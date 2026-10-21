@@ -6,25 +6,26 @@
 <title>Aço Brasil – Distribuidor ArcelorMittal</title>
 <meta name="description" content="Aço Brasil, distribuidor ArcelorMittal em Marabá e Belém. Aço para construção civil, indústria, agronegócio e mais.">
 <style>
-:root{--verde:#1a9b3a;--laranja:#f26a10;--escuro:#1d2430;--claro:#f6f1ea}
+:root{--verde:#0f9b3a;--azul:#0b4a9a;--laranja:#0b4a9a;--escuro:#18202c;--claro:#f2f5f9}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--claro);color:var(--escuro);overflow-x:hidden;line-height:1.5}
 a{color:inherit}
 header{position:sticky;top:0;z-index:5;background:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 8px #0001}
-.logo{font-weight:900;font-size:1.35rem;text-decoration:none}.logo span{color:var(--laranja)}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none}.logo svg{height:56px;width:auto;display:block}.logo img{height:52px;width:auto;display:block}.logo .sep{width:1px;height:36px;background:#d5dbe3}.logo .am{height:30px}.logo .am-txt{font-weight:800;color:#e4002b;font-size:.95rem}
+@media(max-width:640px){.logo img{height:42px}.logo .am{height:22px}}
 nav{display:flex;gap:16px;font-weight:600;font-size:.9rem}
 nav a{text-decoration:none}
 @media(max-width:640px){nav{display:none}}
 .cta{background:#25d366;color:#fff;text-decoration:none;font-weight:700;padding:10px 18px;border-radius:24px;display:inline-block}
-.hero{background:linear-gradient(135deg,#1d2430 0%,#2b3546 60%,#3a2a1f 100%);color:#fff;padding:72px 16px 88px;text-align:center;position:relative}
-.hero:after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:linear-gradient(90deg,var(--verde),#e8c92a,var(--laranja))}
-.hero small{letter-spacing:2px;text-transform:uppercase;color:#f9b27c;font-weight:700}
+.hero{background:linear-gradient(135deg,#0b2f63 0%,#0b4a9a 55%,#18202c 100%);color:#fff;padding:72px 16px 88px;text-align:center;position:relative}
+.hero:after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:linear-gradient(90deg,var(--azul),var(--verde))}
+.hero small{letter-spacing:2px;text-transform:uppercase;color:#7fd99a;font-weight:700}
 .hero h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.1;margin:12px auto 16px;max-width:760px}
 .hero p{max-width:620px;margin:0 auto 28px;color:#d6dbe3}
 section{max-width:1080px;margin:0 auto;padding:56px 16px}
 h2{font-size:clamp(1.5rem,4vw,2.1rem);text-align:center}
-.barra{height:6px;width:120px;margin:12px auto 32px;border-radius:3px;background:linear-gradient(90deg,var(--verde),var(--laranja))}
+.barra{height:6px;width:120px;margin:12px auto 32px;border-radius:3px;background:linear-gradient(90deg,var(--azul),var(--verde))}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
 .setor{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 12px #0001;border-top:4px solid var(--laranja)}
 .setor:nth-child(even){border-top-color:var(--verde)}
@@ -44,12 +45,13 @@ h2{font-size:clamp(1.5rem,4vw,2.1rem);text-align:center}
 .ex{background:#fff4d6;border:1px dashed #e0a800;color:#7a5b00;font-size:.75rem;padding:2px 6px;border-radius:6px}
 footer{background:var(--escuro);color:#c9ced6;text-align:center;padding:28px 16px;font-size:.85rem}
 footer a{color:#fff}
+.parceiro{display:flex;align-items:center;justify-content:center;gap:10px;margin:18px auto 0;background:#fff;border-radius:12px;padding:10px 16px;width:fit-content}.parceiro img{height:34px}.parceiro small{color:#0b2f63}
 .equipe{display:inline-block;margin-top:10px;opacity:.6;font-size:.8rem}
 </style>
 </head>
 <body>
 <header>
-  <a class="logo" href="#">AÇO <span>BRASIL</span></a>
+  <a class="logo" href="#"><svg viewBox="0 0 120 124" role="img" aria-label="Aço Brasil"><path d="M24 34 44 6h32l20 28-8 10L68 16H52L32 44z" fill="#0b4a9a"/><path d="M34 54 56 22h8l22 32-8 6L60 34 42 60z" fill="#0b4a9a"/><circle cx="60" cy="44" r="6" fill="#0f9b3a"/><path d="M50 60h20l5 8H45z" fill="#0f9b3a"/><text x="60" y="96" text-anchor="middle" font-size="28" font-weight="900" fill="#18202c" font-family="Arial Black,Arial,sans-serif">AÇO</text><text x="60" y="120" text-anchor="middle" font-size="22" font-weight="900" fill="#18202c" font-family="Arial Black,Arial,sans-serif">BRASIL</text></svg><span class="sep"></span><img class="am" src="logo-arcelormittal.png" alt="ArcelorMittal" onerror="this.outerHTML='<span class=am-txt>ArcelorMittal</span>'"></a>
   <nav><a href="#setores">Setores</a><a href="#por-que">Por que nós</a><a href="#conteudo">Catálogos</a><a href="#lojas">Lojas</a></nav>
   <a class="cta" href="#lojas">Orçamento</a>
 </header>
@@ -59,6 +61,7 @@ footer a{color:#fff}
   <h1>Aço para quem constrói o Pará</h1>
   <p>Atendemos obras, indústrias e o campo a partir das nossas lojas em Marabá e Belém, com produtos de qualidade ArcelorMittal e equipe especializada.</p>
   <a class="cta" href="#lojas">Solicitar orçamento</a>
+  <div class="parceiro"><small>Distribuidor autorizado</small><img src="logo-arcelormittal.png" alt="ArcelorMittal" onerror="this.outerHTML='<b style=color:#e4002b>ArcelorMittal</b>'"></div>
 </div>
 
 <section id="setores">
