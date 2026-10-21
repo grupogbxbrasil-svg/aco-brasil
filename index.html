@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aço Brasil – Distribuidor ArcelorMittal</title>
+<title>Aço Brasil – Portal dos Vendedores</title>
 <meta name="description" content="Aço Brasil, distribuidor ArcelorMittal em Marabá e Belém. Aço para construção civil, indústria, agronegócio e mais.">
 <style>
 :root{--verde:#0f9b3a;--azul:#0b4a9a;--laranja:#0b4a9a;--escuro:#18202c;--claro:#f2f5f9}
@@ -47,51 +47,59 @@ footer{background:var(--escuro);color:#c9ced6;text-align:center;padding:28px 16p
 footer a{color:#fff}
 .parceiro{display:flex;align-items:center;justify-content:center;gap:10px;margin:18px auto 0;background:#fff;border-radius:12px;padding:10px 16px;width:fit-content}.parceiro img{height:34px}.parceiro small{color:#0b2f63}
 .equipe{display:inline-block;margin-top:10px;opacity:.6;font-size:.8rem}
+.hero{padding:48px 16px 60px}
+.mes{display:inline-block;background:#ffffff1a;border-radius:20px;padding:4px 14px;margin-top:6px;font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 12px #0001;border-left:5px solid var(--azul);text-decoration:none;display:block}
+.card .tag{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--verde)}
+.card h3{font-size:1.05rem;margin:6px 0}
+.card p{font-size:.9rem;color:#555}
+.niver{background:#fff;border-radius:16px;padding:18px;text-align:center;box-shadow:0 2px 12px #0001;border-top:4px solid var(--verde)}
+.niver .av{width:64px;height:64px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,var(--azul),var(--verde));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.4rem}
+.niver b{display:block}.niver span{color:#666;font-size:.85rem}
+.hoje{outline:3px solid #f5c400}
+.aviso{background:#fff;border-radius:12px;padding:14px 18px;margin-bottom:10px;box-shadow:0 2px 8px #0001;display:flex;gap:12px;align-items:flex-start}
+.aviso i{font-style:normal;font-size:.75rem;font-weight:700;color:#fff;background:var(--azul);border-radius:6px;padding:2px 8px;white-space:nowrap}
 </style>
 </head>
 <body>
 <header>
   <a class="logo" href="#"><svg viewBox="0 0 120 124" role="img" aria-label="Aço Brasil"><path d="M24 34 44 6h32l20 28-8 10L68 16H52L32 44z" fill="#0b4a9a"/><path d="M34 54 56 22h8l22 32-8 6L60 34 42 60z" fill="#0b4a9a"/><circle cx="60" cy="44" r="6" fill="#0f9b3a"/><path d="M50 60h20l5 8H45z" fill="#0f9b3a"/><text x="60" y="96" text-anchor="middle" font-size="28" font-weight="900" fill="#18202c" font-family="Arial Black,Arial,sans-serif">AÇO</text><text x="60" y="120" text-anchor="middle" font-size="22" font-weight="900" fill="#18202c" font-family="Arial Black,Arial,sans-serif">BRASIL</text></svg><span class="sep"></span><img class="am" src="logo-arcelormittal.png" alt="ArcelorMittal" onerror="this.outerHTML='<span class=am-txt>ArcelorMittal</span>'"></a>
-  <nav><a href="#setores">Setores</a><a href="#por-que">Por que nós</a><a href="#conteudo">Catálogos</a><a href="#lojas">Lojas</a></nav>
-  <a class="cta" href="#lojas">Orçamento</a>
+  <nav><a href="#avisos">Avisos</a><a href="#materias">Matérias</a><a href="#aniversariantes">Aniversariantes</a><a href="#catalogos">Catálogos</a></nav>
 </header>
 
 <div class="hero">
-  <small>Distribuidor ArcelorMittal</small>
-  <h1>Aço para quem constrói o Pará</h1>
-  <p>Atendemos obras, indústrias e o campo a partir das nossas lojas em Marabá e Belém, com produtos de qualidade ArcelorMittal e equipe especializada.</p>
-  <a class="cta" href="#lojas">Solicitar orçamento</a>
-  <div class="parceiro"><small>Distribuidor autorizado</small><img src="logo-arcelormittal.png" alt="ArcelorMittal" onerror="this.outerHTML='<b style=color:#e4002b>ArcelorMittal</b>'"></div>
+  <small>Portal dos Vendedores</small>
+  <h1>Bom trabalho, equipe Aço Brasil!</h1>
+  <p>Avisos, matérias sobre o mercado do aço, catálogos ArcelorMittal e os aniversariantes do mês, tudo num só lugar.</p>
+  <div class="mes" id="mesAtual"></div>
 </div>
 
-<section id="setores">
-  <h2>Setores que atendemos</h2><div class="barra"></div>
-  <div class="grid">
-    <div class="setor"><h3>Construção Civil</h3><p>Vergalhões, telas, treliças, colunas e arames para obras residenciais e comerciais.</p></div>
-    <div class="setor"><h3>Estruturas Metálicas</h3><p>Perfis, cantoneiras e barras para estruturas leves e pesadas.</p></div>
-    <div class="setor"><h3>Agronegócio</h3><p>Arames, cercamentos e aço para galpões, currais e implementos.</p></div>
-    <div class="setor"><h3>Indústria</h3><p>Barras e fios para usinagem, máquinas e construção mecânica.</p></div>
-    <div class="setor"><h3>Energia Solar</h3><p>Aço para estruturas de fixação e suporte de painéis.</p></div>
-    <div class="setor"><h3>Mineração</h3><p>Materiais para estruturas, manutenção e obras de apoio.</p></div>
-    <div class="setor"><h3>Logística e Armazenagem</h3><p>Soluções para galpões e centros de distribuição.</p></div>
-    <div class="setor"><h3>Serralheria e Metalurgia</h3><p>Perfis, tubos, barras chatas e chapas para o dia a dia da oficina.</p></div>
-    <div class="setor"><h3>Obras de Infraestrutura</h3><p>Aço para pontes, pavimentos, saneamento e obras públicas.</p></div>
-    <div class="setor"><h3>Coberturas e Fechamentos</h3><p>Telhas e chapas metálicas para coberturas e fechamentos laterais.</p></div>
+<section id="avisos">
+  <h2>Avisos da semana</h2><div class="barra"></div>
+  <div class="aviso"><i>Exemplo</i><div>Reunião de vendas na segunda às 8h, loja Marabá.</div></div>
+  <div class="aviso"><i>Exemplo</i><div>Nova tabela de preços de vergalhão válida a partir do dia 1º.</div></div>
+  <div class="aviso"><i>Exemplo</i><div>Meta do mês: acompanhe com seu gerente.</div></div>
+</section>
+
+<section id="materias">
+  <h2>Matérias sobre aço</h2><div class="barra"></div>
+  <div class="cards">
+    <a class="card" href="https://conexao.arcelormittal.com.br/produtos" target="_blank" rel="noopener"><span class="tag">Conexão ArcelorMittal</span><h3>Matérias e conteúdos técnicos</h3><p>Artigos sobre produtos, aplicações e boas práticas na obra.</p></a>
+    <a class="card" href="https://brasil.arcelormittal.com/sala-de-imprensa/noticias" target="_blank" rel="noopener"><span class="tag">Notícias</span><h3>Sala de imprensa ArcelorMittal</h3><p>Novidades da usina, lançamentos e investimentos.</p></a>
+    <a class="card" href="https://acobrasil.org.br/site/" target="_blank" rel="noopener"><span class="tag">Mercado</span><h3>Instituto Aço Brasil</h3><p>Estatísticas de produção e consumo de aço no país.</p></a>
+    <a class="card" href="https://news.google.com/search?q=a%C3%A7o%20vergalh%C3%A3o%20mercado&hl=pt-BR&gl=BR&ceid=BR:pt-419" target="_blank" rel="noopener"><span class="tag">Na mídia</span><h3>Últimas notícias do aço</h3><p>Busca atualizada sobre preços e mercado de aço.</p></a>
   </div>
 </section>
 
-<section id="por-que" class="diferenciais">
-  <h2>Por que a Aço Brasil</h2><div class="barra"></div>
-  <div class="grid">
-    <div class="dif"><b>Qualidade ArcelorMittal</b><span>Produtos de uma das maiores produtoras de aço do mundo.</span></div>
-    <div class="dif"><b>Duas lojas no Pará</b><span>Atendimento em Marabá e Belém.</span></div>
-    <div class="dif"><b>Equipe especializada</b><span>Vendedores que entendem da sua obra ou fábrica.</span></div>
-    <div class="dif"><b>Logística própria</b><span>Entrega na sua obra ou empresa.</span></div>
-  </div>
+<section id="aniversariantes" class="diferenciais">
+  <h2>Aniversariantes do mês 🎉</h2><div class="barra"></div>
+  <div class="grid" id="listaNiver"></div>
+  <p style="text-align:center;color:#888;font-size:.8rem;margin-top:14px">Nomes de exemplo. Edite a lista ANIVERSARIANTES no fim do arquivo.</p>
 </section>
 
-<section id="conteudo">
-  <h2>Catálogos e conteúdo ArcelorMittal</h2><div class="barra"></div>
+<section id="catalogos">
+  <h2>Catálogos e produtos</h2><div class="barra"></div>
   <div class="grid links">
     <a href="https://brasil.arcelormittal.com/produtos-solucoes" target="_blank" rel="noopener">Produtos e soluções<span>Portal oficial ArcelorMittal Brasil</span></a>
     <a href="https://conexao.arcelormittal.com.br/catalogos/" target="_blank" rel="noopener">Catálogos técnicos<span>Especificações e tabelas</span></a>
@@ -99,21 +107,25 @@ footer a{color:#fff}
   </div>
 </section>
 
-<section id="lojas">
-  <h2>Nossas lojas</h2><div class="barra"></div>
-  <div class="grid">
-    <div class="loja"><h3>Marabá</h3>
-      <p><span class="ex">exemplo</span> Endereço da loja</p><p><span class="ex">exemplo</span> Seg a sex, 7h às 17h</p>
-      <a class="cta" href="#" onclick="return false">WhatsApp Marabá</a></div>
-    <div class="loja"><h3>Belém</h3>
-      <p><span class="ex">exemplo</span> Endereço da loja</p><p><span class="ex">exemplo</span> Seg a sex, 7h às 17h</p>
-      <a class="cta" href="#" onclick="return false">WhatsApp Belém</a></div>
-  </div>
-</section>
-
 <footer>
-  © Aço Brasil · Distribuidor ArcelorMittal · Marabá e Belém<br>
-  <a class="equipe" href="equipe.html">Acesso equipe</a>
+  Aço Brasil · Portal interno dos vendedores · Marabá e Belém
 </footer>
+
+<script>
+// Edite aqui: nome, dia, mês (1-12), loja
+const ANIVERSARIANTES = [
+  {nome:"João Silva", dia:5, mes:10, loja:"Marabá"},
+  {nome:"Maria Souza", dia:18, mes:10, loja:"Belém"},
+  {nome:"Carlos Lima", dia:27, mes:10, loja:"Marabá"},
+  {nome:"Ana Costa", dia:9, mes:11, loja:"Belém"}
+];
+const hoje=new Date(), m=hoje.getMonth()+1;
+const nomes=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+document.getElementById("mesAtual").textContent="Mês de "+nomes[m-1];
+const lista=ANIVERSARIANTES.filter(a=>a.mes===m).sort((a,b)=>a.dia-b.dia);
+document.getElementById("listaNiver").innerHTML = lista.length ? lista.map(a=>
+  `<div class="niver${a.dia===hoje.getDate()?' hoje':''}"><div class="av">${a.nome.split(' ').map(p=>p[0]).slice(0,2).join('')}</div><b>${a.nome}</b><span>Dia ${a.dia} · ${a.loja}${a.dia===hoje.getDate()?' · Hoje! 🎂':''}</span></div>`).join("")
+  : '<p style="text-align:center;grid-column:1/-1">Nenhum aniversariante este mês.</p>';
+</script>
 </body>
 </html>
