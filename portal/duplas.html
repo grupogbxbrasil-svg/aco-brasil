@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Duplas | AÇO BRASIL</title>
+<link rel="stylesheet" href="../assets/css/site.css">
+<style>
+body{background:linear-gradient(135deg,#071d3c,#0b2a55);min-height:100vh;padding:40px 20px}
+.box{background:#fff;border-radius:12px;max-width:640px;margin:0 auto;padding:32px 28px;box-shadow:0 20px 50px #0006}
+.box img{height:40px;margin-bottom:18px}.box h1{font-size:1.4rem;color:var(--marinho)}
+.box p{color:var(--cinza);font-size:.9rem;margin:8px 0 18px}
+h2{font-size:.8rem;letter-spacing:1px;text-transform:uppercase;color:var(--cinza);margin:20px 0 8px}
+a.d{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--borda);border-radius:10px;margin-bottom:8px;text-decoration:none}
+a.d:hover{border-color:var(--laranja)}
+.av{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#f26b1d,#e8541c);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.voltar{display:block;text-align:center;margin-top:20px;font-size:.85rem}
+</style>
+</head>
+<body>
+<main class="box">
+<img src="../logo-arcelormittal.png" alt="ArcelorMittal">
+<h1>Painéis das Duplas</h1>
+<p>Selecione a sua dupla para entrar.</p>
+<div id="lista"></div>
+<a class="voltar" href="../index.html">← Voltar ao site</a>
+</main>
+<script src="duplas.js"></script>
+<script>
+const g={};for(const[id,d]of Object.entries(DUPLAS))(g[d.unidade]=g[d.unidade]||[]).push([id,d]);
+lista.innerHTML=Object.entries(g).map(([u,l])=>`<h2>${u}</h2>`+l.map(([id,d])=>`<a class="d" href="painel.html?d=${id}"><span class="av">${d.iniciais}</span><b>${d.nomes.join(" & ")}</b></a>`).join("")).join("");
+</script>
+</body>
+</html>

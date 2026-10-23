@@ -15,7 +15,7 @@ body{background:linear-gradient(135deg,#071d3c,#0b2a55);min-height:100vh;display
 .aviso{background:#fff7e6;border:1px solid #f2c26b;border-radius:8px;padding:12px 14px;font-size:.85rem;color:#6b4a00}
 label{display:block;font-size:.85rem;font-weight:600;margin:14px 0 4px}
 input{width:100%;padding:11px 12px;border:1px solid var(--borda);border-radius:8px;font:inherit;background:#f6f8fb}
-button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;background:var(--marinho);color:#fff;font-weight:700;font-size:.95rem;opacity:.5;cursor:not-allowed}
+button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;background:var(--marinho);color:#fff;font-weight:700;font-size:.95rem;cursor:pointer}
 .voltar{display:block;text-align:center;margin-top:16px;font-size:.85rem}
 </style>
 </head>
@@ -24,15 +24,23 @@ button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;backgr
   <img src="../logo-arcelormittal.png" alt="ArcelorMittal">
   <h1>Acesso Restrito</h1>
   <p>Portal interno para Vendedores, Gerência e Diretoria da Aço Brasil.</p>
-  <div class="aviso" role="status"><b>Portal em implantação.</b> O login será liberado quando o serviço de autenticação seguro for configurado. Nenhum dado é enviado por esta tela.</div>
-  <form onsubmit="return false" aria-disabled="true">
-    <label for="email">E-mail corporativo</label>
-    <input id="email" type="email" autocomplete="username" disabled>
+  <div class="aviso" role="status"><b>Ambiente de teste.</b> Entre com o usuário da sua dupla.</div>
+  <form onsubmit="entrar(event)">
+    <label for="email">Usuário</label>
+    <input id="email" autocomplete="username" required>
     <label for="senha">Senha</label>
-    <input id="senha" type="password" autocomplete="current-password" disabled>
-    <button type="submit" disabled>Entrar</button>
+    <input id="senha" type="password" autocomplete="current-password" required>
+    <button type="submit">Entrar</button>
+<div id="erro" style="color:#c0392b;font-size:.85rem;min-height:18px;margin-top:10px"></div>
   </form>
   <a class="voltar" href="../index.html">← Voltar ao site</a>
 </main>
+<script src="duplas.js"></script>
+<script>
+function entrar(e){e.preventDefault();
+ const k=email.value.trim().toLowerCase(),p=senha.value;
+ for(const[id,d]of Object.entries(DUPLAS)){if(d.usuarios[k]===p){try{sessionStorage.setItem("vend_"+id,k)}catch(_){}location.href="painel.html?d="+id;return}}
+ erro.textContent="Usuário ou senha inválidos.";}
+</script>
 </body>
 </html>
