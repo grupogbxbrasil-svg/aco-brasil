@@ -3,70 +3,87 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Painel do Vendedor – Marabá</title>
+<meta name="robots" content="noindex">
+<title>Israel &amp; Stefanny | AÇO BRASIL</title>
+<link rel="stylesheet" href="../assets/css/site.css">
 <style>
-:root{--bg:#f5f6f8;--card:#fff;--ink:#14181f;--muted:#5f6773;--line:#e4e7ec;--brand:#e8541c;--dark:#1d232b}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-header{background:var(--dark);color:#fff;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border-bottom:4px solid var(--brand)}
-header b{font-size:18px}header small{opacity:.7}
-.btn{background:var(--brand);color:#fff;border:0;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:14px}
-.btn.ghost{background:transparent;border:1px solid #ffffff55}
-main{max-width:1180px;margin:0 auto;padding:24px 16px}
-/* login */
-#login{min-height:calc(100vh - 70px);display:grid;place-items:center;padding:16px}
-.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px;width:100%;max-width:380px}
-.box h1{font-size:20px;margin:0 0 4px}.box p{color:var(--muted);margin:0 0 20px;font-size:14px}
-label{font-size:13px;font-weight:600;display:block;margin:12px 0 6px}
-input{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;font-size:15px}
-.erro{color:#c0392b;font-size:13px;min-height:18px;margin-top:10px}
-.aviso{font-size:12px;color:var(--muted);margin-top:14px;background:#fff6e5;border:1px solid #f3d9a4;padding:8px;border-radius:8px}
-/* painel */
-.topo{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:20px}
-.topo h1{margin:0;font-size:22px}.topo span{color:var(--muted);font-size:14px}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
-@media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.grid{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 18px;display:flex;gap:14px;position:relative;text-decoration:none;color:inherit;transition:box-shadow .15s}
-.card:hover{box-shadow:0 6px 18px #0000000f}
-.ic{flex:0 0 44px;height:44px;border-radius:10px;display:grid;place-items:center;color:#fff}
-.ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.card h3{margin:0 0 4px;font-size:15px}.card p{margin:0 0 10px;font-size:13px;color:var(--muted);line-height:1.4}
-.abrir{color:var(--brand);font-weight:600;font-size:13px}
-.off{opacity:.55;pointer-events:none}.off .ic{background:#c8ccd2!important}
-.off .abrir{color:var(--muted)}
-.badge{position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;letter-spacing:.5px;background:#eef0f3;color:var(--muted);padding:3px 8px;border-radius:6px}
-footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
+body{background:#f4f6fa;margin:0}
 .hide{display:none!important}
+/* ---- login (mesmo visual de portal/login.html) ---- */
+#login{background:linear-gradient(135deg,#071d3c,#0b2a55);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:#fff;border-radius:12px;max-width:420px;width:100%;padding:32px 28px;box-shadow:0 20px 50px #0006}
+.box img{height:40px;margin-bottom:18px}
+.box h1{font-size:1.4rem;color:var(--marinho)}
+.box p{color:var(--cinza);font-size:.9rem;margin:8px 0 18px}
+.aviso{background:#fff7e6;border:1px solid #f2c26b;border-radius:8px;padding:12px 14px;font-size:.85rem;color:#6b4a00}
+.box label{display:block;font-size:.85rem;font-weight:600;margin:14px 0 4px}
+.box input{width:100%;padding:11px 12px;border:1px solid var(--borda);border-radius:8px;font:inherit;background:#f6f8fb}
+.box button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;background:var(--marinho);color:#fff;font-weight:700;font-size:.95rem;cursor:pointer}
+.box button:hover{background:var(--azul)}
+.erro{color:#c0392b;font-size:.85rem;min-height:18px;margin-top:10px}
+.voltar{display:block;text-align:center;margin-top:16px;font-size:.85rem}
+/* ---- painel (igual ao Wix) ---- */
+.marcas{background:#262a36;height:80px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:5}
+.marcas img{height:44px;filter:brightness(0) invert(1);opacity:.92}
+.marcas span{color:#e9ebef;font-weight:600;letter-spacing:.5px}
+.m-aco{font-size:15px;line-height:1;text-align:center;font-weight:800}
+.m-aperam{font-size:38px;font-weight:300!important;letter-spacing:-1px!important}
+.m-belgo{font-size:40px;font-weight:700;line-height:.9;text-align:center}.m-belgo small{display:block;font-size:14px;font-weight:400;letter-spacing:1px}
+.hero{background:linear-gradient(100deg,#0e2036 0%,#17304d 70%,#3a3430 100%);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:16px}
+.av{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#f26b1d,#e8541c);display:grid;place-items:center;font-weight:800;font-size:15px}
+.hero .sup{font-size:12px;letter-spacing:1.5px;font-weight:700;color:#aab6c6;text-transform:uppercase}
+.hero h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:28px;margin:2px 0}
+.hero small{color:#c4ccd7;font-size:13px}
+.hero .unid{margin-left:auto;border:1px solid #ffffff55;border-radius:20px;padding:7px 14px;color:#fff;text-decoration:none;font-weight:600;font-size:14px;background:#ffffff10;cursor:pointer}
+.sair{margin-left:8px;background:transparent;border:1px solid #ffffff55;color:#fff;border-radius:20px;padding:7px 14px;cursor:pointer;font:inherit;font-size:13px}
+main{padding:22px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1240px;margin:0 auto}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.marcas{padding:0 12px}.marcas img{height:28px}.m-aperam{font-size:24px}.m-belgo{font-size:24px}.hero{flex-wrap:wrap}.hero .unid{margin-left:0}}
+.card{background:#fff;border:1px solid #e3e7ee;border-radius:14px;padding:16px;display:flex;gap:14px;position:relative;text-decoration:none;color:#14181f;transition:box-shadow .15s}
+.card:hover{box-shadow:0 6px 18px #0000000f}
+.ic{flex:0 0 42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff}
+.ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card h3{margin:0 0 4px;font-size:14px;font-weight:700}.card p{margin:0 0 8px;font-size:12.5px;color:#5b6675;line-height:1.4}
+.abrir{color:#e8541c;font-weight:600;font-size:13px}
+.off{pointer-events:none;background:#f8f9fb}.off h3,.off p,.off .abrir{color:#9aa1ab}.off .ic{background:#c9cdd3!important}
+.badge{position:absolute;top:10px;right:12px;font-size:10px;font-weight:700;letter-spacing:.5px;background:#eceff3;color:#9aa1ab;padding:3px 8px;border-radius:6px}
 </style>
 </head>
 <body>
-<header>
-  <div><b>Aço Brasil · Portal do Vendedor</b><br><small>Distribuidor ArcelorMittal · Unidade Marabá</small></div>
-  <div id="usr" class="hide"><span id="nome" style="margin-right:12px"></span><button class="btn ghost" onclick="sair()">Sair</button></div>
-</header>
 
 <section id="login">
   <form class="box" onsubmit="entrar(event)">
-    <h1>Primeiro acesso</h1>
-    <p>Dupla Marabá – Israel &amp; Stefanny</p>
+    <img src="../logo-arcelormittal.png" alt="ArcelorMittal">
+    <h1>Acesso Restrito</h1>
+    <p>Painel de Gestão Comercial · DBA Marabá — Israel &amp; Stefanny</p>
+    <div class="aviso" role="status"><b>Ambiente de teste.</b> Login simulado no navegador, sem dados reais.</div>
     <label for="u">Usuário</label><input id="u" autocomplete="username" required>
     <label for="s">Senha</label><input id="s" type="password" autocomplete="current-password" required>
-    <button class="btn" style="width:100%;margin-top:18px">Entrar</button>
+    <button type="submit">Entrar</button>
     <div class="erro" id="erro"></div>
-    <div class="aviso">Ambiente de teste. Login simulado no navegador, não é seguro para dados reais.</div>
+    <a class="voltar" href="../index.html">← Voltar ao site</a>
   </form>
 </section>
 
-<main id="painel" class="hide">
-  <div class="topo"><h1>Painel da Dupla · Marabá</h1><span>Israel &amp; Stefanny</span></div>
-  <div class="grid" id="grid"></div>
-</main>
-<footer>Aço Brasil · Distribuidor ArcelorMittal</footer>
+<div id="painel" class="hide">
+  <div class="marcas">
+    <span class="m-aco">AÇO<br>BRASIL</span>
+    <img src="../logo-arcelormittal.png" alt="ArcelorMittal">
+    <span class="m-aperam">aperam</span>
+    <span class="m-belgo">belgo<small>arames</small></span>
+  </div>
+  <div class="hero">
+    <div class="av">IS</div>
+    <div><div class="sup">Painel de Gestão Comercial · DBA Marabá</div><h1>Israel &amp; Stefanny</h1><small>Selecione um relatório</small></div>
+    <a class="unid">◀ DBA Marabá</a><button class="sair" onclick="sair()">Sair</button>
+  </div>
+  <main><div class="grid" id="grid"></div></main>
+</div>
 
 <script>
-// USUÁRIOS DE TESTE: substituir por autenticação real (Supabase/Firebase) antes de produção
-const USERS={israel:{senha:"teste123",nome:"Israel"},stefanny:{senha:"teste123",nome:"Stefanny"}};
-
+// USUÁRIOS DE TESTE — trocar por autenticação real (Supabase/Firebase) antes de produção
+const USERS={israel:"teste123",stefanny:"teste123"};
 const I={
  chart:'<path d="M4 18 9 12l4 3 7-8"/>',
  target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
@@ -76,41 +93,32 @@ const I={
  doc:'<path d="M6 3h8l4 4v14H6z"/><path d="M9 12h6M9 16h6M9 8h3"/>',
  coin:'<circle cx="12" cy="12" r="9"/><path d="M15 9c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2.2 0 3 6 1.5 6 4.6 0 1.4-1.3 2.2-3 2.2-1.5 0-2.6-.6-3-1.6M12 6v12"/>'
 };
+// [título, descrição, ícone, cor, indisponível]
 const CARDS=[
- ["Indicadores de Performance","Meta, faturado, % realizado e detalhamento por setor.","chart","#e8541c"],
- ["Radar Metodologia","Cobertura, contatos, cotações e conversão da dupla.","target","#2e7d52"],
- ["Radar de Crédito","Limite, risco e atraso da carteira DBA Marabá.","shield","#1f5fa8"],
- ["Churn de Clientes","Clientes em risco de perda e sem compra no mês.","userx","#c0392b"],
- ["Funil de Vendas","Funil reverso: etapas, volumes e conversão.","funnel","#7b45a8"],
- ["Pedidos - Israel","Carteira de pedidos do vendedor.","doc","#127c80"],
- ["Pedidos - Stefanny","Carteira de pedidos do vendedor.","chart","#127c80"],
- ["Carteira - Israel","Ordens em aberto na usina por status.","chart","#8a5a2b"],
- ["Carteira - Stefanny","Ordens em aberto na usina por status.","chart","#8a5a2b"],
- ["Pedido de Abastecimento Esporádico — Acompanhamento","Propostas de abastecimento dos vendedores: material, descrição, quantidade e vendedor. Situação automática pelo cruzamento com a base de transferência.","chart","#999",1],
- ["Faturamento","Últimos 12 meses de faturamento com filtros por vendedor, grupo, rota, cidade, cliente, usina, mês e ano.","chart","#999",1],
+ ["Consulta de Estoque","Saldo, trânsito, cobertura por buffer e alerta de ruptura por SKU.","chart","",1],
+ ["Pré-rotas · Ordens","Fechamento de carga por rota: veículo indicado, ocupação e mínimo de 70%.","chart","",1],
+ ["Carteira — Outros Centros","Ordens que outros centros faturam para a nossa região, com saldo na origem.","chart","",1],
+ ["Busca de Estoque","Pesquise por código ou descrição — estoque DBA e outros centros, em um só lugar.","chart","",1],
+ ["Indicadores de Performance","Meta, faturado, % realizado e detalhamento por setor.","chart","#ec5a24"],
+ ["Radar Metodologia","Cobertura, contatos, cotações e conversão da dupla.","target","#2e7d57"],
+ ["Radar de Crédito","Limite, risco e atraso da carteira DBA Marabá.","shield","#1f57a3"],
+ ["Churn de Clientes","Clientes em risco de perda e sem compra no mês.","userx","#c23a2e"],
+ ["Funil de Vendas","Funil reverso: etapas, volumes e conversão.","funnel","#7a47aa"],
+ ["Pedidos - Israel","Carteira de pedidos do vendedor.","doc","#147a80"],
+ ["Pedidos - Stefanny","Carteira de pedidos do vendedor.","chart","#147a80"],
+ ["Carteira - Israel","Ordens em aberto na usina por status.","chart","#8a5628"],
+ ["Carteira - Stefanny","Ordens em aberto na usina por status.","chart","#8a5628"],
+ ["Pedido de Abastecimento Esporádico — Acompanhamento","Propostas de abastecimento dos vendedores: material, descrição, quantidade e vendedor. Situação automática pelo cruzamento com a base de transferência.","chart","",1],
+ ["Faturamento","Últimos 12 meses de faturamento com filtros por vendedor, grupo, rota, cidade, cliente, usina, mês e ano.","chart","",1],
  ["Comissão","Apuração da comissão do mês.","coin","#b8860b"]
 ];
-document.getElementById("grid").innerHTML=CARDS.map(([t,d,ic,c,off])=>`
- <a class="card${off?' off':''}" href="#">
-  ${off?'<span class="badge">INDISPONÍVEL</span>':''}
-  <div class="ic" style="background:${c}"><svg viewBox="0 0 24 24">${I[ic]}</svg></div>
-  <div><h3>${t}</h3><p>${d}</p><span class="abrir">${off?'Em preparação':'Abrir →'}</span></div>
- </a>`).join("");
-
-function mostrar(u){
- const ok=!!u;
- login.classList.toggle("hide",ok);painel.classList.toggle("hide",!ok);usr.classList.toggle("hide",!ok);
- if(ok)nome.textContent="Olá, "+USERS[u].nome;
-}
-function entrar(e){
- e.preventDefault();
- const k=u.value.trim().toLowerCase(),x=USERS[k];
- if(x&&x.senha===s.value){try{sessionStorage.setItem("vend",k)}catch(_){}erro.textContent="";mostrar(k)}
- else erro.textContent="Usuário ou senha inválidos.";
-}
-function sair(){try{sessionStorage.removeItem("vend")}catch(_){}s.value="";mostrar(null)}
-let cur=null;try{cur=sessionStorage.getItem("vend")}catch(_){}
-mostrar(USERS[cur]?cur:null);
+grid.innerHTML=CARDS.map(([t,d,ic,c,off])=>`<a class="card${off?' off':''}" href="#">${off?'<span class="badge">INDISPONÍVEL</span>':''}<div class="ic" style="background:${c}"><svg viewBox="0 0 24 24">${I[ic]}</svg></div><div><h3>${t}</h3><p>${d}</p><span class="abrir">${off?'Em preparação':'Abrir →'}</span></div></a>`).join("");
+function mostrar(ok){login.classList.toggle("hide",ok);painel.classList.toggle("hide",!ok)}
+function entrar(e){e.preventDefault();const k=u.value.trim().toLowerCase();
+ if(USERS[k]&&USERS[k]===s.value){try{sessionStorage.setItem("vend",k)}catch(_){}erro.textContent="";mostrar(true)}
+ else erro.textContent="Usuário ou senha inválidos."}
+function sair(){try{sessionStorage.removeItem("vend")}catch(_){}s.value="";mostrar(false)}
+let c=null;try{c=sessionStorage.getItem("vend")}catch(_){}mostrar(!!USERS[c]);
 </script>
 </body>
 </html>
