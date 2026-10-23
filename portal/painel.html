@@ -7,47 +7,75 @@
 <title>Painel da Dupla | AÇO BRASIL</title>
 <link rel="stylesheet" href="../assets/css/site.css">
 <style>
-body{background:#f4f6fa;margin:0}
+:root{--fundo:#f4f6fa;--verdeok:#1f9d55}
+body{background:var(--fundo)}
 .hide{display:none!important}
-/* ---- login (mesmo visual de portal/login.html) ---- */
+/* login (igual a login.html) */
 #login{background:linear-gradient(135deg,#071d3c,#0b2a55);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .box{background:#fff;border-radius:12px;max-width:420px;width:100%;padding:32px 28px;box-shadow:0 20px 50px #0006}
-.box img{height:40px;margin-bottom:18px}
-.box h1{font-size:1.4rem;color:var(--marinho)}
+.box img{height:40px;margin-bottom:18px}.box h1{font-size:1.4rem;color:var(--marinho)}
 .box p{color:var(--cinza);font-size:.9rem;margin:8px 0 18px}
 .aviso{background:#fff7e6;border:1px solid #f2c26b;border-radius:8px;padding:12px 14px;font-size:.85rem;color:#6b4a00}
 .box label{display:block;font-size:.85rem;font-weight:600;margin:14px 0 4px}
 .box input{width:100%;padding:11px 12px;border:1px solid var(--borda);border-radius:8px;font:inherit;background:#f6f8fb}
 .box button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;background:var(--marinho);color:#fff;font-weight:700;font-size:.95rem;cursor:pointer}
-.box button:hover{background:var(--azul)}
 .erro{color:#c0392b;font-size:.85rem;min-height:18px;margin-top:10px}
 .voltar{display:block;text-align:center;margin-top:16px;font-size:.85rem}
-/* ---- painel (igual ao Wix) ---- */
-.marcas{background:#262a36;height:80px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:5}
-.marcas img{height:44px;filter:brightness(0) invert(1);opacity:.92}
-.marcas span{color:#e9ebef;font-weight:600;letter-spacing:.5px}
-.m-aco{font-size:15px;line-height:1;text-align:center;font-weight:800}
-.m-aperam{font-size:38px;font-weight:300!important;letter-spacing:-1px!important}
-.m-belgo{font-size:40px;font-weight:700;line-height:.9;text-align:center}.m-belgo small{display:block;font-size:14px;font-weight:400;letter-spacing:1px}
-.hero{background:linear-gradient(100deg,#0e2036 0%,#17304d 70%,#3a3430 100%);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:16px}
-.av{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#f26b1d,#e8541c);display:grid;place-items:center;font-weight:800;font-size:15px}
-.hero .sup{font-size:12px;letter-spacing:1.5px;font-weight:700;color:#aab6c6;text-transform:uppercase}
-.hero h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:28px;margin:2px 0}
-.hero small{color:#c4ccd7;font-size:13px}
-.hero .unid{margin-left:auto;border:1px solid #ffffff55;border-radius:20px;padding:7px 14px;color:#fff;text-decoration:none;font-weight:600;font-size:14px;background:#ffffff10;cursor:pointer}
-.sair{margin-left:8px;background:transparent;border:1px solid #ffffff55;color:#fff;border-radius:20px;padding:7px 14px;cursor:pointer;font:inherit;font-size:13px}
-main{padding:22px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1240px;margin:0 auto}
-@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.grid{grid-template-columns:1fr}.marcas{padding:0 12px}.marcas img{height:28px}.m-aperam{font-size:24px}.m-belgo{font-size:24px}.hero{flex-wrap:wrap}.hero .unid{margin-left:0}}
-.card{background:#fff;border:1px solid #e3e7ee;border-radius:14px;padding:16px;display:flex;gap:14px;position:relative;text-decoration:none;color:#14181f;transition:box-shadow .15s}
-.card:hover{box-shadow:0 6px 18px #0000000f}
-.ic{flex:0 0 42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff}
-.ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.card h3{margin:0 0 4px;font-size:14px;font-weight:700}.card p{margin:0 0 8px;font-size:12.5px;color:#5b6675;line-height:1.4}
-.abrir{color:#e8541c;font-weight:600;font-size:13px}
-.off{pointer-events:none;background:#f8f9fb}.off h3,.off p,.off .abrir{color:#9aa1ab}.off .ic{background:#c9cdd3!important}
-.badge{position:absolute;top:10px;right:12px;font-size:10px;font-weight:700;letter-spacing:.5px;background:#eceff3;color:#9aa1ab;padding:3px 8px;border-radius:6px}
+
+/* cabeçalho */
+.cab{background:linear-gradient(90deg,#071d3c,#0b2a55);color:#fff;position:sticky;top:0;z-index:10}
+.cab-in{max-width:1400px;margin:0 auto;height:68px;display:flex;align-items:center;gap:24px;padding:0 24px}
+.marcas{display:flex;align-items:center;gap:14px;flex-shrink:0;text-decoration:none;color:#fff}
+.marcas svg{height:44px;width:auto}
+.marcas .sep{width:1px;height:32px;background:#ffffff40}
+.marcas img{height:32px;filter:brightness(0) invert(1)}
+.parc{display:flex;gap:12px;align-items:center;font-size:.8rem;opacity:.8;font-weight:600;letter-spacing:.3px}
+.menu{display:flex;gap:26px;margin:0 auto;font-size:.9rem;font-weight:500}
+.menu a{color:#dfe6f0;text-decoration:none;padding:22px 0;border-bottom:3px solid transparent}
+.menu a.ativo,.menu a:hover{color:#fff;border-bottom-color:var(--laranja)}
+.menu a.emb{opacity:.45;pointer-events:none}
+.perfil{display:flex;align-items:center;gap:10px;position:relative;cursor:pointer;background:none;border:0;color:#fff;font:inherit;text-align:left}
+.perfil svg{width:30px;height:30px}.perfil b{display:block;font-size:.88rem}.perfil small{font-size:.75rem;opacity:.8}
+.sairb{margin-left:6px;background:transparent;border:1px solid #ffffff55;color:#fff;border-radius:16px;padding:5px 12px;font:inherit;font-size:.8rem;cursor:pointer}.sairb:hover{background:#ffffff1a}
+.x{position:absolute;right:0;top:48px;background:#fff;color:var(--texto);border:1px solid var(--borda);border-radius:8px;min-width:160px;box-shadow:0 8px 20px #0002;padding:6px}
+.drop button{width:100%;text-align:left;background:none;border:0;padding:8px 10px;font:inherit;cursor:pointer;border-radius:6px}.drop button:hover{background:var(--claro)}
+/* topo do painel */
+.topo-p{background:#fff;border-bottom:1px solid var(--borda)}
+.topo-in{max-width:1400px;margin:0 auto;padding:22px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.tit{border-left:4px solid var(--laranja);padding-left:20px;margin-right:auto}
+.tit .sup{font-size:.76rem;letter-spacing:1.2px;font-weight:700;color:var(--cinza);text-transform:uppercase}
+.tit h1{font-size:2rem;color:var(--marinho);margin:2px 0;line-height:1.15}
+.tit p{color:var(--cinza)}
+.resumo{display:flex;gap:12px;flex-wrap:wrap}
+.res{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--borda);border-radius:10px;padding:12px 14px;min-width:190px;background:#fbfcfe}
+.res .ri{width:34px;height:34px;border-radius:8px;background:#eef2f8;display:grid;place-items:center;color:var(--marinho)}
+.res b{font-size:.85rem;color:var(--marinho)}.res small{display:block;font-size:.75rem;color:var(--cinza)}
+.res .n{display:block;font-size:1.1rem;font-weight:800;color:var(--marinho)}
+.volta{align-self:flex-start;border:1.5px solid var(--marinho);color:var(--marinho);border-radius:20px;padding:8px 16px;text-decoration:none;font-weight:600;font-size:.85rem;white-space:nowrap}
+.volta:hover{background:var(--marinho);color:#fff}
+/* grupos e cards */
+main.p{max-width:1400px;margin:0 auto;padding:10px 24px 40px}
+.grupo{margin-top:26px}
+.gh{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.gh .gi{width:40px;height:40px;border-radius:10px;background:#eef2f8;display:grid;place-items:center;color:var(--marinho)}
+.gh h2{font-size:1.1rem;color:var(--marinho)}.gh p{font-size:.82rem;color:var(--cinza)}
+.cards{display:grid;gap:14px}
+.c5{grid-template-columns:repeat(5,1fr)}.c4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:1200px){.c5{grid-template-columns:repeat(3,1fr)}.c4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.c5,.c4{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--borda);border-radius:10px;padding:16px;display:flex;gap:14px;text-decoration:none;color:var(--texto)}
+a.card:hover{border-color:#c9d3e1;box-shadow:0 4px 14px #0b2a5512}
+.ic{flex:0 0 46px;height:46px;border-radius:10px;display:grid;place-items:center;color:#fff}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card h3{font-size:.92rem;color:var(--marinho);margin-bottom:4px}
+.card p{font-size:.8rem;color:var(--cinza);line-height:1.4;margin-bottom:10px}
+.st{display:inline-block;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:10px;margin-bottom:8px}
+.st.ok{background:#e3f5ea;color:var(--verdeok)}.st.prep{background:#eceff3;color:#7a828d}
+.ac{display:block;font-size:.82rem;font-weight:700;color:var(--azul)}
+.ac.sem{color:#9aa3ae;font-weight:500}
+.card.off{background:#f8f9fb}.card.off h3{color:#4a5563}.card.off p{color:#9aa1ab}.card.off .ic{background:#e6e9ee;color:#8a929c}
+@media(max-width:1080px){.menu,.parc{display:none}.perfil small{display:none}}
+@media(max-width:640px){.cab-in{padding:0 14px}.topo-in{padding:18px 16px}main.p{padding:0 16px 30px}.tit h1{font-size:1.6rem}.res{min-width:0;flex:1 1 100%}}
 </style>
 </head>
 <body>
@@ -56,7 +84,7 @@ main{padding:22px}
   <form class="box" onsubmit="entrar(event)">
     <img src="../logo-arcelormittal.png" alt="ArcelorMittal">
     <h1>Acesso Restrito</h1>
-    <p><span id="lsub"></span></p>
+    <p id="lsub"></p>
     <div class="aviso" role="status"><b>Ambiente de teste.</b> Login simulado no navegador, sem dados reais.</div>
     <label for="u">Usuário</label><input id="u" autocomplete="username" required>
     <label for="s">Senha</label><input id="s" type="password" autocomplete="current-password" required>
@@ -67,40 +95,86 @@ main{padding:22px}
 </section>
 
 <div id="painel" class="hide">
-  <div class="marcas">
-    <span class="m-aco">AÇO<br>BRASIL</span>
-    <img src="../logo-arcelormittal.png" alt="ArcelorMittal">
-    <span class="m-aperam">aperam</span>
-    <span class="m-belgo">belgo<small>arames</small></span>
-  </div>
-  <div class="hero">
-    <div class="av" id="ini"></div>
-    <div><div class="sup" id="sup"></div><h1 id="tit"></h1><small>Selecione um relatório</small></div>
-    <a class="unid" id="unid" href="login.html"></a><button class="sair" onclick="sair()">Sair</button>
-  </div>
-  <main><div class="grid" id="grid"></div></main>
+  <header class="cab">
+    <div class="cab-in">
+      <a class="marcas" href="../index.html" aria-label="Aço Brasil – site">
+        <svg viewBox="0 0 120 124" role="img" aria-label="Aço Brasil"><path d="M24 34 44 6h32l20 28-8 10L68 16H52L32 44z" fill="#fff"/><path d="M34 54 56 22h8l22 32-8 6L60 34 42 60z" fill="#fff"/><circle cx="60" cy="44" r="6" fill="#5bd16f"/><path d="M50 60h20l5 8H45z" fill="#5bd16f"/><text x="60" y="96" text-anchor="middle" font-size="28" font-weight="900" fill="#fff" font-family="Arial Black,Arial,sans-serif">AÇO</text><text x="60" y="120" text-anchor="middle" font-size="22" font-weight="900" fill="#fff" font-family="Arial Black,Arial,sans-serif">BRASIL</text></svg>
+        <span class="sep"></span>
+        <img src="../logo-arcelormittal.png" alt="ArcelorMittal">
+        <span class="parc"><span class="sep"></span>Aperam<span>·</span>Belgo Arames</span>
+      </a>
+      <nav class="menu" aria-label="Painel">
+        <a href="#topo" class="ativo">Início</a>
+        <a href="#relatorios">Relatórios</a>
+        <a class="emb" title="Em preparação">Metas</a>
+        <a class="emb" title="Em preparação">Materiais de Apoio</a>
+        <a href="../index.html#noticias">Notícias</a>
+        <a href="../index.html#contato">Fale Conosco</a>
+      </nav>
+      <div class="perfil">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3.5"/><path d="M6 19c1.5-2.5 3.7-3.5 6-3.5s4.5 1 6 3.5"/></svg>
+        <span><b id="pnome"></b><small id="pperfil"></small></span>
+        <button class="sairb" onclick="sair()">Sair</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="topo-p" id="topo">
+    <div class="topo-in">
+      <div class="tit"><div class="sup" id="sup"></div><h1 id="tit"></h1><p>Selecione um relatório para acompanhar seus resultados.</p></div>
+      <div class="resumo">
+        <div class="res"><span class="ri"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg></span><span><b>Relatórios disponíveis</b><span class="n" id="nDisp"></span><small>Ativos no seu painel</small></span></div>
+        <div class="res"><span class="ri"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><b>Em preparação</b><span class="n" id="nPrep"></span><small>Disponíveis em breve</small></span></div>
+        <div class="res"><span class="ri"><svg class="i" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-5l-2 2M4 13a8 8 0 0 0 14 5l2-2"/><path d="M4 4v4h4M20 20v-4h-4"/></svg></span><span><b>Última atualização</b><span class="n">—</span><small>Aguardando dados</small></span></div>
+      </div>
+      <a class="volta" id="unid" href="duplas.html"></a>
+    </div>
+  </section>
+
+  <main class="p" id="relatorios"></main>
 </div>
 
 <script src="duplas.js"></script>
 <script>
-const I={
- chart:'<path d="M4 18 9 12l4 3 7-8"/>',
- target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+const P={
+ chart:'<path d="M4 18 9 12l4 3 7-8"/><path d="M15 7h5v5"/>',
+ target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
  shield:'<path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"/><path d="m9 12 2 2 4-4"/>',
- userx:'<circle cx="9" cy="8" r="4"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M17 8l4 4M21 8l-4 4"/>',
+ users:'<circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.3.3 4 2 4 4.5"/>',
  funnel:'<path d="M3 4h18l-7 8v6l-4 2v-8z"/>',
+ box:'<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
+ store:'<path d="M3 10 12 4l9 6v10H3z"/><path d="M8 20v-6h8v6"/>',
+ truck:'<path d="M2 7h11v9H2zM13 10h4l4 3v3h-8z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+ building:'<path d="M5 21V4h10v17M15 9h4v12"/><path d="M8 8h1M11 8h1M8 12h1M11 12h1M8 16h1M11 16h1M3 21h18"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/>',
  doc:'<path d="M6 3h8l4 4v14H6z"/><path d="M9 12h6M9 16h6M9 8h3"/>',
- coin:'<circle cx="12" cy="12" r="9"/><path d="M15 9c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2.2 0 3 6 1.5 6 4.6 0 1.4-1.3 2.2-3 2.2-1.5 0-2.6-.6-3-1.6M12 6v12"/>'
+ coin:'<circle cx="12" cy="12" r="9"/><path d="M15 9c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2.2 0 3 6 1.5 6 4.6 0 1.4-1.3 2.2-3 2.2-1.5 0-2.6-.6-3-1.6M12 6v12"/>',
+ edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/>'
 };
+const sv=k=>`<svg class="i" viewBox="0 0 24 24">${P[k]}</svg>`;
+const GRUPOS=[
+ {g:"ind",t:"Indicadores e Gestão",d:"Acompanhe o desempenho, metodologia e gestão da sua carteira.",ic:"doc",col:"c5"},
+ {g:"ped",t:"Pedidos e Carteira",d:"Gerencie seus pedidos e acompanhe a carteira de clientes.",ic:"edit",col:"c4"},
+ {g:"prep",t:"Relatórios em preparação",d:"Esses relatórios estão em desenvolvimento e estarão disponíveis em breve.",ic:"doc",col:"c4"}
+];
 const id=new URLSearchParams(location.search).get("d")||"";
 const D=DUPLAS[id];
 if(!D){location.replace("login.html")}
 else{
  const nome=D.nomes.join(" & "),f=x=>x.replace(/\{A\}/g,D.nomes[0]).replace(/\{B\}/g,D.nomes[1]).replace(/\{U\}/g,D.unidade);
  document.title=nome+" | AÇO BRASIL";
- lsub.textContent="Painel de Gestão Comercial · "+D.unidade+" — "+nome;
- ini.textContent=D.iniciais;sup.textContent="Painel de Gestão Comercial · "+D.unidade;tit.textContent=nome;unid.textContent="◀ "+D.unidade;
- grid.innerHTML=RELATORIOS.map(r=>`<a class="card${r.off?' off':''}" href="${r.link?r.link+'?d='+id:'#'}">${r.off?'<span class="badge">INDISPONÍVEL</span>':''}<div class="ic" style="background:${r.c||''}"><svg viewBox="0 0 24 24">${I[r.ic]}</svg></div><div><h3>${f(r.t)}</h3><p>${f(r.d)}</p><span class="abrir">${r.off?'Em preparação':'Abrir →'}</span></div></a>`).join("");
+ lsub.textContent="Painel Comercial · "+D.unidade+" — "+nome;
+ sup.textContent="Painel Comercial · "+D.unidade;tit.textContent=nome;
+ unid.textContent="← Voltar para "+D.unidade;pnome.textContent=nome;pperfil.textContent="Vendedores";
+ nDisp.textContent=RELATORIOS.filter(r=>!r.off).length;nPrep.textContent=RELATORIOS.filter(r=>r.off).length;
+ const card=r=>{
+  const off=!!r.off,tag=(!off&&r.link)?"a":"div",href=tag=="a"?` href="${r.link}${r.link.includes("?")?"&":"?"}d=${id}"`:"";
+  const acao=off?"":(r.link?'<span class="ac">Abrir relatório →</span>':'<span class="ac sem">Link em configuração</span>');
+  return `<${tag} class="card${off?" off":""}"${href}><div class="ic" style="background:${r.c||""}">${sv(r.ic)}</div><div><h3>${f(r.t)}</h3><p>${f(r.d)}</p><span class="st ${off?"prep":"ok"}">${off?"Em preparação":"Disponível"}</span>${acao}</div></${tag}>`;
+ };
+ relatorios.innerHTML=GRUPOS.map(G=>`<section class="grupo"><div class="gh"><span class="gi">${sv(G.ic)}</span><div><h2>${G.t}</h2><p>${G.d}</p></div></div><div class="cards ${G.col}">${RELATORIOS.filter(r=>r.g==G.g).map(card).join("")}</div></section>`).join("");
 }
 const K="vend_"+id;
 function mostrar(ok){login.classList.toggle("hide",ok);painel.classList.toggle("hide",!ok)}
