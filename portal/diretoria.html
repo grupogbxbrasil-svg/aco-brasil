@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Painel da Diretoria | AÇO BRASIL</title>
+<link rel="stylesheet" href="../assets/css/site.css">
+<style>
+/* Painel da Diretoria — espelho automático das planilhas (ver FONTES no script) */
+:root{--fundo:#f4f6fa;--ok:#1f9d55;--mid:#e0a106;--bad:#e2483d;--azul2:#0b4a9a;--bgl:#9db7dc}
+body{background:var(--fundo)}
+.cab{background:linear-gradient(90deg,#071d3c,#0b2a55);color:#fff;position:sticky;top:0;z-index:20}
+.cab-in{max-width:1400px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.cab b{font-size:1.05rem}.cab small{opacity:.75;font-size:.78rem;display:block}
+.fil{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.8rem}
+.fil select{font:inherit;font-size:.82rem;padding:6px 10px;border-radius:16px;border:1px solid #ffffff55;background:#0b2a55;color:#fff}
+.btn{border:1px solid #ffffff55;color:#fff;background:transparent;border-radius:16px;padding:6px 14px;font:inherit;font-size:.8rem;cursor:pointer;text-decoration:none}
+.btn:hover{background:#ffffff1a}
+.dot{width:8px;height:8px;border-radius:50%;background:#5bd16f;display:inline-block;margin-right:6px}
+.abas{background:#fff;border-bottom:1px solid var(--borda);position:sticky;top:56px;z-index:15}
+.abas-in{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+.abas button{background:none;border:0;border-bottom:3px solid transparent;padding:14px 14px;font:inherit;font-size:.88rem;font-weight:600;color:var(--cinza);cursor:pointer;white-space:nowrap}
+.abas button.on{color:var(--marinho);border-bottom-color:var(--laranja)}
+main{max-width:1400px;margin:0 auto;padding:22px 24px 60px}
+.tit{border-left:4px solid var(--laranja);padding-left:16px;margin-bottom:18px}
+.tit .sup{font-size:.72rem;letter-spacing:1.2px;font-weight:700;color:var(--cinza);text-transform:uppercase}
+.tit h1{font-size:1.6rem;color:var(--marinho);line-height:1.2}.tit p{color:var(--cinza);font-size:.84rem}
+.g{display:grid;gap:14px;margin-bottom:14px}
+.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}.g21{grid-template-columns:2fr 1fr}
+.box{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:18px;min-width:0}
+.box h2{font-size:.98rem;color:var(--marinho);margin-bottom:2px}.box .sub{font-size:.76rem;color:var(--cinza);margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--azul2))}
+.kpi small{font-size:.7rem;font-weight:700;letter-spacing:.6px;color:var(--cinza);text-transform:uppercase}
+.kpi b{display:block;font-size:1.6rem;color:var(--marinho);margin:4px 0 2px;line-height:1.1}
+.kpi span{font-size:.78rem;color:var(--cinza)}
+.up{color:var(--ok)!important;font-weight:700}.dn{color:var(--bad)!important;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+th{text-align:left;font-size:.68rem;letter-spacing:.5px;text-transform:uppercase;color:var(--cinza);padding:8px 6px;border-bottom:2px solid var(--borda);white-space:nowrap;cursor:default}
+td{padding:9px 6px;border-bottom:1px solid #edf1f6;white-space:nowrap}
+.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.tot td{font-weight:800;color:var(--marinho);border-top:2px solid var(--borda)}
+.rol{overflow-x:auto}
+.barra{height:8px;background:#edf1f6;border-radius:4px;min-width:70px;position:relative;overflow:hidden}
+.barra i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--azul2)}
+.cols{display:flex;align-items:flex-end;gap:8px;height:220px;padding-top:22px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.col .v{font-size:.68rem;font-weight:700;color:var(--marinho);margin-bottom:3px}
+.col .st{width:100%;max-width:44px;display:flex;flex-direction:column;justify-content:flex-end;border-radius:6px 6px 0 0;overflow:hidden}
+.col .st i{display:block;width:100%}
+.col .m{font-size:.7rem;color:var(--cinza);margin-top:6px}
+.leg{display:flex;gap:14px;font-size:.74rem;color:var(--cinza);margin-top:8px;flex-wrap:wrap}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.hb{display:grid;grid-template-columns:150px 1fr 64px;gap:10px;align-items:center;font-size:.8rem;margin-bottom:8px}
+.hb .barra{height:12px}.hb b{text-align:right;color:var(--marinho)}
+.al{display:flex;gap:12px;padding:12px;border-radius:10px;margin-bottom:10px;font-size:.84rem;align-items:flex-start}
+.al.r{background:#fdecea;color:#7a1f17}.al.a{background:#fff5df;color:#6b4a00}.al.v{background:#e6f5ec;color:#11522e}
+.al b{display:block}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:700}
+.tg-r{background:#fdecea;color:var(--bad)}.tg-a{background:#fff5df;color:#a77400}.tg-v{background:#e6f5ec;color:var(--ok)}.tg-c{background:#eef2f8;color:var(--marinho)}
+.spark{width:90px;height:26px}
+.vazio{color:var(--cinza);font-size:.85rem;padding:20px;text-align:center}
+.carga{display:flex;flex-direction:column;align-items:center;gap:12px;padding:80px 20px;color:var(--cinza)}
+.spin{width:36px;height:36px;border:4px solid #dfe5ec;border-top-color:var(--laranja);border-radius:50%;animation:g 1s linear infinite}@keyframes g{to{transform:rotate(360deg)}}
+.nota{font-size:.74rem;color:var(--cinza);margin-top:10px;font-style:italic}
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g2,.g21{grid-template-columns:1fr}}
+@media(max-width:600px){main,.cab-in,.abas-in{padding-left:16px;padding-right:16px}.g4{grid-template-columns:1fr 1fr}.kpi b{font-size:1.25rem}.hb{grid-template-columns:100px 1fr 54px}.fil{margin-left:0}.abas{top:0;position:relative}}
+</style>
+</head>
+<body>
+<header class="cab"><div class="cab-in">
+  <div><b>Painel da Diretoria · DBA Marabá</b><small id="stEl"><span class="dot"></span>carregando…</small></div>
+  <div class="fil">
+    <select id="fMes" aria-label="Mês"></select>
+    <select id="fDupla" aria-label="Dupla"></select>
+    <button class="btn" onclick="carregar(true)">Atualizar</button>
+    <a class="btn" href="javascript:history.back()">← Voltar</a>
+  </div>
+</div></header>
+<nav class="abas"><div class="abas-in" id="abas"></div></nav>
+<main id="app"><div class="carga"><div class="spin"></div>Lendo a base de faturamento…</div></main>
+
+<script>
+/* ============================================================
+   FONTES (atualizam sozinhas — o painel relê a cada 10 min)
+   FAT: aba "FAT 2026 ATUAL" da planilha publicada do Painel Comercial
+   BV : aba "BV" da planilha "Performance Vendedores - Site" (PVL, markup, RAG)
+   ============================================================ */
+const FONTES = {
+  FAT: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=1851262199",
+  BV:  "https://docs.google.com/spreadsheets/d/1ItMeQ0Z8T7TTeO3l2Iq1ZyOpiQy1buRX5ZBSzQ2g4ng/gviz/tq?tqx=out:csv&headers=0&gid=777001"
+};
+// Colunas da aba FAT 2026 ATUAL (posição, começando em 0)
+const C = {grp:13, vend:63, cli:49, nome:50, cid:52, data:100, dupla:229, ano:230, ton:231, rota:233, mes:234, fam:242, setor:246};
+const BGL = "GV484";
+const MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const ATUALIZA_MIN = 10;
+
+/* ---------- utilidades ---------- */
+function csv(t){const L=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}else if(ch=='"')q=true;else if(ch==','){r.push(c);c=""}else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(c);L.push(r);r=[];c=""}else c+=ch}if(c||r.length){r.push(c);L.push(r)}return L}
+const num=s=>{if(s==null)return 0;s=String(s).trim();if(!s||s=="–"||s=="-")return 0;const neg=/^\(.*\)$/.test(s)||s.startsWith("-");const v=parseFloat(s.replace(/[R$%()\s+-]/g,"").replace(/\./g,"").replace(",","."))||0;return neg?-v:v};
+const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const f1=v=>v.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+const f0=v=>Math.round(v).toLocaleString("pt-BR");
+const fp=v=>isFinite(v)?(v>0?"+":"")+v.toLocaleString("pt-BR",{maximumFractionDigits:1})+"%":"–";
+const pct=(a,b)=>b?(a/b-1)*100:NaN;
+const cls=v=>!isFinite(v)?"":v>=0?"up":"dn";
+const nomeD=d=>d.replace(/\s*\/\s*/," & ");
+const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+const grp=(a,k)=>{const o={};a.forEach(x=>{const kk=typeof k=="function"?k(x):x[k];(o[kk]=o[kk]||[]).push(x)});return o};
+const titulo=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
+
+/* ---------- estado ---------- */
+let D=[], BV=[], ABA="resumo", ULT=null;
+const ABAS=[["resumo","Resumo"],["ranking","Ranking"],["ficha","Ficha da dupla"],["clientes","Clientes & churn"],["mix","Setores & rotas"],["margem","Margem & preço"]];
+abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("");
+abas.onclick=e=>{const b=e.target.closest("button");if(!b)return;ABA=b.dataset.k;try{localStorage.setItem("dir_aba",ABA)}catch(_){}render()};
+try{ABA=localStorage.getItem("dir_aba")||ABA}catch(_){}
+fMes.onchange=fDupla.onchange=()=>render();
+
+/* ---------- carga ---------- */
+async function carregar(manual){
+  try{
+    stEl.innerHTML='<span class="dot"></span>atualizando…';
+    const [t1,t2]=await Promise.all([
+      fetch(FONTES.FAT+"&t="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("FAT "+r.status);return r.text()}),
+      fetch(FONTES.BV+"&t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").catch(()=>"")
+    ]);
+    const L=csv(t1); D=[];
+    for(let i=1;i<L.length;i++){const r=L[i];if(r[C.ano]!="2026")continue;const t=num(r[C.ton]);if(!t)continue;
+      const m=parseInt(r[C.mes])||0;if(!m)continue;
+      let dt=null;const p=(r[C.data]||"").split("/");if(p.length==3)dt=new Date(+p[2],+p[0]-1,+p[1]);
+      D.push({m,t,dupla:(r[C.dupla]||"Outros").trim()||"Outros",vend:titulo(r[C.vend]),cli:r[C.cli],nome:(r[C.nome]||"").trim(),cid:titulo(r[C.cid]),rota:titulo((r[C.rota]||"Sem rota").replace(/^ROTA\s+/i,"")),setor:r[C.setor]||"Outros",fam:r[C.fam]||"",bgl:r[C.grp]==BGL,dt})}
+    ULT=D.reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
+    BV=[];if(t2){csv(t2).forEach(r=>{const ms=r[3]||"";const mm=MES.indexOf(ms.slice(0,3).toLowerCase());if(mm<0||!/26$/.test(ms))return;BV.push({vend:r[0],dupla:r[1],m:mm+1,setor:r[4],t:num(r[5]),cli:num(r[6]),pvl:num(r[8]),mk:num(r[9]),rag:num(r[10]),rec:num(r[12])})})}
+    montarFiltros();render();
+    stEl.innerHTML='<span class="dot"></span>base até '+(ULT?ULT.toLocaleDateString("pt-BR"):"–")+' · lido às '+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }catch(e){stEl.textContent="erro ao ler a planilha";if(!D.length)app.innerHTML=`<div class="box vazio">Não foi possível ler a base (${esc(e.message)}). Confira se a planilha continua publicada na Web.</div>`}
+}
+function montarFiltros(){
+  const ms=[...new Set(D.map(x=>x.m))].sort((a,b)=>a-b), selM=fMes.value, selD=fDupla.value;
+  fMes.innerHTML=ms.map(m=>`<option value="${m}">${MES[m-1]}/26</option>`).join("");
+  fMes.value=selM&&ms.includes(+selM)?selM:ms[ms.length-1];
+  const ds=Object.entries(grp(D,"dupla")).map(([k,a])=>[k,sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+  fDupla.innerHTML='<option value="">Todas as duplas</option>'+ds.map(d=>`<option value="${esc(d)}">${esc(nomeD(d))}</option>`).join("");
+  fDupla.value=ds.includes(selD)?selD:"";
+}
+
+/* ---------- cálculos ---------- */
+function diasUteis(y,m,ate){let n=0;const fim=new Date(y,m,0).getDate();for(let d=1;d<=fim;d++){const dt=new Date(y,m-1,d);if(ate&&dt>ate)break;const w=dt.getDay();if(w&&w<6)n++}return n}
+function ctx(){
+  const M=+fMes.value, DU=fDupla.value, base=DU?D.filter(x=>x.dupla==DU):D;
+  const porM=m=>base.filter(x=>x.m==m);
+  const cur=porM(M), ant=porM(M-1);
+  const parcial=ULT&&ULT.getMonth()+1==M&&ULT.getFullYear()==2026;
+  const duT=diasUteis(2026,M), duD=parcial?Math.max(1,diasUteis(2026,M,ULT)):duT;
+  return {M,DU,base,porM,cur,ant,parcial,duT,duD};
+}
+function serie(a,ate){const o=[];for(let m=1;m<=ate;m++)o.push(sum(a.filter(x=>x.m==m),x=>x.t));return o}
+function clientes(a){const o={};a.forEach(x=>{const c=o[x.cli]=o[x.cli]||{cli:x.cli,nome:x.nome,cid:x.cid,dupla:x.dupla,rota:x.rota,t:0,ms:{},ult:null};c.t+=x.t;c.ms[x.m]=(c.ms[x.m]||0)+x.t;if(x.dt&&(!c.ult||x.dt>c.ult))c.ult=x.dt});return Object.values(o)}
+
+/* ---------- componentes ---------- */
+const kpi=(t,v,s,c)=>`<div class="kpi" style="--c:${c||"var(--azul2)"}"><small>${t}</small><b>${v}</b><span>${s||""}</span></div>`;
+function colunas(ms,a,b,destaque){const mx=Math.max(1,...a.map((v,i)=>v+(b?b[i]:0)));
+  return `<div class="cols">${ms.map((m,i)=>{const tot=a[i]+(b?b[i]:0);return `<div class="col" title="${MES[m-1]}: ${f1(tot)} t"><span class="v">${f0(tot)}</span><div class="st" style="height:${tot/mx*100}%">${b?`<i style="height:${tot?b[i]/tot*100:0}%;background:var(--bgl)"></i>`:""}<i style="flex:1;background:${m==destaque?"linear-gradient(#ff8a45,#f26b1d)":"linear-gradient(#0b4a9a,#0b2a55)"}"></i></div><span class="m">${MES[m-1]}</span></div>`}).join("")}</div>`}
+function spark(v){if(!v.length)return"";const mx=Math.max(...v,1),w=90,h=26,st=w/Math.max(1,v.length-1);const p=v.map((y,i)=>`${(i*st).toFixed(1)},${(h-2-(y/mx)*(h-4)).toFixed(1)}`).join(" ");return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline points="${p}" fill="none" stroke="#0b4a9a" stroke-width="2"/><circle cx="${((v.length-1)*st).toFixed(1)}" cy="${(h-2-(v[v.length-1]/mx)*(h-4)).toFixed(1)}" r="3" fill="#f26b1d"/></svg>`}
+const hbars=(arr,fmt=f1)=>{const mx=Math.max(1,...arr.map(x=>x[1]));return arr.map(([n,v,s])=>`<div class="hb"><span title="${esc(n)}">${esc(n)}</span><div class="barra"><i style="width:${v/mx*100}%"></i></div><b>${fmt(v)}${s?` <small style="color:var(--cinza);font-weight:500">${s}</small>`:""}</b></div>`).join("")};
+const tit=(sup,h,p)=>`<div class="tit"><div class="sup">${sup}</div><h1>${h}</h1>${p?`<p>${p}</p>`:""}</div>`;
+
+/* ---------- ABA: RESUMO ---------- */
+function vResumo(X){
+  const {M,cur,ant,base,parcial,duT,duD}=X;
+  const fat=sum(cur,x=>x.t), fatA=sum(ant,x=>x.t), proj=fat/duD*duT;
+  const fatAmesmoP=ant.length&&parcial?sum(ant.filter(x=>x.dt&&x.dt.getDate()<=ULT.getDate()),x=>x.t):fatA;
+  const m3=[M-1,M-2,M-3].filter(m=>m>0).map(m=>sum(base.filter(x=>x.m==m),x=>x.t)), med3=m3.length?sum(m3,x=>x)/m3.length:0;
+  const bgl=sum(cur.filter(x=>x.bgl),x=>x.t);
+  const cliC=new Set(cur.map(x=>x.cli)), cliA=new Set(ant.map(x=>x.cli));
+  const ytd=sum(base.filter(x=>x.m<=M),x=>x.t);
+  const antes=new Set(base.filter(x=>x.m<M).map(x=>x.cli)), novos=[...cliC].filter(c=>!antes.has(c)).length;
+  const ms=[...Array(M).keys()].map(i=>i+1);
+  const org=ms.map(m=>sum(base.filter(x=>x.m==m&&!x.bgl),x=>x.t)), bg=ms.map(m=>sum(base.filter(x=>x.m==m&&x.bgl),x=>x.t));
+  // alertas
+  const al=[];
+  const cls_=clientes(base.filter(x=>x.m<M&&x.m>=M-3)).filter(c=>!cliC.has(c.cli)).sort((a,b)=>b.t-a.t);
+  if(cls_.length)al.push(["r",`${cls_.length} clientes compraram nos 3 meses anteriores e ainda não compraram em ${MES[M-1]}`,`Maiores: ${cls_.slice(0,3).map(c=>esc(titulo(c.nome))+" ("+f1(c.t)+" t)").join(", ")}.`]);
+  const sets=Object.entries(grp(cur,"setor")).map(([s,a])=>{const v=sum(a,x=>x.t)/duD*duT,b=sum(base.filter(x=>x.m==M-1&&x.setor==s),x=>x.t);return[s,v,b]}).filter(x=>x[2]>5);
+  sets.filter(x=>pct(x[1],x[2])<-20).forEach(([s,v,b])=>al.push(["a",`${titulo(s)}: projeção ${fp(pct(v,b))} vs ${MES[M-2]||"mês anterior"}`,`Ritmo atual aponta ${f1(v)} t contra ${f1(b)} t no mês anterior.`]));
+  if(!X.DU){const ds=Object.entries(grp(cur,"dupla")).map(([d,a])=>[d,sum(a,x=>x.t)/duD*duT,sum(ant.filter(x=>x.dupla==d),x=>x.t)]).filter(x=>x[0]!="Outros");
+    ds.filter(x=>pct(x[1],x[2])>15).forEach(([d,v,b])=>al.push(["v",`${nomeD(d)} acelerando: ${fp(pct(v,b))}`,`Projeção ${f1(v)} t contra ${f1(b)} t no mês anterior.`]));
+    ds.filter(x=>pct(x[1],x[2])<-25).forEach(([d,v,b])=>al.push(["r",`${nomeD(d)} em queda: ${fp(pct(v,b))}`,`Projeção ${f1(v)} t contra ${f1(b)} t no mês anterior.`]))}
+  const top5=clientes(cur).sort((a,b)=>b.t-a.t).slice(0,5), conc=fat?sum(top5,c=>c.t)/fat*100:0;
+  if(conc>50)al.push(["a",`Concentração alta: 5 clientes = ${f1(conc)}% do volume de ${MES[M-1]}`,`Liderado por ${esc(titulo(top5[0]?.nome))}.`]);
+  if(!al.length)al.push(["v","Sem alertas relevantes neste filtro","Volume, clientes e setores dentro do esperado."]);
+
+  return tit(`Resumo · ${MES[M-1]}/26${X.DU?" · "+esc(nomeD(X.DU)):""}`,parcial?`Ritmo do mês: ${f1(proj)} t projetadas`:`Fechamento: ${f1(fat)} t`,
+     parcial?`Base até ${ULT.toLocaleDateString("pt-BR")} · ${duD} de ${duT} dias úteis · projeção linear pelo ritmo diário`:`${duT} dias úteis no mês`)+
+  `<div class="g g4">
+    ${kpi("Faturado no mês",f1(fat)+" t",parcial?`<span class="${cls(pct(fat,fatAmesmoP))}">${fp(pct(fat,fatAmesmoP))}</span> vs mesmo período de ${MES[M-2]||"–"}`:`<span class="${cls(pct(fat,fatA))}">${fp(pct(fat,fatA))}</span> vs ${MES[M-2]||"–"}`,"var(--laranja)")}
+    ${kpi(parcial?"Projeção do mês":"Média últimos 3 meses",parcial?f1(proj)+" t":f1(med3)+" t",parcial?`<span class="${cls(pct(proj,med3))}">${fp(pct(proj,med3))}</span> vs média 3 meses (${f1(med3)} t)`:`mês atual <span class="${cls(pct(fat,med3))}">${fp(pct(fat,med3))}</span>`)}
+    ${kpi("Clientes com compra",f0(cliC.size),`${novos} novos no ano · ${f0(cliA.size)} em ${MES[M-2]||"–"}`,"#2e7d57")}
+    ${kpi("Ticket médio",f1(cliC.size?fat/cliC.size:0)+" t",`por cliente no mês`,"#7a47aa")}
+    ${kpi("Ritmo diário",f1(fat/duD)+" t/dia",`${duD} dias úteis apurados`,"#127c80")}
+    ${kpi("Orgânico (ex-BGL)",f1(fat?(fat-bgl)/fat*100:0)+"%",`BGL (GV484): ${f1(bgl)} t`,"#1f57a3")}
+    ${kpi("Acumulado no ano",f0(ytd)+" t",`jan–${MES[M-1]} · média ${f1(ytd/M)} t/mês`,"#c8930d")}
+    ${kpi("Concentração top 5",f1(conc)+"%",`do volume do mês`,conc>50?"var(--bad)":"var(--ok)")}
+  </div>
+  <div class="g g21">
+    <div class="box"><h2>Evolução mensal</h2><div class="sub">Volume faturado (t) · mês selecionado em laranja</div>${colunas(ms,org,bg,M)}
+      <div class="leg"><span><i style="background:#0b2a55"></i>Orgânico</span><span><i style="background:var(--bgl)"></i>BGL (GV484)</span></div></div>
+    <div class="box"><h2>Alertas do mês</h2><div class="sub">O que merece atenção agora</div>${al.slice(0,6).map(([c,a,b])=>`<div class="al ${c}"><div><b>${a}</b>${b}</div></div>`).join("")}</div>
+  </div>`;
+}
+
+/* ---------- ABA: RANKING ---------- */
+function linhaRank(nome,a,X,tot){
+  const {M,parcial,duT,duD}=X;const c=sum(a.filter(x=>x.m==M),x=>x.t), p=sum(a.filter(x=>x.m==M-1),x=>x.t);
+  const pj=parcial?c/duD*duT:c; const s=serie(a,M).slice(-6); const cl=new Set(a.filter(x=>x.m==M).map(x=>x.cli)).size;
+  const ytd=sum(a.filter(x=>x.m<=M),x=>x.t), med=[M-1,M-2,M-3].filter(m=>m>0).map(m=>sum(a.filter(x=>x.m==m),x=>x.t));
+  const md=med.length?sum(med,x=>x)/med.length:0;
+  return {nome,c,p,pj,s,cl,ytd,md,v:pct(pj,p),sh:tot?c/tot*100:0,tk:cl?c/cl:0};
+}
+function tabRank(rows,col1,tot){
+  return `<div class="rol"><table><thead><tr><th>#</th><th>${col1}</th><th class="n">Mês (t)</th>${X_.parcial?'<th class="n">Projeção</th>':""}<th class="n">Mês ant.</th><th class="n">Var.</th><th class="n">Média 3m</th><th class="n">Share</th><th class="n">Clientes</th><th class="n">Ticket</th><th class="n">Acum. ano</th><th>Últimos 6 meses</th></tr></thead><tbody>
+  ${rows.map((r,i)=>`<tr><td>${i+1}</td><td><b>${esc(r.nome)}</b></td><td class="n"><b>${f1(r.c)}</b></td>${X_.parcial?`<td class="n">${f1(r.pj)}</td>`:""}<td class="n">${f1(r.p)}</td><td class="n"><span class="tag ${!isFinite(r.v)?"tg-c":r.v>=0?"tg-v":"tg-r"}">${fp(r.v)}</span></td><td class="n">${f1(r.md)}</td><td class="n">${f1(r.sh)}%</td><td class="n">${r.cl}</td><td class="n">${f1(r.tk)}</td><td class="n">${f0(r.ytd)}</td><td>${spark(r.s)}</td></tr>`).join("")}
+  ${tot?`<tr class="tot"><td></td><td>Total</td><td class="n">${f1(sum(rows,r=>r.c))}</td>${X_.parcial?`<td class="n">${f1(sum(rows,r=>r.pj))}</td>`:""}<td class="n">${f1(sum(rows,r=>r.p))}</td><td class="n">${fp(pct(sum(rows,r=>r.pj),sum(rows,r=>r.p)))}</td><td class="n">${f1(sum(rows,r=>r.md))}</td><td class="n">100%</td><td class="n"></td><td class="n"></td><td class="n">${f0(sum(rows,r=>r.ytd))}</td><td></td></tr>`:""}
+  </tbody></table></div>`;
+}
+let X_;
+function vRanking(X){
+  const {M,base}=X, tot=sum(X.cur,x=>x.t);
+  const rd=Object.entries(grp(base,"dupla")).map(([d,a])=>linhaRank(nomeD(d),a,X,tot)).sort((a,b)=>b.c-a.c);
+  const eq=base.filter(x=>x.dupla!="Outros");
+  const rv=Object.entries(grp(eq,"vend")).map(([v,a])=>linhaRank(v||"(sem vendedor)",a,X,tot)).filter(r=>r.ytd>0.5).sort((a,b)=>b.c-a.c);
+  const best=rd.filter(r=>r.nome!="Outros"&&isFinite(r.v)).sort((a,b)=>b.v-a.v)[0];
+  return tit(`Ranking · ${MES[M-1]}/26`,"Quem está entregando",X.parcial?"Projeção = volume do mês ÷ dias úteis apurados × dias úteis do mês. Variação calculada pela projeção.":"")+
+  `<div class="g g3">${kpi("Líder do mês",esc(rd.find(r=>r.nome!="Outros")?.nome||"–"),f1(rd.find(r=>r.nome!="Outros")?.c||0)+" t","var(--laranja)")}${kpi("Maior crescimento",esc(best?.nome||"–"),best?fp(best.v)+" vs mês anterior":"","var(--ok)")}${kpi("Vendedores ativos",rv.filter(r=>r.c>0).length,"com faturamento no mês","#1f57a3")}</div>
+  <div class="box" style="margin-bottom:14px"><h2>Duplas e individuais</h2><div class="sub">"Outros" = notas fora das duplas atuais</div>${tabRank(rd,"Dupla",true)}</div>
+  <div class="box"><h2>Vendedores</h2><div class="sub">Equipe atual, pelo vendedor da nota</div>${tabRank(rv,"Vendedor",false)}</div>`;
+}
+
+/* ---------- ABA: FICHA ---------- */
+function vFicha(X){
+  const {M}=X; let DU=X.DU;
+  const ds=Object.entries(grp(D.filter(x=>x.dupla!="Outros"),"dupla")).sort((a,b)=>sum(b[1],x=>x.t)-sum(a[1],x=>x.t)).map(x=>x[0]);
+  if(!DU)DU=ds[0];
+  const a=D.filter(x=>x.dupla==DU), eqM=D.filter(x=>x.m==M&&x.dupla!="Outros"), nD=new Set(eqM.map(x=>x.dupla)).size||1;
+  const cur=a.filter(x=>x.m==M), ant=a.filter(x=>x.m==M-1), fat=sum(cur,x=>x.t), fatA=sum(ant,x=>x.t), pj=X.parcial?fat/X.duD*X.duT:fat;
+  const media=sum(eqM,x=>x.t)/nD, cl=clientes(cur), cliA=new Set(ant.map(x=>x.cli));
+  const ms=[...Array(M).keys()].map(i=>i+1);
+  const setores=Object.entries(grp(cur,"setor")).map(([s,b])=>[titulo(s),sum(b,x=>x.t)]).sort((x,y)=>y[1]-x[1]);
+  const rotas=Object.entries(grp(cur,"rota")).map(([s,b])=>[s,sum(b,x=>x.t)]).sort((x,y)=>y[1]-x[1]).slice(0,8);
+  const vend=Object.entries(grp(cur,"vend")).map(([v,b])=>[v,sum(b,x=>x.t),new Set(b.map(x=>x.cli)).size]).sort((x,y)=>y[1]-x[1]);
+  const risco=clientes(a.filter(x=>x.m<M&&x.m>=M-3)).filter(c=>!cl.find(k=>k.cli==c.cli)).sort((x,y)=>y.t-x.t).slice(0,10);
+  const top=cl.sort((x,y)=>y.t-x.t).slice(0,10);
+  const sel=`<select onchange="fDupla.value=this.value;render()" style="font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--borda)">${ds.map(d=>`<option ${d==DU?"selected":""} value="${esc(d)}">${esc(nomeD(d))}</option>`).join("")}</select>`;
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">${tit(`Ficha · ${MES[M-1]}/26`,esc(nomeD(DU)),"Desempenho da dupla comparado à média das duplas no mês")}${sel}</div>
+  <div class="g g4">
+   ${kpi("Faturado",f1(fat)+" t",`<span class="${cls(pct(fat,fatA))}">${fp(pct(fat,fatA))}</span> vs ${MES[M-2]||"–"}`,"var(--laranja)")}
+   ${kpi(X.parcial?"Projeção":"vs média das duplas",X.parcial?f1(pj)+" t":fp(pct(fat,media)),`média das duplas: ${f1(media)} t`)}
+   ${kpi("Clientes",cl.length,`${cl.filter(c=>!cliA.has(c.cli)).length} não compraram em ${MES[M-2]||"–"}`,"#2e7d57")}
+   ${kpi("Ticket médio",f1(cl.length?fat/cl.length:0)+" t",`share da filial: ${f1(sum(X.cur.length?D.filter(x=>x.m==M):[],x=>x.t)?fat/sum(D.filter(x=>x.m==M),x=>x.t)*100:0)}%`,"#7a47aa")}
+  </div>
+  <div class="g g21">
+   <div class="box"><h2>Evolução mensal</h2><div class="sub">Volume (t) · laranja = mês selecionado</div>${colunas(ms,ms.map(m=>sum(a.filter(x=>x.m==m&&!x.bgl),x=>x.t)),ms.map(m=>sum(a.filter(x=>x.m==m&&x.bgl),x=>x.t)),M)}<div class="leg"><span><i style="background:#0b2a55"></i>Orgânico</span><span><i style="background:var(--bgl)"></i>BGL</span></div></div>
+   <div class="box"><h2>Por vendedor</h2><div class="sub">Volume e clientes no mês</div>${vend.length?hbars(vend.map(v=>[v[0],v[1],v[2]+" cli"])):'<div class="vazio">Sem faturamento</div>'}<h2 style="margin-top:18px">Mix por setor</h2><div class="sub">t no mês</div>${hbars(setores)}</div>
+  </div>
+  <div class="g g3">
+   <div class="box"><h2>Top 10 clientes do mês</h2><div class="sub">Volume (t)</div>${top.length?hbars(top.map(c=>[titulo(c.nome),c.t])):'<div class="vazio">—</div>'}</div>
+   <div class="box"><h2>Clientes em risco</h2><div class="sub">Compraram nos 3 meses anteriores, nada em ${MES[M-1]}</div>${risco.length?`<table><tbody>${risco.map(c=>`<tr><td>${esc(titulo(c.nome))}<br><small style="color:var(--cinza)">${esc(c.cid)} · última ${c.ult?c.ult.toLocaleDateString("pt-BR"):"–"}</small></td><td class="n"><b>${f1(c.t)}</b> t</td></tr>`).join("")}</tbody></table>`:'<div class="vazio">Nenhum cliente em risco</div>'}</div>
+   <div class="box"><h2>Rotas</h2><div class="sub">Volume (t) no mês</div>${hbars(rotas)}</div>
+  </div>`;
+}
+
+/* ---------- ABA: CLIENTES ---------- */
+function vClientes(X){
+  const {M,base,cur}=X; const ms=[...Array(M).keys()].map(i=>i+1);
+  const ativos=ms.map(m=>new Set(base.filter(x=>x.m==m).map(x=>x.cli)).size);
+  const vistos=new Set(), novosM=[], perdM=[];
+  ms.forEach(m=>{const s=new Set(base.filter(x=>x.m==m).map(x=>x.cli));let n=0;s.forEach(c=>{if(!vistos.has(c))n++});s.forEach(c=>vistos.add(c));novosM.push(m==1?0:n);
+    const prev=new Set(base.filter(x=>x.m<m&&x.m>=m-3).map(x=>x.cli));let p=0;prev.forEach(c=>{if(!s.has(c))p++});perdM.push(m==1?0:p)});
+  const all=clientes(base.filter(x=>x.m<=M)), hoje=ULT||new Date();
+  const dias=c=>c.ult?Math.floor((hoje-c.ult)/864e5):999;
+  const faixa=[["Até 30 dias",c=>dias(c)<=30,"tg-v"],["31–60 dias",c=>dias(c)>30&&dias(c)<=60,"tg-a"],["61–90 dias",c=>dias(c)>60&&dias(c)<=90,"tg-a"],["Mais de 90 dias",c=>dias(c)>90,"tg-r"]];
+  const risco=all.filter(c=>dias(c)>45&&dias(c)<=150).sort((a,b)=>b.t-a.t).slice(0,25);
+  const cm=clientes(cur).sort((a,b)=>b.t-a.t), tot=sum(cm,c=>c.t);
+  const acc=n=>tot?sum(cm.slice(0,n),c=>c.t)/tot*100:0;
+  const recup=clientes(cur).filter(c=>{const a=base.filter(x=>x.cli==c.cli&&x.m<M);if(!a.length)return false;const um=Math.max(...a.map(x=>x.m));return M-um>=3}).length;
+  return tit(`Clientes & churn · ${MES[M-1]}/26`,"Quem estamos ganhando e quem estamos perdendo","Perdido = comprou em algum dos 3 meses anteriores e não comprou no mês. Recuperado = voltou após 3+ meses sem compra.")+
+  `<div class="g g4">${kpi("Clientes ativos",ativos[M-1],`<span class="${cls(pct(ativos[M-1],ativos[M-2]))}">${fp(pct(ativos[M-1],ativos[M-2]))}</span> vs ${MES[M-2]||"–"}`,"var(--ok)")}
+  ${kpi("Novos no mês",novosM[M-1],"primeira compra no ano","#1f57a3")}${kpi("Sem compra no mês",perdM[M-1],"compraram nos 3 meses anteriores","var(--bad)")}${kpi("Recuperados",recup,"voltaram após 3+ meses","#7a47aa")}</div>
+  <div class="g g2">
+   <div class="box"><h2>Base de clientes mês a mês</h2><div class="sub">Ativos · novos · sem compra</div><div class="rol"><table><thead><tr><th>Mês</th><th class="n">Ativos</th><th class="n">Novos</th><th class="n">Sem compra</th><th>Saldo</th></tr></thead><tbody>${ms.map((m,i)=>`<tr><td>${MES[m-1]}</td><td class="n"><b>${ativos[i]}</b></td><td class="n up">${i?"+"+novosM[i]:"–"}</td><td class="n dn">${i?"−"+perdM[i]:"–"}</td><td><div class="barra"><i style="width:${ativos[i]/Math.max(...ativos)*100}%"></i></div></td></tr>`).join("")}</tbody></table></div></div>
+   <div class="box"><h2>Recência da carteira</h2><div class="sub">Dias desde a última compra (base até ${hoje.toLocaleDateString("pt-BR")})</div>${faixa.map(([n,f,t])=>{const a=all.filter(f);return `<div class="hb"><span><span class="tag ${t}">${n}</span></span><div class="barra"><i style="width:${a.length/all.length*100}%"></i></div><b>${a.length}</b></div>`}).join("")}
+    <h2 style="margin-top:18px">Concentração do mês</h2><div class="sub">% do volume nos maiores clientes</div>${hbars([["Top 1",acc(1)],["Top 5",acc(5)],["Top 10",acc(10)],["Top 20",acc(20)]],v=>f1(v)+"%")}</div>
+  </div>
+  <div class="box"><h2>Lista de ataque: clientes esfriando</h2><div class="sub">Sem compra há 46–150 dias, ordenados pelo volume no ano — prioridade de visita</div><div class="rol"><table><thead><tr><th>Cliente</th><th>Cidade</th><th>Dupla</th><th>Rota</th><th class="n">Volume no ano (t)</th><th class="n">Última compra</th><th class="n">Dias</th></tr></thead><tbody>
+   ${risco.map(c=>{const d=dias(c);return `<tr><td><b>${esc(titulo(c.nome))}</b></td><td>${esc(c.cid)}</td><td>${esc(nomeD(c.dupla))}</td><td>${esc(c.rota)}</td><td class="n">${f1(c.t)}</td><td class="n">${c.ult?c.ult.toLocaleDateString("pt-BR"):"–"}</td><td class="n"><span class="tag ${d>90?"tg-r":"tg-a"}">${d}</span></td></tr>`}).join("")||'<tr><td colspan="7" class="vazio">Nenhum cliente nessa faixa</td></tr>'}</tbody></table></div></div>`;
+}
+
+/* ---------- ABA: MIX ---------- */
+function vMix(X){
+  const {M,base,cur}=X; const ms=[M-5,M-4,M-3,M-2,M-1,M].filter(m=>m>0);
+  const sets=[...new Set(base.map(x=>x.setor))];
+  const tabS=sets.map(s=>{const v=ms.map(m=>sum(base.filter(x=>x.m==m&&x.setor==s),x=>x.t));return[s,v]}).sort((a,b)=>b[1][b[1].length-1]-a[1][a[1].length-1]);
+  const rotas=Object.entries(grp(base.filter(x=>x.m<=M),"rota")).map(([r,a])=>{const c=a.filter(x=>x.m==M);return{r,c:sum(c,x=>x.t),p:sum(a.filter(x=>x.m==M-1),x=>x.t),ytd:sum(a,x=>x.t),cl:new Set(c.map(x=>x.cli)).size,s:serie(a,M).slice(-6)}}).sort((a,b)=>b.c-a.c);
+  const fam=Object.entries(grp(cur,"fam")).map(([f,a])=>[f||"(sem família)",sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const cid=Object.entries(grp(cur,"cid")).map(([f,a])=>[f,sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const fat=sum(cur,x=>x.t), fora=sum(cur.filter(x=>/fora/i.test(x.rota)),x=>x.t);
+  return tit(`Setores & rotas · ${MES[M-1]}/26`,"Onde está o volume","")+
+  `<div class="g g4">${kpi("Setor líder",titulo(tabS[0]?.[0]||"–"),f1(tabS[0]?.[1].slice(-1)[0]||0)+" t","var(--laranja)")}${kpi("Rotas ativas",rotas.filter(r=>r.c>0).length,"com faturamento no mês")}${kpi("Rotas prioritárias",f1(fat?(fat-fora)/fat*100:0)+"%",`Rota Fora DBA: ${f1(fora)} t`,"#2e7d57")}${kpi("Cidades atendidas",new Set(cur.map(x=>x.cid)).size,"no mês","#7a47aa")}</div>
+  <div class="box" style="margin-bottom:14px"><h2>Setores — últimos 6 meses</h2><div class="sub">Volume (t)</div><div class="rol"><table><thead><tr><th>Setor</th>${ms.map(m=>`<th class="n">${MES[m-1]}</th>`).join("")}<th class="n">Var. mês</th><th>Tendência</th></tr></thead><tbody>
+   ${tabS.map(([s,v])=>`<tr><td><b>${esc(titulo(s))}</b></td>${v.map((x,i)=>`<td class="n" ${i==v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><span class="tag ${pct(v[v.length-1],v[v.length-2])>=0?"tg-v":"tg-r"}">${fp(pct(v[v.length-1],v[v.length-2]))}</span></td><td>${spark(v)}</td></tr>`).join("")}
+   <tr class="tot"><td>Total</td>${ms.map((m,i)=>`<td class="n">${f1(sum(tabS,x=>x[1][i]))}</td>`).join("")}<td></td><td></td></tr></tbody></table></div>${X.parcial?`<div class="nota">${MES[M-1]} ainda parcial (${X.duD} de ${X.duT} dias úteis).</div>`:""}</div>
+  <div class="box" style="margin-bottom:14px"><h2>Rotas</h2><div class="sub">Volume (t), clientes e tendência</div><div class="rol"><table><thead><tr><th>Rota</th><th class="n">Mês</th><th class="n">Mês ant.</th><th class="n">Var.</th><th class="n">Clientes</th><th class="n">Acum. ano</th><th>6 meses</th></tr></thead><tbody>
+   ${rotas.map(r=>`<tr><td><b>${esc(r.r)}</b></td><td class="n"><b>${f1(r.c)}</b></td><td class="n">${f1(r.p)}</td><td class="n"><span class="tag ${!isFinite(pct(r.c,r.p))?"tg-c":pct(r.c,r.p)>=0?"tg-v":"tg-r"}">${fp(pct(r.c,r.p))}</span></td><td class="n">${r.cl}</td><td class="n">${f0(r.ytd)}</td><td>${spark(r.s)}</td></tr>`).join("")}</tbody></table></div></div>
+  <div class="g g2"><div class="box"><h2>Top famílias de produto</h2><div class="sub">t no mês</div>${hbars(fam)}</div><div class="box"><h2>Top cidades</h2><div class="sub">t no mês</div>${hbars(cid)}</div></div>`;
+}
+
+/* ---------- ABA: MARGEM ---------- */
+function vMargem(X){
+  const {M}=X;
+  if(!BV.length)return tit("Margem & preço","Sem dados de margem","")+`<div class="box vazio">A aba BV da planilha "Performance Vendedores - Site" não respondeu. Confira se ela continua compartilhada por link.</div>`;
+  const ms=[...new Set(BV.map(x=>x.m))].sort((a,b)=>a-b); const mm=ms.includes(M)?M:ms[ms.length-1];
+  let b=BV.filter(x=>x.m==mm); const dsel=X.DU?X.DU.split("/").map(s=>s.trim().toLowerCase()):null;
+  if(dsel)b=b.filter(x=>dsel.some(n=>x.vend.toLowerCase().includes(n.split(" ")[0])));
+  const ag=a=>{const t=sum(a,x=>x.t),r=sum(a,x=>x.rec);return{t,pvl:t?sum(a,x=>x.pvl*x.t)/t:0,rag:t?sum(a,x=>x.rag*x.t)/t:0,mk:r?sum(a,x=>x.mk*x.rec)/r:0,rec:r}};
+  const tot=ag(b);
+  const pv=Object.entries(grp(b,"vend")).map(([v,a])=>({v,...ag(a)})).sort((x,y)=>y.rag*y.t-x.rag*x.t);
+  const ps=Object.entries(grp(b,"setor")).map(([s,a])=>({s,...ag(a)})).sort((x,y)=>y.t-x.t);
+  const ev=ms.map(m=>({m,...ag(BV.filter(x=>x.m==m&&(!dsel||dsel.some(n=>x.vend.toLowerCase().includes(n.split(" ")[0])))))}));
+  const mxr=Math.max(1,...ev.map(e=>e.rag));
+  return tit(`Margem & preço · ${MES[mm-1]}/26`,"Estamos vendendo bem ou só vendendo muito?",`Fonte: Power BI (aba BV) · PVL e RAG ponderados pelo volume, markup pela receita${mm!=M?` · último mês disponível: ${MES[mm-1]}`:""}`)+
+  `<div class="g g4">${kpi("PVL médio","R$ "+f0(tot.pvl)+"/t","preço líquido de venda","var(--laranja)")}${kpi("Markup",f1(tot.mk)+"%","ponderado pela receita","#2e7d57")}${kpi("RAG médio","R$ "+f0(tot.rag)+"/t","resultado por tonelada","#1f57a3")}${kpi("Resultado (RAG × t)","R$ "+f0(tot.rag*tot.t),`${f1(tot.t)} t · receita R$ ${f0(tot.rec)}`,"#c8930d")}</div>
+  <div class="g g21"><div class="box"><h2>Por vendedor</h2><div class="sub">Ordenado pela contribuição (RAG × volume)</div><div class="rol"><table><thead><tr><th>Vendedor</th><th class="n">Volume (t)</th><th class="n">PVL (R$/t)</th><th class="n">vs média</th><th class="n">Markup</th><th class="n">RAG (R$/t)</th><th class="n">Contribuição</th></tr></thead><tbody>
+   ${pv.map(p=>`<tr><td><b>${esc(p.v)}</b></td><td class="n">${f1(p.t)}</td><td class="n">${f0(p.pvl)}</td><td class="n"><span class="tag ${p.pvl>=tot.pvl?"tg-v":"tg-r"}">${fp(pct(p.pvl,tot.pvl))}</span></td><td class="n">${f1(p.mk)}%</td><td class="n">${f0(p.rag)}</td><td class="n"><b>R$ ${f0(p.rag*p.t)}</b></td></tr>`).join("")}</tbody></table></div></div>
+  <div class="box"><h2>RAG mês a mês</h2><div class="sub">R$/t</div><div class="cols">${ev.map(e=>`<div class="col"><span class="v">${f0(e.rag)}</span><div class="st" style="height:${e.rag/mxr*100}%"><i style="flex:1;background:${e.m==mm?"linear-gradient(#ff8a45,#f26b1d)":"linear-gradient(#0b4a9a,#0b2a55)"}"></i></div><span class="m">${MES[e.m-1]}</span></div>`).join("")}</div></div></div>
+  <div class="box"><h2>Por setor</h2><div class="sub">Preço e margem</div><div class="rol"><table><thead><tr><th>Setor</th><th class="n">Volume (t)</th><th class="n">PVL (R$/t)</th><th class="n">Markup</th><th class="n">RAG (R$/t)</th><th>RAG relativo</th></tr></thead><tbody>
+   ${ps.map(p=>`<tr><td><b>${esc(titulo(p.s))}</b></td><td class="n">${f1(p.t)}</td><td class="n">${f0(p.pvl)}</td><td class="n">${f1(p.mk)}%</td><td class="n">${f0(p.rag)}</td><td><div class="barra"><i style="width:${p.rag/Math.max(...ps.map(x=>x.rag),1)*100}%"></i></div></td></tr>`).join("")}</tbody></table></div></div>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(!D.length)return;
+  [...abas.children].forEach(b=>b.classList.toggle("on",b.dataset.k==ABA));
+  const X=ctx(); X_=X;
+  const V={resumo:vResumo,ranking:vRanking,ficha:vFicha,clientes:vClientes,mix:vMix,margem:vMargem}[ABA]||vResumo;
+  try{app.innerHTML=V(X)}catch(e){app.innerHTML=`<div class="box vazio">Erro ao montar esta aba: ${esc(e.message)}</div>`;console.error(e)}
+}
+carregar(); setInterval(carregar, ATUALIZA_MIN*60*1000);
+</script>
+</body>
+</html>
