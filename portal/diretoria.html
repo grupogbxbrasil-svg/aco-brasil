@@ -65,6 +65,38 @@ tr.tot td{font-weight:800;color:var(--marinho);border-top:2px solid var(--borda)
 .nota{font-size:.74rem;color:var(--cinza);margin-top:10px;font-style:italic}
 @media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g2,.g21{grid-template-columns:1fr}}
 @media(max-width:600px){main,.cab-in,.abas-in{padding-left:16px;padding-right:16px}.g4{grid-template-columns:1fr 1fr}.kpi b{font-size:1.25rem}.hb{grid-template-columns:100px 1fr 54px}.fil{margin-left:0}.abas{top:0;position:relative}}
+
+/* ---- apresentação ---- */
+main>*{animation:sobe .45s ease both}main>*:nth-child(2){animation-delay:.05s}main>*:nth-child(3){animation-delay:.1s}main>*:nth-child(4){animation-delay:.15s}main>*:nth-child(5){animation-delay:.2s}
+@keyframes sobe{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.kpi{transition:transform .15s,box-shadow .15s}.kpi.ks{padding-bottom:44px}.kpi:hover{transform:translateY(-2px);box-shadow:0 8px 22px #0b2a5514}
+.kspark{position:absolute;left:0;right:0;bottom:0;width:100%;height:40px}
+.box{box-shadow:0 1px 2px #0b2a550a}
+.hero{background:radial-gradient(circle at 85% 20%,#1d4f95 0,transparent 45%),linear-gradient(120deg,#071d3c,#0b2a55 60%,#0f3a75);color:#fff;border-radius:16px;padding:26px 28px;display:grid;grid-template-columns:1.4fr 1fr;gap:24px;margin-bottom:14px;align-items:center;box-shadow:0 10px 30px #071d3c33}
+.h-sup{font-size:.74rem;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;color:#9fc0ea}
+.h-num{font-size:3.4rem;font-weight:800;line-height:1.05;margin:6px 0}.h-num small{font-size:1.4rem;font-weight:600;opacity:.8}
+.h-sub{font-size:.86rem;color:#c9d7ea;margin-bottom:16px}
+.h-bars{display:grid;gap:10px;max-width:520px}
+.hbar{display:grid;grid-template-columns:150px 1fr 54px 70px;gap:10px;align-items:center;font-size:.8rem;color:#dbe6f3}
+.hbar b{color:#fff;text-align:right}.hbar small{color:#9fb3cc;text-align:right}
+.hb-t{height:10px;background:#ffffff1f;border-radius:6px;position:relative;overflow:visible}.hb-t i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}.hb-t em{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff9}
+.h-right{text-align:center}.gauge{width:100%;max-width:280px}.h-g{font-size:.78rem;color:#9fb3cc;margin-top:-4px}
+.donut{display:flex;gap:18px;align-items:center;flex-wrap:wrap}.donut svg{width:170px;height:170px;flex:0 0 auto}
+.dleg{flex:1;min-width:150px;display:grid;gap:8px;font-size:.82rem}.dleg div{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center}.dleg i{width:12px;height:12px;border-radius:3px}.dleg b{color:var(--marinho)}
+.al{align-items:flex-start}.al-i{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:.85rem;background:#fff9}
+.podio{display:flex;justify-content:center;align-items:flex-end;gap:14px;margin:6px 0 18px;flex-wrap:wrap}
+.pd{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:16px 16px 0;text-align:center;width:260px;display:flex;flex-direction:column;overflow:hidden}
+.pd-n{width:38px;height:38px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;font-weight:800;color:#fff;background:#c8930d}
+.pd2 .pd-n{background:#8a97a8}.pd3 .pd-n{background:#b4703f}
+.pd-nome{font-weight:800;color:var(--marinho);font-size:1.05rem}.pd-v{font-size:1.7rem;font-weight:800;color:var(--marinho);margin:2px 0}.pd-s{font-size:.75rem;color:var(--cinza);margin-bottom:12px}
+.pd-base{margin:0 -16px;background:linear-gradient(#0b4a9a,#0b2a55);color:#ffffff55;font-size:2rem;font-weight:900;display:grid;place-items:center}
+.pd1 .pd-base{background:linear-gradient(#ff8a45,#f26b1d)}
+.heat td{border-bottom:2px solid #fff;font-weight:600}
+.btn.ap{background:var(--laranja);border-color:var(--laranja)}
+#apBar{position:fixed;left:0;top:0;height:3px;background:var(--laranja);z-index:99;width:0}
+body.apres .abas,body.apres .fil select,body.apres .fil .btn:not(.ap){display:none}
+body.apres main{max-width:1700px}body.apres{font-size:17px}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.h-num{font-size:2.6rem}.hbar{grid-template-columns:110px 1fr 46px}.hbar small{display:none}.pd{width:100%}}
 </style>
 </head>
 <body>
@@ -73,6 +105,7 @@ tr.tot td{font-weight:800;color:var(--marinho);border-top:2px solid var(--borda)
   <div class="fil">
     <select id="fMes" aria-label="Mês"></select>
     <select id="fDupla" aria-label="Dupla"></select>
+    <button class="btn ap" id="btAp" onclick="apresentar()">▶ Apresentar</button>
     <button class="btn" onclick="carregar(true)">Atualizar</button>
     <a class="btn" href="javascript:history.back()">← Voltar</a>
   </div>
@@ -160,11 +193,22 @@ function serie(a,ate){const o=[];for(let m=1;m<=ate;m++)o.push(sum(a.filter(x=>x
 function clientes(a){const o={};a.forEach(x=>{const c=o[x.cli]=o[x.cli]||{cli:x.cli,nome:x.nome,cid:x.cid,dupla:x.dupla,rota:x.rota,t:0,ms:{},ult:null};c.t+=x.t;c.ms[x.m]=(c.ms[x.m]||0)+x.t;if(x.dt&&(!c.ult||x.dt>c.ult))c.ult=x.dt});return Object.values(o)}
 
 /* ---------- componentes ---------- */
-const kpi=(t,v,s,c)=>`<div class="kpi" style="--c:${c||"var(--azul2)"}"><small>${t}</small><b>${v}</b><span>${s||""}</span></div>`;
+const kpi=(t,v,sub,c,sp)=>`<div class="kpi${sp?" ks":""}" style="--c:${c||"var(--azul2)"}"><small>${t}</small><b>${v}</b><span>${sub||""}</span>${sp?sparkA(sp,c||"#0b4a9a"):""}</div>`;
 function colunas(ms,a,b,destaque){const mx=Math.max(1,...a.map((v,i)=>v+(b?b[i]:0)));
   return `<div class="cols">${ms.map((m,i)=>{const tot=a[i]+(b?b[i]:0);return `<div class="col" title="${MES[m-1]}: ${f1(tot)} t"><span class="v">${f0(tot)}</span><div class="st" style="height:${tot/mx*100}%">${b?`<i style="height:${tot?b[i]/tot*100:0}%;background:var(--bgl)"></i>`:""}<i style="flex:1;background:${m==destaque?"linear-gradient(#ff8a45,#f26b1d)":"linear-gradient(#0b4a9a,#0b2a55)"}"></i></div><span class="m">${MES[m-1]}</span></div>`}).join("")}</div>`}
 function spark(v){if(!v.length)return"";const mx=Math.max(...v,1),w=90,h=26,st=w/Math.max(1,v.length-1);const p=v.map((y,i)=>`${(i*st).toFixed(1)},${(h-2-(y/mx)*(h-4)).toFixed(1)}`).join(" ");return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline points="${p}" fill="none" stroke="#0b4a9a" stroke-width="2"/><circle cx="${((v.length-1)*st).toFixed(1)}" cy="${(h-2-(v[v.length-1]/mx)*(h-4)).toFixed(1)}" r="3" fill="#f26b1d"/></svg>`}
 const hbars=(arr,fmt=f1)=>{const mx=Math.max(1,...arr.map(x=>x[1]));return arr.map(([n,v,s])=>`<div class="hb"><span title="${esc(n)}">${esc(n)}</span><div class="barra"><i style="width:${v/mx*100}%"></i></div><b>${fmt(v)}${s?` <small style="color:var(--cinza);font-weight:500">${s}</small>`:""}</b></div>`).join("")};
+const CORES=["#0b2a55","#f26b1d","#1f9d55","#0b4a9a","#7a47aa","#c8930d","#127c80","#e2483d"];
+function sparkA(v,c){if(!v||v.length<2)return"";const mx=Math.max(...v,1),mn=Math.min(...v,0),w=200,h=40,st=w/(v.length-1),y=x=>(h-3-(x-mn)/((mx-mn)||1)*(h-8)).toFixed(1);const p=v.map((x,i)=>`${(i*st).toFixed(1)},${y(x)}`).join(" ");return `<svg class="kspark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polygon points="0,${h} ${p} ${w},${h}" fill="${c}" opacity=".12"/><polyline points="${p}" fill="none" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`}
+function donut(arr){const tot=sum(arr,x=>x[1])||1,R=62,C=2*Math.PI*R;let off=0;
+  const seg=arr.map(([n,v],i)=>{const d=C*v/tot,el=`<circle r="${R}" cx="80" cy="80" fill="none" stroke="${CORES[i%8]}" stroke-width="22" stroke-dasharray="${d} ${C-d}" stroke-dashoffset="${-off}"><title>${esc(n)}: ${f1(v)} t</title></circle>`;off+=d;return el}).join("");
+  return `<div class="donut"><svg viewBox="0 0 160 160"><g transform="rotate(-90 80 80)">${seg}</g><text x="80" y="78" text-anchor="middle" font-size="22" font-weight="800" fill="#0b2a55">${f0(tot)}</text><text x="80" y="96" text-anchor="middle" font-size="10" fill="#5b6675">toneladas</text></svg>
+  <div class="dleg">${arr.map(([n,v],i)=>`<div><i style="background:${CORES[i%8]}"></i><span>${esc(n)}</span><b>${f1(v/tot*100)}%</b></div>`).join("")}</div></div>`}
+function gauge(p){const v=Math.max(0,Math.min(p,150))/150,R=80,C=Math.PI*R,col=p>=100?"#5bd16f":p>=85?"#ffc24d":"#ff7b6b";
+  const ang=Math.PI*(1-100/150),mx=100+R*Math.cos(ang),my=100-R*Math.sin(ang);
+  return `<svg class="gauge" viewBox="0 0 200 118"><path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="#ffffff22" stroke-width="16" stroke-linecap="round"/><path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="${col}" stroke-width="16" stroke-linecap="round" stroke-dasharray="${C*v} ${C}"/><line x1="${mx}" y1="${my}" x2="${100+(R-14)*Math.cos(ang)}" y2="${100-(R-14)*Math.sin(ang)}" stroke="#fff" stroke-width="2"/><text x="100" y="92" text-anchor="middle" font-size="30" font-weight="800" fill="#fff">${f0(p)}%</text></svg>`}
+const hbar=(t,p,ref)=>`<div class="hbar"><span>${t}</span><div class="hb-t"><i style="width:${Math.min(p,150)/1.5}%;background:${p>=100?"#5bd16f":p>=85?"#ffc24d":"#ff7b6b"}"></i><em style="left:66.7%"></em></div><b>${f0(p)}%</b><small>${ref}</small></div>`;
+function heat(rows,ms){return `<div class="rol"><table class="heat"><thead><tr><th>Dupla</th>${ms.map(m=>`<th class="n">${MES[m-1]}</th>`).join("")}</tr></thead><tbody>${rows.map(([n,v])=>{const mx=Math.max(...v,1);return `<tr><td><b>${esc(n)}</b></td>${v.map(x=>{const a=x/mx;return `<td class="n" style="background:rgba(11,42,85,${(a*.85).toFixed(2)});color:${a>.5?"#fff":"#16202e"}">${f0(x)}</td>`}).join("")}</tr>`}).join("")}</tbody></table></div>`}
 const tit=(sup,h,p)=>`<div class="tit"><div class="sup">${sup}</div><h1>${h}</h1>${p?`<p>${p}</p>`:""}</div>`;
 
 /* ---------- ABA: RESUMO ---------- */
@@ -192,22 +236,44 @@ function vResumo(X){
   if(conc>50)al.push(["a",`Concentração alta: 5 clientes = ${f1(conc)}% do volume de ${MES[M-1]}`,`Liderado por ${esc(titulo(top5[0]?.nome))}.`]);
   if(!al.length)al.push(["v","Sem alertas relevantes neste filtro","Volume, clientes e setores dentro do esperado."]);
 
-  return tit(`Resumo · ${MES[M-1]}/26${X.DU?" · "+esc(nomeD(X.DU)):""}`,parcial?`Ritmo do mês: ${f1(proj)} t projetadas`:`Fechamento: ${f1(fat)} t`,
-     parcial?`Base até ${ULT.toLocaleDateString("pt-BR")} · ${duD} de ${duT} dias úteis · projeção linear pelo ritmo diário`:`${duT} dias úteis no mês`)+
-  `<div class="g g4">
-    ${kpi("Faturado no mês",f1(fat)+" t",parcial?`<span class="${cls(pct(fat,fatAmesmoP))}">${fp(pct(fat,fatAmesmoP))}</span> vs mesmo período de ${MES[M-2]||"–"}`:`<span class="${cls(pct(fat,fatA))}">${fp(pct(fat,fatA))}</span> vs ${MES[M-2]||"–"}`,"var(--laranja)")}
-    ${kpi(parcial?"Projeção do mês":"Média últimos 3 meses",parcial?f1(proj)+" t":f1(med3)+" t",parcial?`<span class="${cls(pct(proj,med3))}">${fp(pct(proj,med3))}</span> vs média 3 meses (${f1(med3)} t)`:`mês atual <span class="${cls(pct(fat,med3))}">${fp(pct(fat,med3))}</span>`)}
-    ${kpi("Clientes com compra",f0(cliC.size),`${novos} novos no ano · ${f0(cliA.size)} em ${MES[M-2]||"–"}`,"#2e7d57")}
-    ${kpi("Ticket médio",f1(cliC.size?fat/cliC.size:0)+" t",`por cliente no mês`,"#7a47aa")}
-    ${kpi("Ritmo diário",f1(fat/duD)+" t/dia",`${duD} dias úteis apurados`,"#127c80")}
-    ${kpi("Orgânico (ex-BGL)",f1(fat?(fat-bgl)/fat*100:0)+"%",`BGL (GV484): ${f1(bgl)} t`,"#1f57a3")}
-    ${kpi("Acumulado no ano",f0(ytd)+" t",`jan–${MES[M-1]} · média ${f1(ytd/M)} t/mês`,"#c8930d")}
-    ${kpi("Concentração top 5",f1(conc)+"%",`do volume do mês`,conc>50?"var(--bad)":"var(--ok)")}
+  const serM=f=>ms.map(m=>f(base.filter(x=>x.m==m),m));
+  const sFat=serM(a=>sum(a,x=>x.t)); if(parcial)sFat[sFat.length-1]=proj;
+  const sCli=serM(a=>new Set(a.map(x=>x.cli)).size), sTk=serM(a=>{const n=new Set(a.map(x=>x.cli)).size;return n?sum(a,x=>x.t)/n:0});
+  const sOrg=serM(a=>{const t=sum(a,x=>x.t);return t?sum(a.filter(x=>!x.bgl),x=>x.t)/t*100:0}), sRit=serM((a,m)=>sum(a,x=>x.t)/(m==M?duD:diasUteis(2026,m)));
+  let ac=0; const sYtd=sFat.map(v=>ac+=v);
+  const ref=parcial?proj:fat, vsMed=med3?ref/med3*100:0, vsAnt=fatA?ref/fatA*100:0;
+  const mix=Object.entries(grp(cur,"setor")).map(([k,a])=>[titulo(k),sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]);
+  const topD=X.DU?null:Object.entries(grp(cur.filter(x=>x.dupla!="Outros"),"dupla")).map(([d,a])=>[nomeD(d),sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]);
+  return `<section class="hero">
+    <div>
+      <div class="h-sup">${parcial?"Ritmo do mês":"Fechamento"} · ${MES[M-1]}/26${X.DU?" · "+esc(nomeD(X.DU)):" · DBA Marabá"}</div>
+      <div class="h-num">${f1(ref)}<small> t</small></div>
+      <div class="h-sub">${parcial?`${f1(fat)} t faturadas em ${duD} de ${duT} dias úteis · projeção pelo ritmo de ${f1(fat/duD)} t/dia`:`${duT} dias úteis · ${f1(fat/duT)} t por dia útil`}</div>
+      <div class="h-bars">
+        ${hbar("vs média 3 meses",vsMed,f1(med3)+" t")}
+        ${hbar("vs "+(MES[M-2]||"mês anterior"),vsAnt,f1(fatA)+" t")}
+      </div>
+    </div>
+    <div class="h-right">${gauge(vsMed)}<div class="h-g">do volume médio dos últimos 3 meses</div></div>
+  </section>
+  <div class="g g4">
+    ${kpi("Faturado no mês",f1(fat)+" t",parcial?`<span class="${cls(pct(fat,fatAmesmoP))}">${fp(pct(fat,fatAmesmoP))}</span> vs mesmo período de ${MES[M-2]||"–"}`:`<span class="${cls(pct(fat,fatA))}">${fp(pct(fat,fatA))}</span> vs ${MES[M-2]||"–"}`,"#f26b1d",sFat)}
+    ${kpi("Clientes com compra",f0(cliC.size),`${novos} novos no ano · ${f0(cliA.size)} em ${MES[M-2]||"–"}`,"#1f9d55",sCli)}
+    ${kpi("Ticket médio",f1(cliC.size?fat/cliC.size:0)+" t","por cliente no mês","#7a47aa",sTk)}
+    ${kpi("Ritmo diário",f1(fat/duD)+" t/dia",`${duD} dias úteis apurados`,"#127c80",sRit)}
+    ${kpi("Orgânico (ex-BGL)",f1(fat?(fat-bgl)/fat*100:0)+"%",`BGL (GV484): ${f1(bgl)} t`,"#1f57a3",sOrg)}
+    ${kpi("Acumulado no ano",f0(ytd)+" t",`jan–${MES[M-1]} · média ${f1(ytd/M)} t/mês`,"#c8930d",sYtd)}
+    ${kpi("Concentração top 5",f1(conc)+"%","do volume do mês",conc>50?"#e2483d":"#1f9d55")}
+    ${kpi("Média 3 meses",f1(med3)+" t",`mês atual <span class="${cls(pct(ref,med3))}">${fp(pct(ref,med3))}</span>`,"#0b2a55")}
   </div>
   <div class="g g21">
     <div class="box"><h2>Evolução mensal</h2><div class="sub">Volume faturado (t) · mês selecionado em laranja</div>${colunas(ms,org,bg,M)}
       <div class="leg"><span><i style="background:#0b2a55"></i>Orgânico</span><span><i style="background:var(--bgl)"></i>BGL (GV484)</span></div></div>
-    <div class="box"><h2>Alertas do mês</h2><div class="sub">O que merece atenção agora</div>${al.slice(0,6).map(([c,a,b])=>`<div class="al ${c}"><div><b>${a}</b>${b}</div></div>`).join("")}</div>
+    <div class="box"><h2>Mix por setor</h2><div class="sub">Participação no volume do mês</div>${donut(mix)}</div>
+  </div>
+  <div class="g ${topD?"g2":""}">
+    <div class="box"><h2>Alertas do mês</h2><div class="sub">O que merece atenção agora</div>${al.slice(0,6).map(([c,a,b])=>`<div class="al ${c}"><span class="al-i">${c=="r"?"!":c=="a"?"•":"↑"}</span><div><b>${a}</b>${b}</div></div>`).join("")}</div>
+    ${topD?`<div class="box"><h2>Duplas no mês</h2><div class="sub">Volume (t) · clique na aba Ranking para detalhes</div>${hbars(topD)}</div>`:""}
   </div>`;
 }
 
@@ -232,9 +298,15 @@ function vRanking(X){
   const eq=base.filter(x=>x.dupla!="Outros");
   const rv=Object.entries(grp(eq,"vend")).map(([v,a])=>linhaRank(v||"(sem vendedor)",a,X,tot)).filter(r=>r.ytd>0.5).sort((a,b)=>b.c-a.c);
   const best=rd.filter(r=>r.nome!="Outros"&&isFinite(r.v)).sort((a,b)=>b.v-a.v)[0];
+  const pod=rd.filter(r=>r.nome!="Outros").slice(0,3);
+  const ordem=[1,0,2].filter(i=>pod[i]);
+  const ms=[...Array(M).keys()].map(i=>i+1).slice(-9);
+  const dz=Object.entries(grp(base.filter(x=>x.dupla!="Outros"),"dupla")).map(([d,a])=>[nomeD(d),ms.map(m=>sum(a.filter(x=>x.m==m),x=>x.t))]).sort((x,y)=>y[1][y[1].length-1]-x[1][x[1].length-1]);
   return tit(`Ranking · ${MES[M-1]}/26`,"Quem está entregando",X.parcial?"Projeção = volume do mês ÷ dias úteis apurados × dias úteis do mês. Variação calculada pela projeção.":"")+
-  `<div class="g g3">${kpi("Líder do mês",esc(rd.find(r=>r.nome!="Outros")?.nome||"–"),f1(rd.find(r=>r.nome!="Outros")?.c||0)+" t","var(--laranja)")}${kpi(best&&best.v<0?"Menor queda":"Maior crescimento",esc(best?.nome||"–"),best?fp(best.v)+" vs mês anterior":"","var(--ok)")}${kpi("Vendedores ativos",rv.filter(r=>r.c>0).length,"com faturamento no mês","#1f57a3")}</div>
+  `<div class="podio">${ordem.map(i=>{const r=pod[i];return `<div class="pd pd${i+1}"><div class="pd-n">${i+1}º</div><div class="pd-nome">${esc(r.nome)}</div><div class="pd-v">${f1(r.c)} t</div><div class="pd-s"><span class="tag ${!isFinite(r.v)?"tg-c":r.v>=0?"tg-v":"tg-r"}">${fp(r.v)}</span> · ${r.cl} clientes · ${f1(r.sh)}% do total</div><div class="pd-base" style="height:${[0,90,64,46][i+1]}px">${i+1}</div></div>`}).join("")}</div>
+  <div class="g g3">${kpi(best&&best.v<0?"Menor queda":"Maior crescimento",esc(best?.nome||"–"),best?fp(best.v)+" vs mês anterior":"","#1f9d55")}${kpi("Vendedores ativos",rv.filter(r=>r.c>0).length,"com faturamento no mês","#1f57a3")}${kpi("Volume da equipe",f1(sum(rd.filter(r=>r.nome!="Outros"),r=>r.c))+" t",f1(tot?sum(rd.filter(r=>r.nome!="Outros"),r=>r.c)/tot*100:0)+"% da filial","#f26b1d")}</div>
   <div class="box" style="margin-bottom:14px"><h2>Duplas e individuais</h2><div class="sub">"Outros" = notas fora das duplas atuais</div>${tabRank(rd,"Dupla",true)}</div>
+  <div class="box" style="margin-bottom:14px"><h2>Mapa de calor · volume por mês</h2><div class="sub">Quanto mais escuro, mais perto do melhor mês da própria dupla</div>${heat(dz,ms)}</div>
   <div class="box"><h2>Vendedores</h2><div class="sub">Equipe atual, pelo vendedor da nota</div>${tabRank(rv,"Vendedor",false)}</div>`;
 }
 
@@ -346,6 +418,21 @@ function render(){
   const V={resumo:vResumo,ranking:vRanking,ficha:vFicha,clientes:vClientes,mix:vMix,margem:vMargem}[ABA]||vResumo;
   try{app.innerHTML=V(X)}catch(e){app.innerHTML=`<div class="box vazio">Erro ao montar esta aba: ${esc(e.message)}</div>`;console.error(e)}
 }
+/* ---------- modo apresentação (tela cheia, troca de aba sozinho) ---------- */
+let AP=null;const AP_SEG=25;
+function apresentar(){
+  if(AP){pararAp();return}
+  document.body.classList.add("apres");btAp.textContent="■ Parar";
+  try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}catch(_){}
+  let bar=document.getElementById("apBar");if(!bar){bar=document.createElement("div");bar.id="apBar";document.body.appendChild(bar)}
+  const ordem=["resumo","ranking","clientes","mix","margem"];let i=Math.max(0,ordem.indexOf(ABA)),t0=Date.now();
+  ABA=ordem[i];render();scrollTo(0,0);
+  AP=setInterval(()=>{const p=(Date.now()-t0)/(AP_SEG*1000);bar.style.width=Math.min(p,1)*100+"%";
+    if(p>=1){i=(i+1)%ordem.length;ABA=ordem[i];render();scrollTo({top:0});t0=Date.now()}},200);
+}
+function pararAp(){clearInterval(AP);AP=null;document.body.classList.remove("apres");btAp.textContent="▶ Apresentar";const b=document.getElementById("apBar");if(b)b.style.width=0;try{document.fullscreenElement&&document.exitFullscreen()}catch(_){}render()}
+document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&AP)pararAp()});
+document.addEventListener("keydown",e=>{if(e.key=="Escape"&&AP)pararAp()});
 carregar(); setInterval(carregar, ATUALIZA_MIN*60*1000);
 </script>
 </body>
