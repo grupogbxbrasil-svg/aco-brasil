@@ -97,9 +97,26 @@ main>*{animation:sobe .45s ease both}main>*:nth-child(2){animation-delay:.05s}ma
 body.apres .abas,body.apres .fil select,body.apres .fil .btn:not(.ap){display:none}
 body.apres main{max-width:1700px}body.apres{font-size:17px}
 @media(max-width:900px){.hero{grid-template-columns:1fr}.h-num{font-size:2.6rem}.hbar{grid-template-columns:110px 1fr 46px}.hbar small{display:none}.pd{width:100%}}
+#gate{position:fixed;inset:0;z-index:200;background:linear-gradient(135deg,#071d3c,#0b2a55);display:flex;align-items:center;justify-content:center;padding:20px}
+#gate form{background:#fff;border-radius:14px;max-width:380px;width:100%;padding:30px 26px;box-shadow:0 20px 50px #0006}
+#gate h1{font-size:1.3rem;color:var(--marinho);margin-bottom:4px}#gate p{font-size:.85rem;color:var(--cinza);margin-bottom:16px}
+#gate label{display:block;font-size:.82rem;font-weight:600;margin:12px 0 4px}#gate input{width:100%;padding:11px 12px;border:1px solid var(--borda);border-radius:8px;font:inherit}
+#gate button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;background:var(--marinho);color:#fff;font-weight:700;cursor:pointer}
+#gate .er{color:#c0392b;font-size:.82rem;min-height:18px;margin-top:8px}
 </style>
 </head>
 <body>
+<div id="gate"><form onsubmit="return entrarDir(event)"><h1>Painel da Diretoria</h1><p>Acesso restrito · DBA Marabá</p>
+<label for="gu">Usuário</label><input id="gu" autocomplete="username" required>
+<label for="gs">Senha</label><input id="gs" type="password" autocomplete="current-password" required>
+<button type="submit">Entrar</button><div class="er" id="ger"></div></form></div>
+<script>
+/* Login simples da diretoria (só no navegador — não é segurança real). Para trocar a senha, gere o SHA-256 da nova e substitua abaixo. */
+const DIR_USERS={"diretoria":"5df6b10b2a3358054b97e3bd42cc572e1e0244aeb2de0358379370c83d28e0b0"};
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+async function entrarDir(e){e.preventDefault();const u=gu.value.trim().toLowerCase();if(DIR_USERS[u]&&DIR_USERS[u]===await sha(gs.value)){try{sessionStorage.setItem("dir_ok","1")}catch(_){}gate.remove()}else ger.textContent="Usuário ou senha inválidos.";return false}
+try{if(sessionStorage.getItem("dir_ok")==="1")gate.remove()}catch(_){}
+</script>
 <header class="cab"><div class="cab-in">
   <div><b>Painel da Diretoria · DBA Marabá</b><small id="stEl"><span class="dot"></span>carregando…</small></div>
   <div class="fil">
@@ -121,7 +138,9 @@ body.apres main{max-width:1700px}body.apres{font-size:17px}
    ============================================================ */
 const FONTES = {
   FAT: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=1851262199",
-  BV:  "https://docs.google.com/spreadsheets/d/1ItMeQ0Z8T7TTeO3l2Iq1ZyOpiQy1buRX5ZBSzQ2g4ng/gviz/tq?tqx=out:csv&headers=0&gid=777001"
+  BV:  "https://docs.google.com/spreadsheets/d/1ItMeQ0Z8T7TTeO3l2Iq1ZyOpiQy1buRX5ZBSzQ2g4ng/gviz/tq?tqx=out:csv&headers=0&gid=777001",
+  // BI: aba "BI SITE" (IMPORTRANGE da aba INFORMAÇÃO BI de "Resultado BI - Marabá") — total da filial por setor, sempre atual
+  BI:  "https://docs.google.com/spreadsheets/d/1ItMeQ0Z8T7TTeO3l2Iq1ZyOpiQy1buRX5ZBSzQ2g4ng/gviz/tq?tqx=out:csv&headers=0&gid=777003"
 };
 // Colunas da aba FAT 2026 ATUAL (posição, começando em 0)
 const C = {grp:13, vend:63, cli:49, nome:50, cid:52, data:100, dupla:229, ano:230, ton:231, rota:233, mes:234, fam:242, setor:246};
@@ -144,7 +163,7 @@ const grp=(a,k)=>{const o={};a.forEach(x=>{const kk=typeof k=="function"?k(x):x[
 const titulo=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
 
 /* ---------- estado ---------- */
-let D=[], BV=[], ABA="resumo", ULT=null;
+let D=[], BV=[], BIm={}, ABA="resumo", ULT=null;
 const ABAS=[["resumo","Resumo"],["ranking","Ranking"],["ficha","Ficha da dupla"],["clientes","Clientes & churn"],["mix","Setores & rotas"],["margem","Margem & preço"]];
 abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("");
 abas.onclick=e=>{const b=e.target.closest("button");if(!b)return;ABA=b.dataset.k;try{localStorage.setItem("dir_aba",ABA)}catch(_){}render()};
@@ -155,9 +174,10 @@ fMes.onchange=fDupla.onchange=()=>render();
 async function carregar(manual){
   try{
     stEl.innerHTML='<span class="dot"></span>atualizando…';
-    const [t1,t2]=await Promise.all([
+    const [t1,t2,t3]=await Promise.all([
       fetch(FONTES.FAT+"&t="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("FAT "+r.status);return r.text()}),
-      fetch(FONTES.BV+"&t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").catch(()=>"")
+      fetch(FONTES.BV+"&t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").catch(()=>""),
+      fetch(FONTES.BI+"&t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").catch(()=>"")
     ]);
     const L=csv(t1); D=[];
     for(let i=1;i<L.length;i++){const r=L[i];if(r[C.ano]!="2026")continue;const t=num(r[C.ton]);if(!t)continue;
@@ -166,6 +186,10 @@ async function carregar(manual){
       D.push({m,t,dupla:(r[C.dupla]||"Outros").trim()||"Outros",vend:titulo(r[C.vend]),cli:r[C.cli],nome:(r[C.nome]||"").trim(),cid:titulo(r[C.cid]),rota:titulo((r[C.rota]||"Sem rota").replace(/^ROTA\s+/i,"")),setor:r[C.setor]||"Outros",fam:r[C.fam]||"",bgl:r[C.grp]==BGL,dt})}
     ULT=D.reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
     BV=[];if(t2){csv(t2).forEach(r=>{const ms=r[3]||"";const mm=MES.indexOf(ms.slice(0,3).toLowerCase());if(mm<0||!/26$/.test(ms))return;BV.push({vend:r[0],dupla:r[1],m:mm+1,setor:r[4],t:num(r[5]),cli:num(r[6]),pvl:num(r[8]),mk:(v=>Math.abs(v)<1?v*100:v)(num(r[9])),rag:num(r[10]),rec:num(r[12])})})}
+    BIm={};if(t3){let mm=0;csv(t3).forEach(r=>{const a=(r[0]||"").trim().toLowerCase();const k=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"].findIndex(n=>a.startsWith(n));if(k>=0&&/2026/.test(a)){mm=k+1;return}
+      if(!mm||!r[1]||/setor/i.test(r[1]))return;const t=num(r[2]);if(!t)return;const o=BIm[mm]=BIm[mm]||{t:0,cli:0,rec:0,pv:0,mk:0,rg:0,set:[]};
+      const pvl=num(r[5]),mk=(v=>Math.abs(v)<1?v*100:v)(num(r[6])),rag=num(r[7]),rec=num(r[9]);o.t+=t;o.cli+=num(r[3]);o.rec+=rec;o.pv+=pvl*t;o.rg+=rag*t;o.mk+=mk*rec;o.set.push([titulo(r[1]),t])});
+      Object.values(BIm).forEach(o=>{o.pvl=o.pv/o.t;o.rag=o.rg/o.t;o.mkp=o.rec?o.mk/o.rec:0;o.set.sort((a,b)=>b[1]-a[1])})}
     montarFiltros();render();
     stEl.innerHTML='<span class="dot"></span>base até '+(ULT?ULT.toLocaleDateString("pt-BR"):"–")+' · lido às '+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
   }catch(e){stEl.textContent="erro ao ler a planilha";if(!D.length)app.innerHTML=`<div class="box vazio">Não foi possível ler a base (${esc(e.message)}). Confira se a planilha continua publicada na Web.</div>`}
@@ -173,7 +197,8 @@ async function carregar(manual){
 function montarFiltros(){
   const ms=[...new Set(D.map(x=>x.m))].sort((a,b)=>a-b), selM=fMes.value, selD=fDupla.value;
   fMes.innerHTML=ms.map(m=>`<option value="${m}">${MES[m-1]}/26</option>`).join("");
-  fMes.value=selM&&ms.includes(+selM)?selM:(ULT&&ULT.getMonth()+1==ms[ms.length-1]&&ms.length>1?ms[ms.length-2]:ms[ms.length-1]);
+  const ult=ms[ms.length-1], biOk=BIm[ult]&&BIm[ult].t>sum(D.filter(x=>x.m==ult),x=>x.t)*1.05;
+  fMes.value=selM&&ms.includes(+selM)?selM:(biOk||!(ULT&&ULT.getMonth()+1==ult&&ms.length>1)?ult:ms[ms.length-2]);
   const ds=Object.entries(grp(D,"dupla")).map(([k,a])=>[k,sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
   fDupla.innerHTML='<option value="">Todas as duplas</option>'+ds.map(d=>`<option value="${esc(d)}">${esc(nomeD(d))}</option>`).join("");
   fDupla.value=ds.includes(selD)?selD:"";
@@ -187,7 +212,9 @@ function ctx(){
   const cur=porM(M), ant=porM(M-1);
   const parcial=ULT&&ULT.getMonth()+1==M&&ULT.getFullYear()==2026;
   const duT=diasUteis(2026,M), duD=parcial?Math.max(1,diasUteis(2026,M,ULT)):duT;
-  return {M,DU,base,porM,cur,ant,parcial,duT,duD};
+  let bi=null,duD2=duD;const hoje=new Date();
+  if(!DU&&BIm[M]&&BIm[M].t>sum(cur,x=>x.t)*1.05){bi=BIm[M];if(hoje.getFullYear()==2026&&hoje.getMonth()+1==M){const ont=new Date(hoje);ont.setDate(hoje.getDate()-1);duD2=Math.max(1,diasUteis(2026,M,ont))}}
+  return {M,DU,base,porM,cur,ant,parcial,duT,duD,bi,duDbi:duD2,parcialBi:duD2<duT};
 }
 function serie(a,ate){const o=[];for(let m=1;m<=ate;m++)o.push(sum(a.filter(x=>x.m==m),x=>x.t));return o}
 function clientes(a){const o={};a.forEach(x=>{const c=o[x.cli]=o[x.cli]||{cli:x.cli,nome:x.nome,cid:x.cid,dupla:x.dupla,rota:x.rota,t:0,ms:{},ult:null};c.t+=x.t;c.ms[x.m]=(c.ms[x.m]||0)+x.t;if(x.dt&&(!c.ult||x.dt>c.ult))c.ult=x.dt});return Object.values(o)}
@@ -213,42 +240,43 @@ const tit=(sup,h,p)=>`<div class="tit"><div class="sup">${sup}</div><h1>${h}</h1
 
 /* ---------- ABA: RESUMO ---------- */
 function vResumo(X){
-  const {M,cur,ant,base,parcial,duT,duD}=X;
-  const fat=sum(cur,x=>x.t), fatA=sum(ant,x=>x.t), proj=fat/duD*duT;
-  const fatAmesmoP=ant.length&&parcial?sum(ant.filter(x=>x.dt&&x.dt.getDate()<=ULT.getDate()),x=>x.t):fatA;
+  const {M,cur,ant,base,duT}=X, parcial=X.bi?X.parcialBi:X.parcial, duD=X.bi?X.duDbi:X.duD;
+  const fatNF=sum(cur,x=>x.t), fat=X.bi?X.bi.t:fatNF, fatA=sum(ant,x=>x.t), proj=fat/duD*duT;
+  const fatAmesmoP=ant.length&&parcial?sum(ant.filter(x=>x.dt&&x.dt.getDate()<=(X.bi?new Date().getDate()-1:ULT.getDate())),x=>x.t):fatA;
   const m3=[M-1,M-2,M-3].filter(m=>m>0).map(m=>sum(base.filter(x=>x.m==m),x=>x.t)), med3=m3.length?sum(m3,x=>x)/m3.length:0;
-  const bgl=sum(cur.filter(x=>x.bgl),x=>x.t);
+  const bglNF=sum(cur.filter(x=>x.bgl),x=>x.t), bgl=X.bi?(fatNF?bglNF/fatNF*fat:0):bglNF, dataNF=ULT?ULT.toLocaleDateString("pt-BR"):"–";
   const cliC=new Set(cur.map(x=>x.cli)), cliA=new Set(ant.map(x=>x.cli));
-  const ytd=sum(base.filter(x=>x.m<=M),x=>x.t);
+  const ytd=sum(base.filter(x=>x.m<=M),x=>x.t)+(fat-fatNF), nCli=X.bi?X.bi.cli:cliC.size;
   const antes=new Set(base.filter(x=>x.m<M).map(x=>x.cli)), novos=[...cliC].filter(c=>!antes.has(c)).length;
   const ms=[...Array(M).keys()].map(i=>i+1);
-  const org=ms.map(m=>sum(base.filter(x=>x.m==m&&!x.bgl),x=>x.t)), bg=ms.map(m=>sum(base.filter(x=>x.m==m&&x.bgl),x=>x.t));
+  const org=ms.map(m=>sum(base.filter(x=>x.m==m&&!x.bgl),x=>x.t)+(m==M?fat-fatNF:0)), bg=ms.map(m=>sum(base.filter(x=>x.m==m&&x.bgl),x=>x.t));
   // alertas
   const al=[];
   const cls_=clientes(base.filter(x=>x.m<M&&x.m>=M-3)).filter(c=>!cliC.has(c.cli)).sort((a,b)=>b.t-a.t);
-  if(cls_.length)al.push(["r",`${cls_.length} clientes compraram nos 3 meses anteriores e ainda não compraram em ${MES[M-1]}`,`Maiores: ${cls_.slice(0,3).map(c=>esc(titulo(c.nome))+" ("+f1(c.t)+" t)").join(", ")}.`]);
-  const sets=Object.entries(grp(cur,"setor")).map(([s,a])=>{const v=sum(a,x=>x.t)/duD*duT,b=sum(base.filter(x=>x.m==M-1&&x.setor==s),x=>x.t);return[s,v,b]}).filter(x=>x[2]>5);
+  if(X.bi)al.push(["a",`Posição de ${MES[M-1]} pelo Power BI: ${f1(fat)} t`,`A base de notas (detalhe por dupla e cliente) vai só até ${dataNF}. Atualize a aba FAT 2026 ATUAL para liberar o detalhamento.`]);
+  if(cls_.length&&!X.bi)al.push(["r",`${cls_.length} clientes compraram nos 3 meses anteriores e ainda não compraram em ${MES[M-1]}`,`Maiores: ${cls_.slice(0,3).map(c=>esc(titulo(c.nome))+" ("+f1(c.t)+" t)").join(", ")}.`]);
+  const sets=(X.bi?X.bi.set.map(([s,t])=>[s.toUpperCase(),[{t}]]):Object.entries(grp(cur,"setor"))).map(([s,a])=>{const v=sum(a,x=>x.t)/duD*duT,b=sum(base.filter(x=>x.m==M-1&&x.setor==s),x=>x.t);return[s,v,b]}).filter(x=>x[2]>5);
   sets.filter(x=>pct(x[1],x[2])<-20).forEach(([s,v,b])=>al.push(["a",`${titulo(s)}: projeção ${fp(pct(v,b))} vs ${MES[M-2]||"mês anterior"}`,`Ritmo atual aponta ${f1(v)} t contra ${f1(b)} t no mês anterior.`]));
-  if(!X.DU){const ds=Object.entries(grp(cur,"dupla")).map(([d,a])=>[d,sum(a,x=>x.t)/duD*duT,sum(ant.filter(x=>x.dupla==d),x=>x.t)]).filter(x=>x[0]!="Outros");
+  if(!X.DU&&!X.bi){const ds=Object.entries(grp(cur,"dupla")).map(([d,a])=>[d,sum(a,x=>x.t)/duD*duT,sum(ant.filter(x=>x.dupla==d),x=>x.t)]).filter(x=>x[0]!="Outros");
     ds.filter(x=>pct(x[1],x[2])>15).forEach(([d,v,b])=>al.push(["v",`${nomeD(d)} acelerando: ${fp(pct(v,b))}`,`Projeção ${f1(v)} t contra ${f1(b)} t no mês anterior.`]));
     ds.filter(x=>pct(x[1],x[2])<-25).forEach(([d,v,b])=>al.push(["r",`${nomeD(d)} em queda: ${fp(pct(v,b))}`,`Projeção ${f1(v)} t contra ${f1(b)} t no mês anterior.`]))}
-  const top5=clientes(cur).sort((a,b)=>b.t-a.t).slice(0,5), conc=fat?sum(top5,c=>c.t)/fat*100:0;
+  const top5=clientes(cur).sort((a,b)=>b.t-a.t).slice(0,5), conc=fatNF?sum(top5,c=>c.t)/fatNF*100:0;
   if(conc>50)al.push(["a",`Concentração alta: 5 clientes = ${f1(conc)}% do volume de ${MES[M-1]}`,`Liderado por ${esc(titulo(top5[0]?.nome))}.`]);
   if(!al.length)al.push(["v","Sem alertas relevantes neste filtro","Volume, clientes e setores dentro do esperado."]);
 
   const serM=f=>ms.map(m=>f(base.filter(x=>x.m==m),m));
   const sFat=serM(a=>sum(a,x=>x.t)); if(parcial)sFat[sFat.length-1]=proj;
   const sCli=serM(a=>new Set(a.map(x=>x.cli)).size), sTk=serM(a=>{const n=new Set(a.map(x=>x.cli)).size;return n?sum(a,x=>x.t)/n:0});
-  const sOrg=serM(a=>{const t=sum(a,x=>x.t);return t?sum(a.filter(x=>!x.bgl),x=>x.t)/t*100:0}), sRit=serM((a,m)=>sum(a,x=>x.t)/(m==M?duD:diasUteis(2026,m)));
+  const sOrg=serM(a=>{const t=sum(a,x=>x.t);return t?sum(a.filter(x=>!x.bgl),x=>x.t)/t*100:0}), sRit=serM((a,m)=>m==M?fat/duD:sum(a,x=>x.t)/diasUteis(2026,m));
   let ac=0; const sYtd=sFat.map(v=>ac+=v);
   const ref=parcial?proj:fat, vsMed=med3?ref/med3*100:0, vsAnt=fatA?ref/fatA*100:0;
-  const mix=Object.entries(grp(cur,"setor")).map(([k,a])=>[titulo(k),sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]);
+  const mix=X.bi?X.bi.set:Object.entries(grp(cur,"setor")).map(([k,a])=>[titulo(k),sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]);
   const topD=X.DU?null:Object.entries(grp(cur.filter(x=>x.dupla!="Outros"),"dupla")).map(([d,a])=>[nomeD(d),sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]);
   return `<section class="hero">
     <div>
       <div class="h-sup">${parcial?"Ritmo do mês":"Fechamento"} · ${MES[M-1]}/26${X.DU?" · "+esc(nomeD(X.DU)):" · DBA Marabá"}</div>
       <div class="h-num">${f1(ref)}<small> t</small></div>
-      <div class="h-sub">${parcial?`${f1(fat)} t faturadas em ${duD} de ${duT} dias úteis · projeção pelo ritmo de ${f1(fat/duD)} t/dia`:`${duT} dias úteis · ${f1(fat/duT)} t por dia útil`}</div>
+      <div class="h-sub">${parcial?`${f1(fat)} t faturadas em ${duD} de ${duT} dias úteis · projeção pelo ritmo de ${f1(fat/duD)} t/dia`:`${duT} dias úteis · ${f1(fat/duT)} t por dia útil`}${X.bi?`<br><span class="tag" style="background:#ffffff22;color:#fff;margin-top:6px">Fonte: Power BI (posição atual) · detalhe por dupla: notas até ${dataNF}</span>`:""}</div>
       <div class="h-bars">
         ${hbar("vs média 3 meses",vsMed,f1(med3)+" t")}
         ${hbar("vs "+(MES[M-2]||"mês anterior"),vsAnt,f1(fatA)+" t")}
@@ -258,8 +286,8 @@ function vResumo(X){
   </section>
   <div class="g g4">
     ${kpi("Faturado no mês",f1(fat)+" t",parcial?`<span class="${cls(pct(fat,fatAmesmoP))}">${fp(pct(fat,fatAmesmoP))}</span> vs mesmo período de ${MES[M-2]||"–"}`:`<span class="${cls(pct(fat,fatA))}">${fp(pct(fat,fatA))}</span> vs ${MES[M-2]||"–"}`,"#f26b1d",sFat)}
-    ${kpi("Clientes com compra",f0(cliC.size),`${novos} novos no ano · ${f0(cliA.size)} em ${MES[M-2]||"–"}`,"#1f9d55",sCli)}
-    ${kpi("Ticket médio",f1(cliC.size?fat/cliC.size:0)+" t","por cliente no mês","#7a47aa",sTk)}
+    ${kpi("Clientes com compra",f0(nCli),`${novos} novos no ano · ${f0(cliA.size)} em ${MES[M-2]||"–"}`,"#1f9d55",sCli)}
+    ${kpi("Ticket médio",f1(nCli?fat/nCli:0)+" t","por cliente no mês","#7a47aa",sTk)}
     ${kpi("Ritmo diário",f1(fat/duD)+" t/dia",`${duD} dias úteis apurados`,"#127c80",sRit)}
     ${kpi("Orgânico (ex-BGL)",f1(fat?(fat-bgl)/fat*100:0)+"%",`BGL (GV484): ${f1(bgl)} t`,"#1f57a3",sOrg)}
     ${kpi("Acumulado no ano",f0(ytd)+" t",`jan–${MES[M-1]} · média ${f1(ytd/M)} t/mês`,"#c8930d",sYtd)}
@@ -273,7 +301,7 @@ function vResumo(X){
   </div>
   <div class="g ${topD?"g2":""}">
     <div class="box"><h2>Alertas do mês</h2><div class="sub">O que merece atenção agora</div>${al.slice(0,6).map(([c,a,b])=>`<div class="al ${c}"><span class="al-i">${c=="r"?"!":c=="a"?"•":"↑"}</span><div><b>${a}</b>${b}</div></div>`).join("")}</div>
-    ${topD?`<div class="box"><h2>Duplas no mês</h2><div class="sub">Volume (t) · clique na aba Ranking para detalhes</div>${hbars(topD)}</div>`:""}
+    ${topD?`<div class="box"><h2>Duplas no mês</h2><div class="sub">Volume (t)${X.bi?` · base de notas até ${dataNF}`:" · clique na aba Ranking para detalhes"}</div>${hbars(topD)}</div>`:""}
   </div>`;
 }
 
@@ -416,7 +444,8 @@ function render(){
   [...abas.children].forEach(b=>b.classList.toggle("on",b.dataset.k==ABA));
   const X=ctx(); X_=X;
   const V={resumo:vResumo,ranking:vRanking,ficha:vFicha,clientes:vClientes,mix:vMix,margem:vMargem}[ABA]||vResumo;
-  try{app.innerHTML=V(X)}catch(e){app.innerHTML=`<div class="box vazio">Erro ao montar esta aba: ${esc(e.message)}</div>`;console.error(e)}
+  const av=X.bi&&ABA!="resumo"&&ABA!="margem"?`<div class="al a" style="margin-bottom:14px"><span class="al-i">•</span><div><b>${MES[X.M-1]} parcial nesta aba</b>A base de notas vai só até ${ULT?ULT.toLocaleDateString("pt-BR"):"–"}. O total atualizado de ${MES[X.M-1]} (${f1(X.bi.t)} t, Power BI) está no Resumo.</div></div>`:"";
+  try{app.innerHTML=av+V(X)}catch(e){app.innerHTML=`<div class="box vazio">Erro ao montar esta aba: ${esc(e.message)}</div>`;console.error(e)}
 }
 /* ---------- modo apresentação (tela cheia, troca de aba sozinho) ---------- */
 let AP=null;const AP_SEG=25;
