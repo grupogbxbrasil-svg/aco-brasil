@@ -161,7 +161,7 @@ function desenhar(S){
     <div class="box"><h2>Faturamento por rota</h2><div class="sub">Total acumulado no ano (t) · visão reportada</div>${rotas}</div>
   </div>
   <div class="box rol"><h2>Top 20 clientes</h2><div class="sub">Volume faturado (t) · visão orgânica (ex-BGL)</div>
-    <table><thead><tr><th>Nº</th><th>Cliente</th>${hc.slice(6,13).map(h=>`<th class="n">${esc(h)}</th>`).join("")}<th class="n">Total (t)</th><th class="n">%</th></tr></thead><tbody>${cli}</tbody></table></div>`;
+    <table><thead><tr><th>Nº</th><th>Cliente</th>${hc.slice(6,13).map((h,j)=>`<th class="n">${esc(h||(j==0?"Jan–Mar":((S.meses[S.meses.length-7+j]||[])[2]||"").split(/[\/ ]/)[0].slice(0,3)))}</th>`).join("")}<th class="n">Total (t)</th><th class="n">%</th></tr></thead><tbody>${cli}</tbody></table></div>`;
 }
 
 /* ---------- carga automática ---------- */
