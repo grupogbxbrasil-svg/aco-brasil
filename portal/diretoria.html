@@ -132,7 +132,7 @@ async function carregar(manual){
       let dt=null;const p=(r[C.data]||"").split("/");if(p.length==3)dt=new Date(+p[2],+p[0]-1,+p[1]);
       D.push({m,t,dupla:(r[C.dupla]||"Outros").trim()||"Outros",vend:titulo(r[C.vend]),cli:r[C.cli],nome:(r[C.nome]||"").trim(),cid:titulo(r[C.cid]),rota:titulo((r[C.rota]||"Sem rota").replace(/^ROTA\s+/i,"")),setor:r[C.setor]||"Outros",fam:r[C.fam]||"",bgl:r[C.grp]==BGL,dt})}
     ULT=D.reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
-    BV=[];if(t2){csv(t2).forEach(r=>{const ms=r[3]||"";const mm=MES.indexOf(ms.slice(0,3).toLowerCase());if(mm<0||!/26$/.test(ms))return;BV.push({vend:r[0],dupla:r[1],m:mm+1,setor:r[4],t:num(r[5]),cli:num(r[6]),pvl:num(r[8]),mk:num(r[9]),rag:num(r[10]),rec:num(r[12])})})}
+    BV=[];if(t2){csv(t2).forEach(r=>{const ms=r[3]||"";const mm=MES.indexOf(ms.slice(0,3).toLowerCase());if(mm<0||!/26$/.test(ms))return;BV.push({vend:r[0],dupla:r[1],m:mm+1,setor:r[4],t:num(r[5]),cli:num(r[6]),pvl:num(r[8]),mk:(v=>Math.abs(v)<1?v*100:v)(num(r[9])),rag:num(r[10]),rec:num(r[12])})})}
     montarFiltros();render();
     stEl.innerHTML='<span class="dot"></span>base até '+(ULT?ULT.toLocaleDateString("pt-BR"):"–")+' · lido às '+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
   }catch(e){stEl.textContent="erro ao ler a planilha";if(!D.length)app.innerHTML=`<div class="box vazio">Não foi possível ler a base (${esc(e.message)}). Confira se a planilha continua publicada na Web.</div>`}
@@ -140,7 +140,7 @@ async function carregar(manual){
 function montarFiltros(){
   const ms=[...new Set(D.map(x=>x.m))].sort((a,b)=>a-b), selM=fMes.value, selD=fDupla.value;
   fMes.innerHTML=ms.map(m=>`<option value="${m}">${MES[m-1]}/26</option>`).join("");
-  fMes.value=selM&&ms.includes(+selM)?selM:ms[ms.length-1];
+  fMes.value=selM&&ms.includes(+selM)?selM:(ULT&&ULT.getMonth()+1==ms[ms.length-1]&&ms.length>1?ms[ms.length-2]:ms[ms.length-1]);
   const ds=Object.entries(grp(D,"dupla")).map(([k,a])=>[k,sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
   fDupla.innerHTML='<option value="">Todas as duplas</option>'+ds.map(d=>`<option value="${esc(d)}">${esc(nomeD(d))}</option>`).join("");
   fDupla.value=ds.includes(selD)?selD:"";
@@ -214,7 +214,7 @@ function vResumo(X){
 /* ---------- ABA: RANKING ---------- */
 function linhaRank(nome,a,X,tot){
   const {M,parcial,duT,duD}=X;const c=sum(a.filter(x=>x.m==M),x=>x.t), p=sum(a.filter(x=>x.m==M-1),x=>x.t);
-  const pj=parcial?c/duD*duT:c; const s=serie(a,M).slice(-6); const cl=new Set(a.filter(x=>x.m==M).map(x=>x.cli)).size;
+  const pj=parcial?c/duD*duT:c; const s=serie(a,M).slice(-6);s[s.length-1]=pj; const cl=new Set(a.filter(x=>x.m==M).map(x=>x.cli)).size;
   const ytd=sum(a.filter(x=>x.m<=M),x=>x.t), med=[M-1,M-2,M-3].filter(m=>m>0).map(m=>sum(a.filter(x=>x.m==m),x=>x.t));
   const md=med.length?sum(med,x=>x)/med.length:0;
   return {nome,c,p,pj,s,cl,ytd,md,v:pct(pj,p),sh:tot?c/tot*100:0,tk:cl?c/cl:0};
@@ -233,7 +233,7 @@ function vRanking(X){
   const rv=Object.entries(grp(eq,"vend")).map(([v,a])=>linhaRank(v||"(sem vendedor)",a,X,tot)).filter(r=>r.ytd>0.5).sort((a,b)=>b.c-a.c);
   const best=rd.filter(r=>r.nome!="Outros"&&isFinite(r.v)).sort((a,b)=>b.v-a.v)[0];
   return tit(`Ranking · ${MES[M-1]}/26`,"Quem está entregando",X.parcial?"Projeção = volume do mês ÷ dias úteis apurados × dias úteis do mês. Variação calculada pela projeção.":"")+
-  `<div class="g g3">${kpi("Líder do mês",esc(rd.find(r=>r.nome!="Outros")?.nome||"–"),f1(rd.find(r=>r.nome!="Outros")?.c||0)+" t","var(--laranja)")}${kpi("Maior crescimento",esc(best?.nome||"–"),best?fp(best.v)+" vs mês anterior":"","var(--ok)")}${kpi("Vendedores ativos",rv.filter(r=>r.c>0).length,"com faturamento no mês","#1f57a3")}</div>
+  `<div class="g g3">${kpi("Líder do mês",esc(rd.find(r=>r.nome!="Outros")?.nome||"–"),f1(rd.find(r=>r.nome!="Outros")?.c||0)+" t","var(--laranja)")}${kpi(best&&best.v<0?"Menor queda":"Maior crescimento",esc(best?.nome||"–"),best?fp(best.v)+" vs mês anterior":"","var(--ok)")}${kpi("Vendedores ativos",rv.filter(r=>r.c>0).length,"com faturamento no mês","#1f57a3")}</div>
   <div class="box" style="margin-bottom:14px"><h2>Duplas e individuais</h2><div class="sub">"Outros" = notas fora das duplas atuais</div>${tabRank(rd,"Dupla",true)}</div>
   <div class="box"><h2>Vendedores</h2><div class="sub">Equipe atual, pelo vendedor da nota</div>${tabRank(rv,"Vendedor",false)}</div>`;
 }
