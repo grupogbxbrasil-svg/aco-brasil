@@ -25,7 +25,7 @@ const DUPLAS = {
    g = grupo (ind = Indicadores e Gestão, ped = Pedidos e Carteira, prep = Relatórios em preparação)
    off:1 = Em preparação. link = página do relatório (sem link, o card não abre nada). */
 const RELATORIOS = [
-  {g:"ind", t:"Indicadores de Performance", d:"Meta, faturado, % realizado e detalhamento por setor.", ic:"chart", c:"#ec5a24"},
+  {g:"ind", t:"Indicadores de Performance", d:"Meta, faturado, % realizado e detalhamento por setor.", ic:"chart", c:"#ec5a24", link:"performance.html"},
   {g:"ind", t:"Radar Metodologia", d:"Cobertura, contatos, cotações e conversão da dupla.", ic:"target", c:"#2e7d57"},
   {g:"ind", t:"Radar de Crédito", d:"Limite, risco e atraso da carteira {U}.", ic:"shield", c:"#1f57a3"},
   {g:"ind", t:"Churn de Clientes", d:"Clientes em risco de perda e sem compra no mês.", ic:"users", c:"#e2483d"},
