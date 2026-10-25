@@ -102,11 +102,12 @@ body.apres main{max-width:1700px}body.apres{font-size:17px}
 #gate h1{font-size:1.3rem;color:var(--marinho);margin-bottom:4px}#gate p{font-size:.85rem;color:var(--cinza);margin-bottom:16px}
 #gate label{display:block;font-size:.82rem;font-weight:600;margin:12px 0 4px}#gate input{width:100%;padding:11px 12px;border:1px solid var(--borda);border-radius:8px;font:inherit}
 #gate button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;background:var(--marinho);color:#fff;font-weight:700;cursor:pointer}
+.uni{display:inline-flex;gap:4px}.uni .btn.on{background:var(--laranja);color:#fff;border-color:var(--laranja)}
 #gate .er{color:#c0392b;font-size:.82rem;min-height:18px;margin-top:8px}
 </style>
 </head>
 <body>
-<div id="gate"><form onsubmit="return entrarDir(event)"><h1>Painel da Diretoria</h1><p>Acesso restrito · DBA Marabá</p>
+<div id="gate"><form onsubmit="return entrarDir(event)"><h1>Painel da Diretoria</h1><p>Acesso restrito · DBA Marabá e Belém</p>
 <label for="gu">Usuário</label><input id="gu" autocomplete="username" required>
 <label for="gs">Senha</label><input id="gs" type="password" autocomplete="current-password" required>
 <button type="submit">Entrar</button><div class="er" id="ger"></div></form></div>
@@ -118,8 +119,9 @@ async function entrarDir(e){e.preventDefault();const u=gu.value.trim().toLowerCa
 try{if(sessionStorage.getItem("dir_ok")==="1")gate.remove()}catch(_){}
 </script>
 <header class="cab"><div class="cab-in">
-  <div><b>Painel da Diretoria · DBA Marabá</b><small id="stEl"><span class="dot"></span>carregando…</small></div>
+  <div><b>Painel da Diretoria · DBA <span id="uniNome">Marabá</span></b><small id="stEl"><span class="dot"></span>carregando…</small></div>
   <div class="fil">
+    <div class="uni" role="group" aria-label="Unidade"><button class="btn" data-u="maraba">Marabá</button><button class="btn" data-u="belem">Belém</button></div>
     <select id="fMes" aria-label="Mês"></select>
     <select id="fDupla" aria-label="Dupla"></select>
     <button class="btn ap" id="btAp" onclick="apresentar()">▶ Apresentar</button>
@@ -136,6 +138,20 @@ try{if(sessionStorage.getItem("dir_ok")==="1")gate.remove()}catch(_){}
    FAT: aba "FAT 2026 ATUAL" da planilha publicada do Painel Comercial
    BV : aba "BV" da planilha "Performance Vendedores - Site" (PVL, markup, RAG)
    ============================================================ */
+/* ---------- UNIDADES (botão Marabá / Belém) ----------
+   Cada unidade tem as mesmas 5 fontes. Para Belém, preencha os gid das abas
+   equivalentes da planilha "Painel Comercial DBA Belém" (publicada na Web).
+   Enquanto um gid estiver vazio, aquela fonte é ignorada (FAT vazio = painel avisa). */
+const PUB_MAB="https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=";
+const PUB_BEL="https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=";
+const GID_BEL={FAT:"", NOVO:"", DP:"", BV:"", BI:""}; // <- preencher (ex.: FAT:"123456789")
+const UNIDADES={
+  maraba:{nome:"Marabá", fontes:null},
+  belem:{nome:"Belém", semDuplas:true, fontes:Object.fromEntries(Object.entries(GID_BEL).map(([k,g])=>[k,g?PUB_BEL+g:""]))}
+};
+let UNI="maraba";
+try{UNI=new URLSearchParams(location.search).get("u")||localStorage.getItem("dir_uni")||UNI}catch(_){}
+if(!UNIDADES[UNI])UNI="maraba";
 const FONTES = {
   FAT: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=1851262199",
   // NOVO: aba "FAT NOVO 2026" (layout novo, atualizada diariamente, sem o grupo BGL) — fonte principal das notas
@@ -146,6 +162,12 @@ const FONTES = {
   // BI: aba "BI SITE" (IMPORTRANGE da aba INFORMAÇÃO BI de "Resultado BI - Marabá") — total da filial por setor, sempre atual
   BI:  "https://docs.google.com/spreadsheets/d/1ItMeQ0Z8T7TTeO3l2Iq1ZyOpiQy1buRX5ZBSzQ2g4ng/gviz/tq?tqx=out:csv&headers=0&gid=777003"
 };
+UNIDADES.maraba.fontes={...FONTES};
+function setUni(u){UNI=u;try{localStorage.setItem("dir_uni",u)}catch(_){}
+  Object.assign(FONTES,UNIDADES[u].fontes);uniNome.textContent=UNIDADES[u].nome;document.title="Diretoria · DBA "+UNIDADES[u].nome;
+  document.querySelectorAll(".uni .btn").forEach(b=>b.classList.toggle("on",b.dataset.u==u));
+  abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("");fMes.innerHTML="";fDupla.innerHTML="";D=[];app.innerHTML='<div class="carga"><div class="spin"></div>Lendo a base de '+UNIDADES[u].nome+'…</div>'}
+document.querySelector(".uni").onclick=e=>{const b=e.target.closest("[data-u]");if(!b||b.dataset.u==UNI)return;setUni(b.dataset.u);carregar(true)};
 // Colunas da aba FAT 2026 ATUAL (posição, começando em 0)
 const C = {grp:13, vend:63, cli:49, nome:50, cid:52, data:100, dupla:229, ano:230, ton:231, rota:233, mes:234, fam:242, setor:246};
 const BGL = "GV484";
@@ -176,9 +198,11 @@ fMes.onchange=fDupla.onchange=()=>render();
 
 /* ---------- carga ---------- */
 async function carregar(manual){
+  const U0=UNI;
+  if(!FONTES.FAT){stEl.textContent=UNIDADES[UNI].nome+": fontes não configuradas";app.innerHTML='<div class="box vazio">O painel de '+UNIDADES[UNI].nome+' ainda não tem as abas de faturamento ligadas. Preencha GID_BEL no código.</div>';return}
   try{
     stEl.innerHTML='<span class="dot"></span>atualizando…';
-    const ft=u=>fetch(u+"&t="+Date.now(),{cache:"no-store"});
+    const ft=u=>u?fetch(u+(u.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"}):Promise.resolve({ok:false,status:"sem gid configurado",text:()=>""});
     const [t1,t2,t3,t4,t5]=await Promise.all([
       ft(FONTES.FAT).then(r=>{if(!r.ok)throw new Error("FAT "+r.status);return r.text()}),
       ft(FONTES.BV).then(r=>r.ok?r.text():"").catch(()=>""),
@@ -186,6 +210,7 @@ async function carregar(manual){
       ft(FONTES.NOVO).then(r=>r.ok?r.text():"").catch(()=>""),
       ft(FONTES.DP).then(r=>r.ok?r.text():"").catch(()=>"")
     ]);
+    if(U0!==UNI)return; // trocou de unidade durante a leitura
     /* 1) Base antiga (FAT 2026 ATUAL): usada para o grupo BGL (GV484) e para os de-para de material, cliente e cidade */
     const L=csv(t1), D26=[], mapMat={}, mapCliRota={}, mapCidRota={};
     for(let i=1;i<L.length;i++){const r=L[i];if(r[C.ano]!="2026")continue;
@@ -205,6 +230,8 @@ async function carregar(manual){
         fam:mm?mm.fam:titulo((r[7]||"").split(" ")[0]),bgl:r[12]==BGL,dt})});
     /* Junta: se a base nova veio, ela substitui as notas fora do BGL da base antiga */
     D=DN.length?DN.concat(D26.filter(x=>x.bgl)):D26;
+    /* Unidade sem duplas (Belém): cada vendedor vira a sua própria "dupla" */
+    if(UNIDADES[UNI].semDuplas)D.forEach(x=>x.dupla=x.vend||"Outros");
     FONTE_NF=DN.length?"FAT NOVO 2026 + BGL da FAT 2026 ATUAL":"FAT 2026 ATUAL";
     ULT=(DN.length?DN:D26).reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
     ULT_BGL=D26.filter(x=>x.bgl).reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
@@ -215,7 +242,7 @@ async function carregar(manual){
       Object.values(BIm).forEach(o=>{o.pvl=o.pv/o.t;o.rag=o.rg/o.t;o.mkp=o.rec?o.mk/o.rec:0;o.set.sort((a,b)=>b[1]-a[1])})}
     montarFiltros();render();
     stEl.innerHTML='<span class="dot"></span>notas até '+(ULT?ULT.toLocaleDateString("pt-BR"):"–")+' · lido às '+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-  }catch(e){stEl.textContent="erro ao ler a planilha";if(!D.length)app.innerHTML=`<div class="box vazio">Não foi possível ler a base (${esc(e.message)}). Confira se a planilha continua publicada na Web.</div>`}
+  }catch(e){if(U0!==UNI)return;stEl.textContent="erro ao ler a planilha";if(!D.length)app.innerHTML=`<div class="box vazio">Não foi possível ler a base (${esc(e.message)}). Confira se a planilha continua publicada na Web.</div>`}
 }
 function montarFiltros(){
   const ms=[...new Set(D.map(x=>x.m))].sort((a,b)=>a-b), selM=fMes.value, selD=fDupla.value;
@@ -462,7 +489,10 @@ function vMargem(X){
 }
 
 /* ---------- render ---------- */
-function render(){
+function semDuplasTxt(){if(!UNIDADES[UNI].semDuplas)return;
+  const tr=t=>t.replace(/Ficha da dupla/g,"Ficha do vendedor").replace(/Todas as duplas/g,"Todos os vendedores").replace(/Duplas e individuais/g,"Vendedores").replace(/\bDuplas\b/g,"Vendedores").replace(/\bduplas\b/g,"vendedores").replace(/\bDupla\b/g,"Vendedor").replace(/\bdupla\b/g,"vendedor");
+  const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){const v=tr(n.nodeValue);if(v!=n.nodeValue)n.nodeValue=v}}
+function render(){setTimeout(semDuplasTxt,0);
   if(!D.length)return;
   [...abas.children].forEach(b=>b.classList.toggle("on",b.dataset.k==ABA));
   const X=ctx(); X_=X;
@@ -485,7 +515,7 @@ function apresentar(){
 function pararAp(){clearInterval(AP);AP=null;document.body.classList.remove("apres");btAp.textContent="▶ Apresentar";const b=document.getElementById("apBar");if(b)b.style.width=0;try{document.fullscreenElement&&document.exitFullscreen()}catch(_){}render()}
 document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&AP)pararAp()});
 document.addEventListener("keydown",e=>{if(e.key=="Escape"&&AP)pararAp()});
-carregar(); setInterval(carregar, ATUALIZA_MIN*60*1000);
+setUni(UNI);carregar(); setInterval(carregar, ATUALIZA_MIN*60*1000);
 </script>
 </body>
 </html>
