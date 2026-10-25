@@ -138,6 +138,10 @@ try{if(sessionStorage.getItem("dir_ok")==="1")gate.remove()}catch(_){}
    ============================================================ */
 const FONTES = {
   FAT: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=1851262199",
+  // NOVO: aba "FAT NOVO 2026" (layout novo, atualizada diariamente, sem o grupo BGL) — fonte principal das notas
+  NOVO: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=910000001",
+  // DP: aba "De-Para Fat Novo" — código da equipe → vendedor
+  DP:   "https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=910000002",
   BV:  "https://docs.google.com/spreadsheets/d/1ItMeQ0Z8T7TTeO3l2Iq1ZyOpiQy1buRX5ZBSzQ2g4ng/gviz/tq?tqx=out:csv&headers=0&gid=777001",
   // BI: aba "BI SITE" (IMPORTRANGE da aba INFORMAÇÃO BI de "Resultado BI - Marabá") — total da filial por setor, sempre atual
   BI:  "https://docs.google.com/spreadsheets/d/1ItMeQ0Z8T7TTeO3l2Iq1ZyOpiQy1buRX5ZBSzQ2g4ng/gviz/tq?tqx=out:csv&headers=0&gid=777003"
@@ -163,7 +167,7 @@ const grp=(a,k)=>{const o={};a.forEach(x=>{const kk=typeof k=="function"?k(x):x[
 const titulo=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
 
 /* ---------- estado ---------- */
-let D=[], BV=[], BIm={}, ABA="resumo", ULT=null;
+let D=[], BV=[], BIm={}, FONTE_NF="", ULT_BGL=null, ABA="resumo", ULT=null;
 const ABAS=[["resumo","Resumo"],["ranking","Ranking"],["ficha","Ficha da dupla"],["clientes","Clientes & churn"],["mix","Setores & rotas"],["margem","Margem & preço"]];
 abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("");
 abas.onclick=e=>{const b=e.target.closest("button");if(!b)return;ABA=b.dataset.k;try{localStorage.setItem("dir_aba",ABA)}catch(_){}render()};
@@ -174,24 +178,43 @@ fMes.onchange=fDupla.onchange=()=>render();
 async function carregar(manual){
   try{
     stEl.innerHTML='<span class="dot"></span>atualizando…';
-    const [t1,t2,t3]=await Promise.all([
-      fetch(FONTES.FAT+"&t="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("FAT "+r.status);return r.text()}),
-      fetch(FONTES.BV+"&t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").catch(()=>""),
-      fetch(FONTES.BI+"&t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").catch(()=>"")
+    const ft=u=>fetch(u+"&t="+Date.now(),{cache:"no-store"});
+    const [t1,t2,t3,t4,t5]=await Promise.all([
+      ft(FONTES.FAT).then(r=>{if(!r.ok)throw new Error("FAT "+r.status);return r.text()}),
+      ft(FONTES.BV).then(r=>r.ok?r.text():"").catch(()=>""),
+      ft(FONTES.BI).then(r=>r.ok?r.text():"").catch(()=>""),
+      ft(FONTES.NOVO).then(r=>r.ok?r.text():"").catch(()=>""),
+      ft(FONTES.DP).then(r=>r.ok?r.text():"").catch(()=>"")
     ]);
-    const L=csv(t1); D=[];
-    for(let i=1;i<L.length;i++){const r=L[i];if(r[C.ano]!="2026")continue;const t=num(r[C.ton]);if(!t)continue;
-      const m=parseInt(r[C.mes])||0;if(!m)continue;
+    /* 1) Base antiga (FAT 2026 ATUAL): usada para o grupo BGL (GV484) e para os de-para de material, cliente e cidade */
+    const L=csv(t1), D26=[], mapMat={}, mapCliRota={}, mapCidRota={};
+    for(let i=1;i<L.length;i++){const r=L[i];if(r[C.ano]!="2026")continue;
+      const rota=titulo((r[C.rota]||"").replace(/^ROTA\s+/i,""));
+      if(r[15]&&r[C.setor])mapMat[r[15]]={setor:r[C.setor],fam:r[C.fam]||""};
+      if(rota){mapCliRota[r[C.cli]]=rota;mapCidRota[(r[C.cid]||"").toUpperCase()]=rota}
+      const t=num(r[C.ton]);if(!t)continue;const m=parseInt(r[C.mes])||0;if(!m)continue;
       let dt=null;const p=(r[C.data]||"").split("/");if(p.length==3)dt=new Date(+p[2],+p[0]-1,+p[1]);
-      D.push({m,t,dupla:(r[C.dupla]||"Outros").trim()||"Outros",vend:titulo(r[C.vend]),cli:r[C.cli],nome:(r[C.nome]||"").trim(),cid:titulo(r[C.cid]),rota:titulo((r[C.rota]||"Sem rota").replace(/^ROTA\s+/i,"")),setor:r[C.setor]||"Outros",fam:r[C.fam]||"",bgl:r[C.grp]==BGL,dt})}
-    ULT=D.reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
+      D26.push({m,t,dupla:(r[C.dupla]||"Outros").trim()||"Outros",vend:titulo(r[C.vend]),cli:r[C.cli],nome:(r[C.nome]||"").trim(),cid:titulo(r[C.cid]),rota:rota||"Sem rota",setor:r[C.setor]||"Outros",fam:r[C.fam]||"",bgl:r[C.grp]==BGL,dt})}
+    /* 2) Base nova (FAT NOVO 2026): todas as notas fora do BGL, atualizada até o último dia útil */
+    const vendEq={};if(t5)csv(t5).slice(1).forEach(r=>{if(r[0])vendEq[r[0].trim()]=titulo(r[1])});
+    const setLbl={"planos":"PLANOS E DERIVADOS","construção civil":"CONSTRUÇÃO CIVIL","civil - outros":"CONSTRUÇÃO CIVIL","bekaert":"BBA","industriais":"INDÚSTRIA"};
+    const DN=[];if(t4)csv(t4).slice(1).forEach(r=>{const ds=(r[18]||"").split("/");if(ds.length!=3||ds[2]!="2026")return;const t=num(r[17]);if(!t)return;
+      const dt=new Date(+ds[2],+ds[1]-1,+ds[0]),mm=mapMat[r[6]],du=(r[21]||"").trim();
+      DN.push({m:+ds[1],t,dupla:!du||/mapear/i.test(du)?"Outros":du,vend:vendEq[(r[15]||"").trim()]||(r[15]||""),cli:r[10],nome:(r[11]||"").trim(),cid:titulo(r[14]),
+        rota:mapCliRota[r[10]]||mapCidRota[(r[14]||"").toUpperCase()]||"Sem rota",setor:mm?mm.setor:(setLbl[(r[20]||"").toLowerCase()]||"TERCEIROS"),
+        fam:mm?mm.fam:titulo((r[7]||"").split(" ")[0]),bgl:r[12]==BGL,dt})});
+    /* Junta: se a base nova veio, ela substitui as notas fora do BGL da base antiga */
+    D=DN.length?DN.concat(D26.filter(x=>x.bgl)):D26;
+    FONTE_NF=DN.length?"FAT NOVO 2026 + BGL da FAT 2026 ATUAL":"FAT 2026 ATUAL";
+    ULT=(DN.length?DN:D26).reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
+    ULT_BGL=D26.filter(x=>x.bgl).reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
     BV=[];if(t2){csv(t2).forEach(r=>{const ms=r[3]||"";const mm=MES.indexOf(ms.slice(0,3).toLowerCase());if(mm<0||!/26$/.test(ms))return;BV.push({vend:r[0],dupla:r[1],m:mm+1,setor:r[4],t:num(r[5]),cli:num(r[6]),pvl:num(r[8]),mk:(v=>Math.abs(v)<1?v*100:v)(num(r[9])),rag:num(r[10]),rec:num(r[12])})})}
     BIm={};if(t3){let mm=0;csv(t3).forEach(r=>{const a=(r[0]||"").trim().toLowerCase();const k=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"].findIndex(n=>a.startsWith(n));if(k>=0&&/2026/.test(a)){mm=k+1;return}
       if(!mm||!r[1]||/setor/i.test(r[1]))return;const t=num(r[2]);if(!t)return;const o=BIm[mm]=BIm[mm]||{t:0,cli:0,rec:0,pv:0,mk:0,rg:0,set:[]};
       const pvl=num(r[5]),mk=(v=>Math.abs(v)<1?v*100:v)(num(r[6])),rag=num(r[7]),rec=num(r[9]);o.t+=t;o.cli+=num(r[3]);o.rec+=rec;o.pv+=pvl*t;o.rg+=rag*t;o.mk+=mk*rec;o.set.push([titulo(r[1]),t])});
       Object.values(BIm).forEach(o=>{o.pvl=o.pv/o.t;o.rag=o.rg/o.t;o.mkp=o.rec?o.mk/o.rec:0;o.set.sort((a,b)=>b[1]-a[1])})}
     montarFiltros();render();
-    stEl.innerHTML='<span class="dot"></span>base até '+(ULT?ULT.toLocaleDateString("pt-BR"):"–")+' · lido às '+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    stEl.innerHTML='<span class="dot"></span>notas até '+(ULT?ULT.toLocaleDateString("pt-BR"):"–")+' · lido às '+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
   }catch(e){stEl.textContent="erro ao ler a planilha";if(!D.length)app.innerHTML=`<div class="box vazio">Não foi possível ler a base (${esc(e.message)}). Confira se a planilha continua publicada na Web.</div>`}
 }
 function montarFiltros(){
@@ -244,16 +267,16 @@ function vResumo(X){
   const fatNF=sum(cur,x=>x.t), fat=X.bi?X.bi.t:fatNF, fatA=sum(ant,x=>x.t), proj=fat/duD*duT;
   const fatAmesmoP=ant.length&&parcial?sum(ant.filter(x=>x.dt&&x.dt.getDate()<=(X.bi?new Date().getDate()-1:ULT.getDate())),x=>x.t):fatA;
   const m3=[M-1,M-2,M-3].filter(m=>m>0).map(m=>sum(base.filter(x=>x.m==m),x=>x.t)), med3=m3.length?sum(m3,x=>x)/m3.length:0;
-  const bglNF=sum(cur.filter(x=>x.bgl),x=>x.t), bgl=X.bi?(fatNF?bglNF/fatNF*fat:0):bglNF, dataNF=ULT?ULT.toLocaleDateString("pt-BR"):"–";
+  const bglNF=sum(cur.filter(x=>x.bgl),x=>x.t), bgl=X.bi?bglNF+Math.max(0,fat-fatNF):bglNF, dataNF=ULT?ULT.toLocaleDateString("pt-BR"):"–";
   const cliC=new Set(cur.map(x=>x.cli)), cliA=new Set(ant.map(x=>x.cli));
-  const ytd=sum(base.filter(x=>x.m<=M),x=>x.t)+(fat-fatNF), nCli=X.bi?X.bi.cli:cliC.size;
+  const ytd=sum(base.filter(x=>x.m<=M),x=>x.t)+(fat-fatNF), nCli=cliC.size;
   const antes=new Set(base.filter(x=>x.m<M).map(x=>x.cli)), novos=[...cliC].filter(c=>!antes.has(c)).length;
   const ms=[...Array(M).keys()].map(i=>i+1);
-  const org=ms.map(m=>sum(base.filter(x=>x.m==m&&!x.bgl),x=>x.t)+(m==M?fat-fatNF:0)), bg=ms.map(m=>sum(base.filter(x=>x.m==m&&x.bgl),x=>x.t));
+  const org=ms.map(m=>sum(base.filter(x=>x.m==m&&!x.bgl),x=>x.t)), bg=ms.map(m=>sum(base.filter(x=>x.m==m&&x.bgl),x=>x.t)+(m==M?Math.max(0,fat-fatNF):0));
   // alertas
   const al=[];
   const cls_=clientes(base.filter(x=>x.m<M&&x.m>=M-3)).filter(c=>!cliC.has(c.cli)).sort((a,b)=>b.t-a.t);
-  if(X.bi)al.push(["a",`Posição de ${MES[M-1]} pelo Power BI: ${f1(fat)} t`,`A base de notas (detalhe por dupla e cliente) vai só até ${dataNF}. Atualize a aba FAT 2026 ATUAL para liberar o detalhamento.`]);
+  if(X.bi)al.push(["a",`Total de ${MES[M-1]} pelo Power BI: ${f1(fat)} t`,`As notas sem BGL até ${dataNF} somam ${f1(fatNF-bglNF)} t. A diferença de ${f1(fat-fatNF)} t é o BGL (GV484)${ULT_BGL?`, lançado nas notas só até ${ULT_BGL.toLocaleDateString("pt-BR")}`:""}, e notas ainda fora da base.`]);
   if(cls_.length&&!X.bi)al.push(["r",`${cls_.length} clientes compraram nos 3 meses anteriores e ainda não compraram em ${MES[M-1]}`,`Maiores: ${cls_.slice(0,3).map(c=>esc(titulo(c.nome))+" ("+f1(c.t)+" t)").join(", ")}.`]);
   const sets=(X.bi?X.bi.set.map(([s,t])=>[s.toUpperCase(),[{t}]]):Object.entries(grp(cur,"setor"))).map(([s,a])=>{const v=sum(a,x=>x.t)/duD*duT,b=sum(base.filter(x=>x.m==M-1&&x.setor==s),x=>x.t);return[s,v,b]}).filter(x=>x[2]>5);
   sets.filter(x=>pct(x[1],x[2])<-20).forEach(([s,v,b])=>al.push(["a",`${titulo(s)}: projeção ${fp(pct(v,b))} vs ${MES[M-2]||"mês anterior"}`,`Ritmo atual aponta ${f1(v)} t contra ${f1(b)} t no mês anterior.`]));
@@ -276,7 +299,7 @@ function vResumo(X){
     <div>
       <div class="h-sup">${parcial?"Ritmo do mês":"Fechamento"} · ${MES[M-1]}/26${X.DU?" · "+esc(nomeD(X.DU)):" · DBA Marabá"}</div>
       <div class="h-num">${f1(ref)}<small> t</small></div>
-      <div class="h-sub">${parcial?`${f1(fat)} t faturadas em ${duD} de ${duT} dias úteis · projeção pelo ritmo de ${f1(fat/duD)} t/dia`:`${duT} dias úteis · ${f1(fat/duT)} t por dia útil`}${X.bi?`<br><span class="tag" style="background:#ffffff22;color:#fff;margin-top:6px">Fonte: Power BI (posição atual) · detalhe por dupla: notas até ${dataNF}</span>`:""}</div>
+      <div class="h-sub">${parcial?`${f1(fat)} t faturadas em ${duD} de ${duT} dias úteis · projeção pelo ritmo de ${f1(fat/duD)} t/dia`:`${duT} dias úteis · ${f1(fat/duT)} t por dia útil`}${X.bi?`<br><span class="tag" style="background:#ffffff22;color:#fff;margin-top:6px">Fonte: Power BI (posição atual) · notas sem BGL até ${dataNF}</span>`:""}</div>
       <div class="h-bars">
         ${hbar("vs média 3 meses",vsMed,f1(med3)+" t")}
         ${hbar("vs "+(MES[M-2]||"mês anterior"),vsAnt,f1(fatA)+" t")}
@@ -287,9 +310,9 @@ function vResumo(X){
   <div class="g g4">
     ${kpi("Faturado no mês",f1(fat)+" t",parcial?`<span class="${cls(pct(fat,fatAmesmoP))}">${fp(pct(fat,fatAmesmoP))}</span> vs mesmo período de ${MES[M-2]||"–"}`:`<span class="${cls(pct(fat,fatA))}">${fp(pct(fat,fatA))}</span> vs ${MES[M-2]||"–"}`,"#f26b1d",sFat)}
     ${kpi("Clientes com compra",f0(nCli),`${novos} novos no ano · ${f0(cliA.size)} em ${MES[M-2]||"–"}`,"#1f9d55",sCli)}
-    ${kpi("Ticket médio",f1(nCli?fat/nCli:0)+" t","por cliente no mês","#7a47aa",sTk)}
+    ${kpi("Ticket médio",f1(nCli?(fatNF-bglNF)/nCli:0)+" t","por cliente no mês (sem BGL)","#7a47aa",sTk)}
     ${kpi("Ritmo diário",f1(fat/duD)+" t/dia",`${duD} dias úteis apurados`,"#127c80",sRit)}
-    ${kpi("Orgânico (ex-BGL)",f1(fat?(fat-bgl)/fat*100:0)+"%",`BGL (GV484): ${f1(bgl)} t`,"#1f57a3",sOrg)}
+    ${kpi("Orgânico (ex-BGL)",f1(fat?(fat-bgl)/fat*100:0)+"%",X.bi?`BGL + não detalhado: ${f1(bgl)} t`:`BGL (GV484): ${f1(bgl)} t`,"#1f57a3",sOrg)}
     ${kpi("Acumulado no ano",f0(ytd)+" t",`jan–${MES[M-1]} · média ${f1(ytd/M)} t/mês`,"#c8930d",sYtd)}
     ${kpi("Concentração top 5",f1(conc)+"%","do volume do mês",conc>50?"#e2483d":"#1f9d55")}
     ${kpi("Média 3 meses",f1(med3)+" t",`mês atual <span class="${cls(pct(ref,med3))}">${fp(pct(ref,med3))}</span>`,"#0b2a55")}
@@ -444,7 +467,7 @@ function render(){
   [...abas.children].forEach(b=>b.classList.toggle("on",b.dataset.k==ABA));
   const X=ctx(); X_=X;
   const V={resumo:vResumo,ranking:vRanking,ficha:vFicha,clientes:vClientes,mix:vMix,margem:vMargem}[ABA]||vResumo;
-  const av=X.bi&&ABA!="resumo"&&ABA!="margem"?`<div class="al a" style="margin-bottom:14px"><span class="al-i">•</span><div><b>${MES[X.M-1]} parcial nesta aba</b>A base de notas vai só até ${ULT?ULT.toLocaleDateString("pt-BR"):"–"}. O total atualizado de ${MES[X.M-1]} (${f1(X.bi.t)} t, Power BI) está no Resumo.</div></div>`:"";
+  const av=X.bi&&ABA!="resumo"&&ABA!="margem"?`<div class="al a" style="margin-bottom:14px"><span class="al-i">•</span><div><b>Como ler ${MES[X.M-1]} nesta aba</b>Os números são das notas sem BGL até ${ULT?ULT.toLocaleDateString("pt-BR"):"–"}. O total da filial pelo Power BI (${f1(X.bi.t)} t, com BGL) está no Resumo.</div></div>`:"";
   try{app.innerHTML=av+V(X)}catch(e){app.innerHTML=`<div class="box vazio">Erro ao montar esta aba: ${esc(e.message)}</div>`;console.error(e)}
 }
 /* ---------- modo apresentação (tela cheia, troca de aba sozinho) ---------- */
