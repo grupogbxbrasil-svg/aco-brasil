@@ -11,6 +11,68 @@ const DUPLAS = {
     iniciais: "IS",
     usuarios: { israel: "teste123", stefanny: "teste123" }
   }
+  /* ---- DBA Belém: vendedores individuais (sem dupla) ----
+     painel: portal/painel.html?d=bel-<nome> */,
+  "bel-alcir": {
+    unidade: "DBA Belém",
+    nomes: ["Alcir"],
+    iniciais: "AL",
+    usuarios: { alcir: "teste123" }
+  },
+  "bel-francitonio": {
+    unidade: "DBA Belém",
+    nomes: ["Francitonio"],
+    iniciais: "FR",
+    usuarios: { francitonio: "teste123" }
+  },
+  "bel-raphael": {
+    unidade: "DBA Belém",
+    nomes: ["Raphael"],
+    iniciais: "RA",
+    usuarios: { raphael: "teste123" }
+  },
+  "bel-cibelle": {
+    unidade: "DBA Belém",
+    nomes: ["Cibelle"],
+    iniciais: "CI",
+    usuarios: { cibelle: "teste123" }
+  },
+  "bel-renato": {
+    unidade: "DBA Belém",
+    nomes: ["Renato"],
+    iniciais: "RE",
+    usuarios: { renato: "teste123" }
+  },
+  "bel-jennifer": {
+    unidade: "DBA Belém",
+    nomes: ["Jennifer"],
+    iniciais: "JE",
+    usuarios: { jennifer: "teste123" }
+  },
+  "bel-alessandra": {
+    unidade: "DBA Belém",
+    nomes: ["Alessandra"],
+    iniciais: "AS",
+    usuarios: { alessandra: "teste123" }
+  },
+  "bel-fabio": {
+    unidade: "DBA Belém",
+    nomes: ["Fabio"],
+    iniciais: "FA",
+    usuarios: { fabio: "teste123" }
+  },
+  "bel-alvaro": {
+    unidade: "DBA Belém",
+    nomes: ["Alvaro"],
+    iniciais: "AV",
+    usuarios: { alvaro: "teste123" }
+  },
+  "bel-marcelle": {
+    unidade: "DBA Belém",
+    nomes: ["Marcelle"],
+    iniciais: "MA",
+    usuarios: { marcelle: "teste123" }
+  }
   /* Exemplo de nova dupla:
   ,"fulano-ciclano": {
     unidade: "DBA Marabá",

@@ -79,7 +79,18 @@ tr.tot td{font-weight:800;color:var(--marinho);border-top:2px solid var(--borda)
 /* ---------- CONFIGURAÇÃO ---------- */
 // Link "Publicar na Web" em CSV de cada dupla (aba RESULTADO <DUPLA>).
 const PLANILHAS = {
-  "israel-stefanny": "https://docs.google.com/spreadsheets/d/1ItMeQ0Z8T7TTeO3l2Iq1ZyOpiQy1buRX5ZBSzQ2g4ng/gviz/tq?tqx=out:csv&headers=0&gid=202609273"   // ex.: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=202609273&single=true&output=csv"
+  "israel-stefanny": "https://docs.google.com/spreadsheets/d/1ItMeQ0Z8T7TTeO3l2Iq1ZyOpiQy1buRX5ZBSzQ2g4ng/gviz/tq?tqx=out:csv&headers=0&gid=202609273",   // ex.: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=202609273&single=true&output=csv"
+  // DBA Belém — Painel Comercial DBA Belém, aba 'Performance <nome>'
+  "bel-alcir": "https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=178020849",
+  "bel-francitonio": "https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=537204004",
+  "bel-raphael": "https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=1101078203",
+  "bel-cibelle": "https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=703638270",
+  "bel-renato": "https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=1874030307",
+  "bel-jennifer": "https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=240801009",
+  "bel-alessandra": "https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=81199607",
+  "bel-fabio": "https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=1867975067",
+  "bel-alvaro": "https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=1576085608",
+  "bel-marcelle": "https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=296972053"
 };
 const ATUALIZA_MIN = 5;   // relê a planilha a cada 5 minutos
 
@@ -152,7 +163,7 @@ function desenhar(S){
   <div class="tit"><div class="sup">${esc(D?D.unidade:"Painel Comercial")}</div><h1>${esc(S.titulo)}</h1><p>${esc(S.nota)}</p></div>
   <div class="resumo2">
     <div class="box anel">${anel(pct)}<div class="lg"><div>Meta<b>${esc(K["META (t)"]??"–")} t</b></div><div>Faturado<b>${esc(K["FATURADO (t)"]??"–")} t</b></div></div></div>
-    <div class="box"><h2>Indicadores do mês</h2><div class="sub">Consolidado da dupla</div><div class="kpis">${kp}</div></div>
+    <div class="box"><h2>Indicadores do mês</h2><div class="sub">Consolidado ${D&&D.nomes.length<2?"do vendedor":"da dupla"}</div><div class="kpis">${kp}</div></div>
   </div>
   <div class="box rol" style="margin-bottom:16px"><h2>Detalhamento por setor</h2><div class="sub">Verde ≥ 100% · amarelo ≥ 80% · vermelho &lt; 80%</div>
     <table><thead><tr><th>Setor</th><th class="n">Meta (t)</th><th class="n">Faturado (t)</th><th>Progresso</th><th class="n">% Realiz.</th><th class="n">Clientes</th><th class="n">PVL (R$/t)</th><th class="n">Markup</th><th class="n">RAG</th></tr></thead><tbody>${setRows}</tbody></table></div>

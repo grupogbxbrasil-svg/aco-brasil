@@ -168,13 +168,15 @@ else{
  lsub.textContent="Painel Comercial · "+D.unidade+" — "+nome;
  sup.textContent="Painel Comercial · "+D.unidade;tit.textContent=nome;
  unid.textContent="← Voltar para "+D.unidade;pnome.textContent=nome;pperfil.textContent="Vendedores";
- nDisp.textContent=RELATORIOS.filter(r=>!r.off).length;nPrep.textContent=RELATORIOS.filter(r=>r.off).length;
+ // vendedor individual (Belém): esconde os relatórios do 2º vendedor ({B})
+ const REL=RELATORIOS.filter(r=>D.nomes.length>1||!/\{B\}/.test(r.t+r.d)).map(r=>D.nomes.length>1?r:Object.assign({},r,{d:r.d.replace(/ da dupla/g,"")}));
+ nDisp.textContent=REL.filter(r=>!r.off).length;nPrep.textContent=REL.filter(r=>r.off).length;
  const card=r=>{
   const off=!!r.off,tag=(!off&&r.link)?"a":"div",href=tag=="a"?` href="${r.link}${r.link.includes("?")?"&":"?"}d=${id}"`:"";
   const acao=off?"":(r.link?'<span class="ac">Abrir relatório →</span>':'<span class="ac sem">Link em configuração</span>');
   return `<${tag} class="card${off?" off":""}"${href}><div class="ic" style="background:${r.c||""}">${sv(r.ic)}</div><div><h3>${f(r.t)}</h3><p>${f(r.d)}</p><span class="st ${off?"prep":"ok"}">${off?"Em preparação":"Disponível"}</span>${acao}</div></${tag}>`;
  };
- relatorios.innerHTML=GRUPOS.map(G=>`<section class="grupo"><div class="gh"><span class="gi">${sv(G.ic)}</span><div><h2>${G.t}</h2><p>${G.d}</p></div></div><div class="cards ${G.col}">${RELATORIOS.filter(r=>r.g==G.g).map(card).join("")}</div></section>`).join("");
+ relatorios.innerHTML=GRUPOS.map(G=>`<section class="grupo"><div class="gh"><span class="gi">${sv(G.ic)}</span><div><h2>${G.t}</h2><p>${G.d}</p></div></div><div class="cards ${G.col}">${REL.filter(r=>r.g==G.g).map(card).join("")}</div></section>`).join("");
 }
 const K="vend_"+id;
 function mostrar(ok){login.classList.toggle("hide",ok);painel.classList.toggle("hide",!ok)}
