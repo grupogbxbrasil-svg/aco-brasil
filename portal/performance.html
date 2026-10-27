@@ -119,7 +119,10 @@ function ler(R){
   // KPIs lidos pelo título de cada coluna (linha de rótulos + linha de valores logo abaixo)
   const k1 = acha(R,r=>r[0]=="META (t)"), k2 = acha(R,(r,i)=>i>k1 && /CARTEIRA|^CLIENTES S/.test(r[0]||""));
   S.kpi = {};
-  [k1,k2].forEach(k=>{ if(k<0)return; (R[k]||[]).forEach((h,c)=>{ h=(h||"").trim(); if(h) S.kpi[h]=((R[k+1]||[])[c]||"").trim()||"–"; }); });
+  // padrão por ordem: usado quando a leitura do Google não traz o título (colunas numéricas perdem o texto)
+  const PAD=[["META (t)","FATURADO (t)","% REALIZADO","CLIENTES C/ COMPRA","FAT + CARTEIRA (t)"],["CARTEIRA (t)","TICKET MÉDIO (t)","PVL FATURADO (R$/t)","MARKUP %","RAG (R$/t)"]];
+  [k1,k2].forEach((k,b)=>{ if(k<0)return; const H=R[k]||[], V=R[k+1]||[]; let n=0;
+    V.forEach((v,c)=>{ v=(v||"").trim(); const h=(H[c]||"").trim(); if(!v&&!h)return; const nome=(c>0&&h)?h:(h&&c==0?h:PAD[b][n]); n++; if(nome) S.kpi[nome]=v||"–"; }); });
   const hs = acha(R,r=>r[2]=="SETOR"); S.setor = hs<0?[]:bloco(R,hs,x=>/^TOTAL/.test(x));
   S.hSetor = hs<0?[]:R[hs];
   const hm = acha(R,r=>r[2]=="MÊS"); S.meses = hm<0?[]:bloco(R,hm,x=>/^ACUMULADO/.test(x)).filter(r=>!/^ACUMULADO/.test(r[2]));
