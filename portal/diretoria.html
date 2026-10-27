@@ -144,7 +144,7 @@ try{if(sessionStorage.getItem("dir_ok")==="1")gate.remove()}catch(_){}
    Enquanto um gid estiver vazio, aquela fonte é ignorada (FAT vazio = painel avisa). */
 const PUB_MAB="https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=";
 const PUB_BEL="https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=";
-const GID_BEL={FAT:"", NOVO:"", DP:"", BV:"", BI:""}; // <- preencher (ex.: FAT:"123456789")
+const GID_BEL={FAT:"1363505846", NOVO:"", DP:"", BV:"", BI:"1366626833"}; // FAT = aba "faturamento 2026" · BI = aba "INFORMAÇÃO BI"
 const UNIDADES={
   maraba:{nome:"Marabá", fontes:null},
   belem:{nome:"Belém", semDuplas:true, fontes:Object.fromEntries(Object.entries(GID_BEL).map(([k,g])=>[k,g?PUB_BEL+g:""]))}
@@ -170,6 +170,9 @@ function setUni(u){UNI=u;try{localStorage.setItem("dir_uni",u)}catch(_){}
 document.querySelector(".uni").onclick=e=>{const b=e.target.closest("[data-u]");if(!b||b.dataset.u==UNI)return;setUni(b.dataset.u);carregar(true)};
 // Colunas da aba FAT 2026 ATUAL (posição, começando em 0)
 const C = {grp:13, vend:63, cli:49, nome:50, cid:52, data:100, dupla:229, ano:230, ton:231, rota:233, mes:234, fam:242, setor:246};
+// Belém: a aba "faturamento 2026" tem 4 colunas a mais antes das colunas (aux)
+const C_MAB={...C}, C_BEL={grp:13, vend:63, cli:49, nome:50, cid:52, data:100, dupla:233, ano:234, ton:235, rota:237, mes:238, fam:246, setor:250};
+const colsUni=()=>Object.assign(C, UNI=="belem"?C_BEL:C_MAB);
 const BGL = "GV484";
 const MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 const ATUALIZA_MIN = 10;
@@ -199,6 +202,7 @@ fMes.onchange=fDupla.onchange=()=>render();
 /* ---------- carga ---------- */
 async function carregar(manual){
   const U0=UNI;
+  colsUni();
   if(!FONTES.FAT){stEl.textContent=UNIDADES[UNI].nome+": fontes não configuradas";app.innerHTML='<div class="box vazio">O painel de '+UNIDADES[UNI].nome+' ainda não tem as abas de faturamento ligadas. Preencha GID_BEL no código.</div>';return}
   try{
     stEl.innerHTML='<span class="dot"></span>atualizando…';
