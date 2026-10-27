@@ -76,6 +76,7 @@ main>*{animation:sobe .45s ease both}main>*:nth-child(2){animation-delay:.05s}ma
 .h-sup{font-size:.74rem;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;color:#9fc0ea}
 .h-num{font-size:3.4rem;font-weight:800;line-height:1.05;margin:6px 0}.h-num small{font-size:1.4rem;font-weight:600;opacity:.8}
 .h-sub{font-size:.86rem;color:#c9d7ea;margin-bottom:16px}
+.h-duo{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 4px}.h-lab{display:block;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;font-weight:700;color:#c9d7ea}.h-real{color:#ff8a3d}.h-proj{color:#8fd3ff;opacity:.95}
 .h-bars{display:grid;gap:10px;max-width:520px}
 .hbar{display:grid;grid-template-columns:150px 1fr 54px 70px;gap:10px;align-items:center;font-size:.8rem;color:#dbe6f3}
 .hbar b{color:#fff;text-align:right}.hbar small{color:#9fb3cc;text-align:right}
@@ -329,8 +330,11 @@ function vResumo(X){
   return `<section class="hero">
     <div>
       <div class="h-sup">${parcial?"Ritmo do mês":"Fechamento"} · ${MES[M-1]}/26${X.DU?" · "+esc(nomeD(X.DU)):" · DBA Marabá"}</div>
-      <div class="h-num">${f1(ref)}<small> t</small></div>
-      <div class="h-sub">${parcial?`${f1(fat)} t faturadas em ${duD} de ${duT} dias úteis · projeção pelo ritmo de ${f1(fat/duD)} t/dia`:`${duT} dias úteis · ${f1(fat/duT)} t por dia útil`}${X.bi?`<br><span class="tag" style="background:#ffffff22;color:#fff;margin-top:6px">Fonte: Power BI (posição atual) · notas sem BGL até ${dataNF}</span>`:""}</div>
+      ${parcial?`<div class="h-duo">
+        <div><span class="h-lab">Faturado real</span><div class="h-num h-real">${f1(fat)}<small> t</small></div></div>
+        <div><span class="h-lab">Projeção do mês</span><div class="h-num h-proj">${f1(proj)}<small> t</small></div></div>
+      </div>`:`<div class="h-num">${f1(ref)}<small> t</small></div>`}
+      <div class="h-sub">${parcial?`${duD} de ${duT} dias úteis apurados · projeção pelo ritmo de ${f1(fat/duD)} t/dia`:`${duT} dias úteis · ${f1(fat/duT)} t por dia útil`}${X.bi?`<br><span class="tag" style="background:#ffffff22;color:#fff;margin-top:6px">Fonte: Power BI (posição atual) · notas sem BGL até ${dataNF}</span>`:""}</div>
       <div class="h-bars">
         ${hbar("vs média 3 meses",vsMed,f1(med3)+" t")}
         ${hbar("vs "+(MES[M-2]||"mês anterior"),vsAnt,f1(fatA)+" t")}
