@@ -109,16 +109,17 @@ const num = s => { if(!s||s=="–"||s=="-")return 0; const neg=/^\(.*\)$/.test(s
   const v=parseFloat(s.replace(/[R$%()\s+-]/g,"").replace(/\./g,"").replace(",","."))||0; return neg?-v:v; };
 const esc = s => String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const cor = p => p>=100?"var(--ok)":p>=80?"var(--mid)":"var(--bad)";
-const acha = (R,f,de=0) => { for(let i=de;i<R.length;i++) if(f(R[i]))return i; return -1; };
+const acha = (R,f,de=0) => { for(let i=de;i<R.length;i++) if(f(R[i],i))return i; return -1; };
 const bloco = (R,h,fim) => { const o=[]; for(let i=h+1;i<R.length;i++){const r=R[i]; if(!r[2]){if(o.length)break;else continue} o.push(r); if(fim(r[2]))break;} return o; };
 
 /* ---------- leitura da planilha ---------- */
 function ler(R){
   const S = {};
   const t = acha(R,r=>/RESULTADO DO M[ÊE]S/i.test(r[0]||"")); S.titulo = t>=0?R[t][0].replace(/^\d+\s*\|\s*/,""):"Resultado do mês"; S.nota = t>=0?(R[t+1]||[])[0]:"";
-  const k1 = acha(R,r=>r[0]=="META (t)"), k2 = acha(R,r=>r[0]=="CLIENTES SÓ CARTEIRA");
+  // KPIs lidos pelo título de cada coluna (linha de rótulos + linha de valores logo abaixo)
+  const k1 = acha(R,r=>r[0]=="META (t)"), k2 = acha(R,(r,i)=>i>k1 && /CARTEIRA|^CLIENTES S/.test(r[0]||""));
   S.kpi = {};
-  [k1,k2].forEach(k=>{ if(k<0)return; [0,3,6,9,12].forEach(c=>{ const L=k==k1?["META (t)","FATURADO (t)","% REALIZADO","CLIENTES C/ COMPRA","CLIENTES FAT + CARTEIRA"]:["CLIENTES SÓ CARTEIRA","TICKET MÉDIO (t)","PVL FATURADO (R$/t)","MARKUP %","RAG (R$/t)"]; S.kpi[L[c/3]] = (R[k+1]||[])[c]||"–"; }); });
+  [k1,k2].forEach(k=>{ if(k<0)return; (R[k]||[]).forEach((h,c)=>{ h=(h||"").trim(); if(h) S.kpi[h]=((R[k+1]||[])[c]||"").trim()||"–"; }); });
   const hs = acha(R,r=>r[2]=="SETOR"); S.setor = hs<0?[]:bloco(R,hs,x=>/^TOTAL/.test(x));
   S.hSetor = hs<0?[]:R[hs];
   const hm = acha(R,r=>r[2]=="MÊS"); S.meses = hm<0?[]:bloco(R,hm,x=>/^ACUMULADO/.test(x)).filter(r=>!/^ACUMULADO/.test(r[2]));
@@ -140,8 +141,11 @@ function anel(p){const r=78,C=2*Math.PI*r,v=Math.max(0,Math.min(p,100));
 
 function desenhar(S){
   const K=S.kpi, pct=num(K["% REALIZADO"]);
-  const kp=["FATURADO (t)","CLIENTES C/ COMPRA","CLIENTES FAT + CARTEIRA","CLIENTES SÓ CARTEIRA","TICKET MÉDIO (t)","PVL FATURADO (R$/t)","MARKUP %","RAG (R$/t)"]
+  const kp=["FATURADO (t)","CLIENTES C/ COMPRA","TICKET MÉDIO (t)","PVL FATURADO (R$/t)","MARKUP %","RAG (R$/t)"]
     .map(k=>`<div class="kpi"><small>${esc(k)}</small><b>${esc(K[k]??"–")}</b></div>`).join("");
+  // Faturado + Carteira fica num bloco separado (não entra no faturado)
+  const cart=["FAT + CARTEIRA (t)","CARTEIRA (t)","CLIENTES FAT + CARTEIRA","CLIENTES SÓ CARTEIRA"].filter(k=>K[k]!=null)
+    .map(k=>`<div class="kpi"><small>${esc(k)}</small><b>${esc(K[k])}</b></div>`).join("");
 
   const setRows=S.setor.map(r=>{const p=num(r[7]),tot=/^TOTAL/.test(r[2]);
     return `<tr class="${tot?"tot":""}"><td>${esc(r[2])}</td><td class="n">${esc(r[5])}</td><td class="n">${esc(r[6])}</td>
@@ -165,6 +169,7 @@ function desenhar(S){
     <div class="box anel">${anel(pct)}<div class="lg"><div>Meta<b>${esc(K["META (t)"]??"–")} t</b></div><div>Faturado<b>${esc(K["FATURADO (t)"]??"–")} t</b></div></div></div>
     <div class="box"><h2>Indicadores do mês</h2><div class="sub">Consolidado ${D&&D.nomes.length<2?"do vendedor":"da dupla"}</div><div class="kpis">${kp}</div></div>
   </div>
+  ${cart?`<div class="box" style="margin-bottom:16px"><h2>Faturamento + Carteira</h2><div class="sub">Pedidos em carteira somados ao faturado — acompanhamento separado do faturamento</div><div class="kpis">${cart}</div></div>`:""}
   <div class="box rol" style="margin-bottom:16px"><h2>Detalhamento por setor</h2><div class="sub">Verde ≥ 100% · amarelo ≥ 80% · vermelho &lt; 80%</div>
     <table><thead><tr><th>Setor</th><th class="n">Meta (t)</th><th class="n">Faturado (t)</th><th>Progresso</th><th class="n">% Realiz.</th><th class="n">Clientes</th><th class="n">PVL (R$/t)</th><th class="n">Markup</th><th class="n">RAG</th></tr></thead><tbody>${setRows}</tbody></table></div>
   <div class="grid2">
