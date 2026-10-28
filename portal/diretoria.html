@@ -253,7 +253,7 @@ function montarFiltros(){
   const ms=[...new Set(D.map(x=>x.m))].sort((a,b)=>a-b), selM=fMes.value, selD=fDupla.value;
   fMes.innerHTML=ms.map(m=>`<option value="${m}">${MES[m-1]}/26</option>`).join("");
   const ult=ms[ms.length-1], biOk=BIm[ult]&&BIm[ult].t>sum(D.filter(x=>x.m==ult),x=>x.t)*1.05;
-  fMes.value=selM&&ms.includes(+selM)?selM:(biOk||!(ULT&&ULT.getMonth()+1==ult&&ms.length>1)?ult:ms[ms.length-2]);
+  fMes.value=selM&&ms.includes(+selM)?selM:ult;
   const ds=Object.entries(grp(D,"dupla")).map(([k,a])=>[k,sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
   fDupla.innerHTML='<option value="">Todas as duplas</option>'+ds.map(d=>`<option value="${esc(d)}">${esc(nomeD(d))}</option>`).join("");
   fDupla.value=ds.includes(selD)?selD:"";
@@ -268,7 +268,8 @@ function ctx(){
   const parcial=ULT&&ULT.getMonth()+1==M&&ULT.getFullYear()==2026;
   const duT=diasUteis(2026,M), duD=parcial?Math.max(1,diasUteis(2026,M,ULT)):duT;
   let bi=null,duD2=duD;const hoje=new Date();
-  if(!DU&&BIm[M]&&BIm[M].t>sum(cur,x=>x.t)*1.05){bi=BIm[M];if(hoje.getFullYear()==2026&&hoje.getMonth()+1==M){const ont=new Date(hoje);ont.setDate(hoje.getDate()-1);duD2=Math.max(1,diasUteis(2026,M,ont))}}
+  let biM=DU?(()=>{const v=BV.filter(x=>x.m==M&&(x.dupla==DU||x.vend==DU)&&!/total/i.test(x.setor||""));if(!v.length)return null;const o={t:0,set:[]};v.forEach(x=>{o.t+=x.t;o.set.push([titulo(x.setor),x.t])});o.set.sort((a,b)=>b[1]-a[1]);return o})():BIm[M];
+  if(biM&&biM.t>sum(cur,x=>x.t)*1.05){bi=biM;if(hoje.getFullYear()==2026&&hoje.getMonth()+1==M){const ont=new Date(hoje);ont.setDate(hoje.getDate()-1);duD2=Math.max(1,diasUteis(2026,M,ont))}}
   return {M,DU,base,porM,cur,ant,parcial,duT,duD,bi,duDbi:duD2,parcialBi:duD2<duT};
 }
 function serie(a,ate){const o=[];for(let m=1;m<=ate;m++)o.push(sum(a.filter(x=>x.m==m),x=>x.t));return o}
