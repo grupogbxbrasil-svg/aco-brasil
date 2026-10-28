@@ -34,42 +34,6 @@ main{max-width:1400px;margin:0 auto;padding:22px 24px 60px}
 .kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--azul2))}
 .kpi small{font-size:.7rem;font-weight:700;letter-spacing:.6px;color:var(--cinza);text-transform:uppercase}
 .kpi b{display:block;font-size:1.6rem;color:var(--marinho);margin:4px 0 2px;line-height:1.1}
-
-<!-- Quadro de resultados diário no Resumo (RESULTADO BI 2026) -->
-<style>
-.qrd{border:2px solid #2e7d32;border-radius:8px;overflow-x:auto;margin:0 0 16px;background:#fff}
-.qrd .qh{display:flex;align-items:center;gap:16px;padding:6px 10px;min-width:760px}
-.qrd .qd{background:#1b1b1b;color:#fff;font-weight:700;font-size:13px;border-collapse:collapse}.qrd .qd td{padding:3px 10px}.qrd .qd td.n{background:#e8f5e9;color:#000;text-align:center;font-style:italic;min-width:40px}
-.qrd .qm{flex:1;text-align:center;font-size:20px;font-weight:700;color:#333}.qrd .qf{color:#e65100;font-weight:700;font-size:16px}.qrd .qa{font-size:13px;text-align:center;line-height:1.1;color:#333}
-.qrd table.qt{border-collapse:collapse;width:100%;font-size:12px;min-width:760px;color:#222}.qrd .qt th{background:#2e7d32;color:#fff;padding:5px 4px;font-size:11px}
-.qrd .qt td{border:1px solid #ccc;padding:3px 6px;text-align:right}.qrd .qt td:first-child{text-align:left}.qrd .qt tr.tot td{background:#dcedc8;font-weight:700;color:#2e7d32}
-.qrd .g{background:#c8e6c9}.qrd .y{background:#ffe0b2}.qrd .rd{background:#f8bbd0}.qrd .qv{padding:14px;text-align:center;color:#777}
-</style>
-<script>
-/* ---------- QUADRO DE RESULTADOS DIÁRIO (aba RESULTADO BI 2026) ---------- */
-const QRD_SRC={maraba:PUB_MAB+"1939033816",belem:PUB_BEL+"41139862"}, QRD_C={};
-function qrdBlocos(rows){const out=[];let b=null;const nz=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim();
- rows.forEach(r=>{const i=r.findIndex(v=>nz(v)=="DIAS UTEIS");
-  if(i>=0){b={mes:r.find(v=>/^[A-ZÇ]+\/\d{2}$/.test(String(v).trim()))||"",ut:r[i+1],dc:"",h:null,l:[],t:null,c:i};out.push(b);return}
-  if(!b)return;const c=b.c,v=r.slice(c,c+11),k=nz(r[c]);
-  if(k=="DIAS DECORRIDOS"){b.dc=r[c+1];return} if(k=="SETOR"){b.h=v;return}
-  if(!b.h||!k)return; if(k.startsWith("TOTA"))b.t=v; else if(!b.t)b.l.push(v)});
- return out.filter(x=>x.h)}
-function qrdHtml(b,nome){const pi=b.h.findIndex(h=>/REALIZADO/i.test(h));
- const cr=p=>{const n=num(p);return !String(p||"").includes("%")?"":n>=80?"g":n>=40?"y":"rd"};
- const ln=(v,t)=>`<tr${t?' class="tot"':""}>`+v.map((x,k)=>`<td${k==pi&&!t?` class="${cr(x)}"`:""}>${esc(x)}</td>`).join("")+"</tr>";
- return `<div class="qh"><table class="qd"><tr><td>Dias Úteis</td><td class="n">${esc(b.ut)}</td></tr><tr><td><i>Dias Decorridos</i></td><td class="n">${esc(b.dc)}</td></tr></table><div class="qa">AÇO<br>BRASIL</div><div class="qm">${esc(b.mes)}</div><div class="qf">DBA ${esc(nome.toUpperCase())}</div></div>
- <table class="qt"><tr>${b.h.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${b.l.map(v=>ln(v)).join("")}<tr><td colspan="${b.h.length}" style="border:none">&nbsp;</td></tr>${b.t?ln(b.t,1):""}</table>`}
-async function qrdFill(M){const el=document.getElementById("qrd");if(!el)return;const u=UNI,src=QRD_SRC[u];if(!src){el.remove();return}
- try{if(!QRD_C[u]||Date.now()-QRD_C[u].ts>600000){const r=await fetch(src+"&t="+Date.now());QRD_C[u]={ts:Date.now(),b:qrdBlocos(csv(await r.text()))}}
-  const alvo=MES[M-1]?String(MES[M-1]).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().slice(0,3):"";
-  const bl=QRD_C[u].b, b=bl.find(x=>x.mes.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().startsWith(alvo))||bl[bl.length-1];
-  const e2=document.getElementById("qrd"); if(e2&&u==UNI)e2.innerHTML=b?qrdHtml(b,UNIDADES[u].nome):'<div class="qv">Sem dados.</div>'}
- catch(e){const e2=document.getElementById("qrd");if(e2)e2.innerHTML='<div class="qv">Não foi possível ler o quadro de resultados.</div>'}}
-(function(){const _render=render;render=function(){_render.apply(this,arguments);
- try{if(ABA=="resumo"&&D.length&&!document.getElementById("qrd")){app.insertAdjacentHTML("afterbegin",'<div class="qrd" id="qrd"><div class="qv">Carregando quadro de resultados…</div></div>');qrdFill(X_.M)}}catch(e){console.error(e)}};
- try{if(D.length)render()}catch(_){}})();
-</script>
 .kpi span{font-size:.78rem;color:var(--cinza)}
 .up{color:var(--ok)!important;font-weight:700}.dn{color:var(--bad)!important;font-weight:700}
 table{width:100%;border-collapse:collapse;font-size:.83rem}
