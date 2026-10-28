@@ -40,7 +40,8 @@ button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;backgr
 async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 async function entrar(e){e.preventDefault();
  const k=email.value.trim().toLowerCase(),p=senha.value;
- if(k==="diretoria"){if(await sha(p)==="5df6b10b2a3358054b97e3bd42cc572e1e0244aeb2de0358379370c83d28e0b0"){try{sessionStorage.setItem("dir_ok","1")}catch(_){}location.href="diretoria.html";return}else{erro.textContent="Usuário ou senha inválidos.";return}}
+ const DIR={"diretoria":"5df6b10b2a3358054b97e3bd42cc572e1e0244aeb2de0358379370c83d28e0b0","supervisao":"09be3223d2e141d52a73221eff0000bcede632177ca296489c349d3e8108e292"};
+ if(DIR[k]){if(await sha(p)===DIR[k]){try{sessionStorage.setItem("dir_ok","1")}catch(_){}location.href="diretoria.html";return}else{erro.textContent="Usuário ou senha inválidos.";return}}
  for(const[id,d]of Object.entries(DUPLAS)){if(d.usuarios[k]===p){try{sessionStorage.setItem("vend_"+id,k)}catch(_){}location.href="painel.html?d="+id;return}}
  erro.textContent="Usuário ou senha inválidos.";}
 </script>
