@@ -565,3 +565,49 @@ async function qrdFill(M){const el=document.getElementById("qrd");if(!el)return;
  try{if(ABA=="resumo"&&D.length&&!document.getElementById("qrd")){app.insertAdjacentHTML("afterbegin",'<div class="qrd" id="qrd"><div class="qv">Carregando quadro de resultados…</div></div>');qrdFill(X_.M)}}catch(e){console.error(e)}};
  try{if(D.length)render()}catch(_){}})();
 </script>
+
+<!-- Quadro de resultados por vendedor (abas "<vendedor> vendas") -->
+<style>.vqd .qv2{padding:4px 10px 8px;font-size:12px;color:#777}.vqd-t{font-size:.98rem;color:var(--marinho);font-weight:700;margin:0 0 8px}</style>
+<script>
+/* ---------- QUADRO POR VENDEDOR ---------- */
+const VQ_GID={
+ maraba:{israel:"441538326",jadson:"1318320768",jessica:"1869265200",matheus:"510608811",rafael:"1281874551",rebeca:"1250448944",stefanny:"1381692253",martinho:"986946096"},
+ belem:{alcir:"511352808",francitonio:"1609826661",raphael:"1712041372",cibelle:"1613244717",renato:"978030090",jennifer:"2021581207",alessandra:"1592224128",fabio:"1189567616",alvaro:"1550762302",marcelle:"391800473",rogerio:"1065418063",jessica:"1876699413"}};
+const VQ_C={};
+const vqN=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+function vqBlocos(rows){const out=[];let b=null;
+ rows.forEach(r=>{const c0=vqN(r[0]);
+  if(/^[a-zç]+\/\d{2}$/.test(c0)){b={mes:c0,h:null,l:[],t:null};out.push(b);return}
+  if(!b)return; if(c0=="setor"){b.h=r.slice(0,9);return}
+  if(!b.h||!c0)return; if(c0=="total")b.t=r.slice(0,9); else if(!b.t)b.l.push(r.slice(0,9))});
+ return out.filter(x=>x.h)}
+async function vqLoad(u,nome){const k=u+":"+nome,g=(VQ_GID[u]||{})[nome];if(!g)return null;
+ if(!VQ_C[k]||Date.now()-VQ_C[k].ts>600000){const src=(u=="belem"?PUB_BEL:PUB_MAB)+g;VQ_C[k]={ts:Date.now(),b:vqBlocos(csv(await qrdGet(src+"&t="+Date.now())))}}
+ return VQ_C[k].b}
+async function qrdLoadFil(u){if(!QRD_C[u]||Date.now()-QRD_C[u].ts>600000){QRD_C[u]={ts:Date.now(),b:qrdBlocos(csv(await qrdGet(QRD_SRC[u]+"&t="+Date.now())))}}return QRD_C[u].b}
+function vqHtml(b,nome,mesTxt,fil){
+ const tx=v=>{const s=String(v||"").trim();return !s||s=="-"?0:num(s)};
+ const f2=v=>v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+ const ln=(r,t)=>{const fat=tx(r[1]),fc=tx(r[7]),vazio=!String(r[1]||"").trim()||r[1]=="-";
+  const cel=[r[0],vazio?"":f2(fat),vazio?"":f2(fc-fat),vazio?"":f2(fc),r[2]||"",r[3]||"",r[4]||"",r[5]||"",r[6]||""];
+  return `<tr${t?' class="tot"':""}>`+cel.map(x=>`<td>${esc(x)}</td>`).join("")+"</tr>"};
+ const h=["Setor","Faturado (t)","Carteira","Fat + Carteira","Clientes com compra","Ticket Médio","PVL Faturado","Markup %","RAG"];
+ return `<div class="qrd"><div class="qh"><table class="qd"><tr><td>Dias Úteis</td><td class="n">${esc(fil?fil.ut:"")}</td></tr><tr><td><i>Dias Decorridos</i></td><td class="n">${esc(fil?fil.dc:"")}</td></tr></table><div class="qa">AÇO<br>BRASIL</div><div class="qm">${esc(mesTxt)}</div><div class="qf">${esc(titulo(nome).toUpperCase())}</div></div>
+ <table class="qt"><tr>${h.map(x=>`<th>${x}</th>`).join("")}</tr>${b.l.map(r=>ln(r)).join("")}<tr><td colspan="9" style="border:none">&nbsp;</td></tr>${b.t?ln(b.t,1):""}</table>
+ <div class="qv2">Meta por vendedor ainda não cadastrada.</div></div>`}
+async function vqFill(M,DU){const el=document.getElementById("vqd");if(!el)return;const u=UNI;
+ const nomes=String(DU||"").split(/\/|&/).map(s=>vqN(s).split(/\s+/)[0]).filter(n=>(VQ_GID[u]||{})[n]);
+ if(!nomes.length){el.remove();return}
+ const ab=vqN(MES[M-1]||"").slice(0,3);
+ try{let fil=null;try{fil=(await qrdLoadFil(u)).find(x=>vqN(x.mes).startsWith(ab))}catch(_){}
+  const mesTxt=fil?fil.mes:String(MES[M-1]||"").toUpperCase()+"/26";
+  const partes=await Promise.all(nomes.map(async n=>{const bl=await vqLoad(u,n);const b=bl&&bl.find(x=>x.mes.startsWith(ab));return b?vqHtml(b,n,mesTxt,fil):`<div class="qrd"><div class="qv">${esc(titulo(n))}: sem dados de ${esc(mesTxt)}.</div></div>`}));
+  const e2=document.getElementById("vqd");if(e2&&u==UNI)e2.innerHTML='<div class="vqd-t">Quadro de resultados por vendedor</div>'+partes.join("")}
+ catch(e){const e2=document.getElementById("vqd");if(e2)e2.innerHTML='<div class="qrd"><div class="qv">Não foi possível ler o quadro dos vendedores.</div></div>'}}
+(function(){const _r2=render;render=function(){_r2.apply(this,arguments);
+ try{if(!D.length||document.getElementById("vqd"))return;let DU=X_&&X_.DU;
+  if(ABA=="ficha"&&!DU){const s=app.querySelector("select");DU=s?s.value:""}
+  if(DU&&(ABA=="resumo"||ABA=="ficha")){const q=document.getElementById("qrd");if(q&&ABA=="resumo")q.remove();
+   app.insertAdjacentHTML("afterbegin",'<div class="vqd" id="vqd"><div class="qrd"><div class="qv">Carregando quadro do vendedor…</div></div></div>');vqFill(X_.M,DU)}}catch(e){console.error(e)}};
+ try{if(D.length)render()}catch(_){}})();
+</script>
