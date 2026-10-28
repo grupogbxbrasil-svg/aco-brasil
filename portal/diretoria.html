@@ -553,8 +553,10 @@ function qrdHtml(b,nome){const pi=b.h.findIndex(h=>/REALIZADO/i.test(h));
  const ln=(v,t)=>`<tr${t?' class="tot"':""}>`+v.map((x,k)=>`<td${k==pi&&!t?` class="${cr(x)}"`:""}>${esc(x)}</td>`).join("")+"</tr>";
  return `<div class="qh"><table class="qd"><tr><td>Dias Úteis</td><td class="n">${esc(b.ut)}</td></tr><tr><td><i>Dias Decorridos</i></td><td class="n">${esc(b.dc)}</td></tr></table><div class="qa">AÇO<br>BRASIL</div><div class="qm">${esc(b.mes)}</div><div class="qf">DBA ${esc(nome.toUpperCase())}</div></div>
  <table class="qt"><tr>${b.h.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${b.l.map(v=>ln(v)).join("")}<tr><td colspan="${b.h.length}" style="border:none">&nbsp;</td></tr>${b.t?ln(b.t,1):""}</table>`}
+function qrdGet(u){const px=()=>new Promise((res,rej)=>{const id="qrd"+String(Math.random()).slice(2);const to=setTimeout(()=>{removeEventListener("message",hh);rej(new Error("tempo"))},25000);const hh=e=>{const d=e.data||{};if(d.tipo==="fxr"&&d.id===id){clearTimeout(to);removeEventListener("message",hh);d.ok&&d.text?res(d.text):rej(new Error("proxy "+d.status))}};addEventListener("message",hh);parent.postMessage({tipo:"fx",id:id,url:u},"*")});
+ return fetch(u,{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{if(!t||t.length<50)throw 0;return t}).catch(()=>px())}
 async function qrdFill(M){const el=document.getElementById("qrd");if(!el)return;const u=UNI,src=QRD_SRC[u];if(!src){el.remove();return}
- try{if(!QRD_C[u]||Date.now()-QRD_C[u].ts>600000){const r=await fetch(src+"&t="+Date.now());QRD_C[u]={ts:Date.now(),b:qrdBlocos(csv(await r.text()))}}
+ try{if(!QRD_C[u]||Date.now()-QRD_C[u].ts>600000){QRD_C[u]={ts:Date.now(),b:qrdBlocos(csv(await qrdGet(src+"&t="+Date.now())))}}
   const alvo=MES[M-1]?String(MES[M-1]).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().slice(0,3):"";
   const bl=QRD_C[u].b, b=bl.find(x=>x.mes.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().startsWith(alvo))||bl[bl.length-1];
   const e2=document.getElementById("qrd"); if(e2&&u==UNI)e2.innerHTML=b?qrdHtml(b,UNIDADES[u].nome):'<div class="qv">Sem dados.</div>'}
