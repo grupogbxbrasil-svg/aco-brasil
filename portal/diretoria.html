@@ -367,10 +367,11 @@ function vResumo(X){
 /* ---------- ABA: RANKING ---------- */
 function linhaRank(nome,a,X,tot){
   const {M,parcial,duT,duD}=X;const c=sum(a.filter(x=>x.m==M),x=>x.t), p=sum(a.filter(x=>x.m==M-1),x=>x.t);
-  const pj=parcial?c/duD*duT:c; const s=serie(a,M).slice(-6);s[s.length-1]=pj; const cl=new Set(a.filter(x=>x.m==M).map(x=>x.cli)).size;
+  const ofc=typeof offGet=="function"?offGet(nome,M):null; const c_=ofc?ofc.t:c;
+  const pj=parcial?c_/duD*duT:c_; const s=serie(a,M).slice(-6);s[s.length-1]=pj; const cl=ofc?ofc.cl:new Set(a.filter(x=>x.m==M).map(x=>x.cli)).size;
   const ytd=sum(a.filter(x=>x.m<=M),x=>x.t), med=[M-1,M-2,M-3].filter(m=>m>0).map(m=>sum(a.filter(x=>x.m==m),x=>x.t));
   const md=med.length?sum(med,x=>x)/med.length:0;
-  return {nome,c,p,pj,s,cl,ytd,md,v:pct(pj,p),sh:tot?c/tot*100:0,tk:cl?c/cl:0};
+  const ytd_=ytd-c+c_;return {nome,c:c_,p,pj,s,cl,ytd:ytd_,md,v:pct(pj,p),sh:tot?c_/tot*100:0,tk:cl?c_/cl:0};
 }
 function tabRank(rows,col1,tot){
   return `<div class="rol"><table><thead><tr><th>#</th><th>${col1}</th><th class="n">Mês (t)</th>${X_.parcial?'<th class="n">Projeção</th>':""}<th class="n">Mês ant.</th><th class="n">Var.</th><th class="n">Média 3m</th><th class="n">Share</th><th class="n">Clientes</th><th class="n">Ticket</th><th class="n">Acum. ano</th><th>Últimos 6 meses</th></tr></thead><tbody>
@@ -380,8 +381,8 @@ function tabRank(rows,col1,tot){
 }
 let X_;
 function vRanking(X){
-  const {M,base}=X, tot=sum(X.cur,x=>x.t);
-  const rd=Object.entries(grp(base,"dupla")).map(([d,a])=>linhaRank(nomeD(d),a,X,tot)).sort((a,b)=>b.c-a.c);
+  const {M,base}=X; let tot=sum(X.cur,x=>x.t);
+  let rd=Object.entries(grp(base,"dupla")).map(([d,a])=>linhaRank(nomeD(d),a,X,tot));const totR=sum(rd,r=>r.c);if(totR>tot){tot=totR;rd=Object.entries(grp(base,"dupla")).map(([d,a])=>linhaRank(nomeD(d),a,X,tot))}rd.sort((a,b)=>b.c-a.c);
   const eq=base.filter(x=>x.dupla!="Outros");
   const rv=Object.entries(grp(eq,"vend")).map(([v,a])=>linhaRank(v||"(sem vendedor)",a,X,tot)).filter(r=>r.ytd>0.5).sort((a,b)=>b.c-a.c);
   const best=rd.filter(r=>r.nome!="Outros"&&isFinite(r.v)).sort((a,b)=>b.v-a.v)[0];
@@ -403,8 +404,10 @@ function vFicha(X){
   const ds=Object.entries(grp(D.filter(x=>x.dupla!="Outros"),"dupla")).sort((a,b)=>sum(b[1],x=>x.t)-sum(a[1],x=>x.t)).map(x=>x[0]);
   if(!DU)DU=ds[0];
   const a=D.filter(x=>x.dupla==DU), eqM=D.filter(x=>x.m==M&&x.dupla!="Outros"), nD=new Set(eqM.map(x=>x.dupla)).size||1;
-  const cur=a.filter(x=>x.m==M), ant=a.filter(x=>x.m==M-1), fat=sum(cur,x=>x.t), fatA=sum(ant,x=>x.t), pj=X.parcial?fat/X.duD*X.duT:fat;
-  const media=sum(eqM,x=>x.t)/nD, cl=clientes(cur), cliA=new Set(ant.map(x=>x.cli));
+  const ofc=typeof offGet=="function"?offGet(nomeD(DU),M):null;
+  const cur=a.filter(x=>x.m==M), ant=a.filter(x=>x.m==M-1), fat=ofc?ofc.t:sum(cur,x=>x.t), fatA=sum(ant,x=>x.t), pj=X.parcial?fat/X.duD*X.duT:fat;
+  const ofs=ds.map(d=>typeof offGet=="function"?offGet(nomeD(d),M):null), media=ofs.every(o=>o)?sum(ofs,o=>o.t)/(ofs.length||1):sum(eqM,x=>x.t)/nD, cl=clientes(cur), cliA=new Set(ant.map(x=>x.cli));
+  const nCl=ofc?ofc.cl:cl.length, totFil=Math.max(sum(D.filter(x=>x.m==M),x=>x.t),ofs.every(o=>o)?sum(ofs,o=>o.t):0);
   const ms=[...Array(M).keys()].map(i=>i+1);
   const setores=Object.entries(grp(cur,"setor")).map(([s,b])=>[titulo(s),sum(b,x=>x.t)]).sort((x,y)=>y[1]-x[1]);
   const rotas=Object.entries(grp(cur,"rota")).map(([s,b])=>[s,sum(b,x=>x.t)]).sort((x,y)=>y[1]-x[1]).slice(0,8);
@@ -416,8 +419,8 @@ function vFicha(X){
   <div class="g g4">
    ${kpi("Faturado",f1(fat)+" t",`<span class="${cls(pct(fat,fatA))}">${fp(pct(fat,fatA))}</span> vs ${MES[M-2]||"–"}`,"var(--laranja)")}
    ${kpi(X.parcial?"Projeção":"vs média das duplas",X.parcial?f1(pj)+" t":fp(pct(fat,media)),`média das duplas: ${f1(media)} t`)}
-   ${kpi("Clientes",cl.length,`${cl.filter(c=>!cliA.has(c.cli)).length} não compraram em ${MES[M-2]||"–"}`,"#2e7d57")}
-   ${kpi("Ticket médio",f1(cl.length?fat/cl.length:0)+" t",`share da filial: ${f1(sum(X.cur.length?D.filter(x=>x.m==M):[],x=>x.t)?fat/sum(D.filter(x=>x.m==M),x=>x.t)*100:0)}%`,"#7a47aa")}
+   ${kpi("Clientes",nCl,`${cl.filter(c=>!cliA.has(c.cli)).length} não compraram em ${MES[M-2]||"–"}`,"#2e7d57")}
+   ${kpi("Ticket médio",f1(nCl?fat/nCl:0)+" t",`share da filial: ${f1(totFil?fat/totFil*100:0)}%`,"#7a47aa")}
   </div>
   <div class="g g21">
    <div class="box"><h2>Evolução mensal</h2><div class="sub">Volume (t) · laranja = mês selecionado</div>${colunas(ms,ms.map(m=>sum(a.filter(x=>x.m==m&&!x.bgl),x=>x.t)),ms.map(m=>sum(a.filter(x=>x.m==m&&x.bgl),x=>x.t)),M)}<div class="leg"><span><i style="background:#0b2a55"></i>Orgânico</span><span><i style="background:var(--bgl)"></i>BGL</span></div></div>
@@ -610,5 +613,21 @@ async function vqFill(M,DU){const el=document.getElementById("vqd");if(!el)retur
   if(ABA=="ficha"&&!DU){const s=app.querySelector("select");DU=s?s.value:""}
   if(DU&&(ABA=="resumo"||ABA=="ficha")){const q=document.getElementById("qrd");if(q&&ABA=="resumo")q.remove();
    app.insertAdjacentHTML("afterbegin",'<div class="vqd" id="vqd"><div class="qrd"><div class="qv">Carregando quadro do vendedor…</div></div></div>');vqFill(X_.M,DU)}}catch(e){console.error(e)}};
+ try{if(D.length)render()}catch(_){}})();
+</script>
+<script>
+/* ---------- TOTAIS OFICIAIS: mesmo relatório do quadro (abas "<vendedor> vendas") ----------
+   Ranking e Ficha usam o TOTAL de cada vendedor no quadro; dupla = soma dos dois. */
+const OFF={},OFF_ING={};
+function offGet(nome,M){const o=OFF[UNI+":"+M];if(!o)return null;
+ const ns=String(nome||"").split(/\/|&|\s+e\s+/).map(x=>vqN(x).split(/\s+/)[0]).filter(Boolean);
+ if(!ns.length||!ns.every(n=>o[n]))return null;
+ return {t:sum(ns,n=>o[n].t),cl:sum(ns,n=>o[n].cl)}}
+async function offLoad(u,M){const k=u+":"+M;if(OFF[k]||OFF_ING[k])return;OFF_ING[k]=1;
+ const ab=vqN(MES[M-1]||"").slice(0,3),o={};
+ await Promise.all(Object.keys(VQ_GID[u]||{}).map(async n=>{try{const bl=await vqLoad(u,n);const b=bl&&bl.find(x=>x.mes.startsWith(ab));
+  if(b&&b.t){const tx=v=>{const x=String(v||"").trim();return !x||x=="-"?0:num(x)};o[n]={t:tx(b.t[1]),cl:tx(b.t[2])}}}catch(_){}}));
+ OFF[k]=o;delete OFF_ING[k];if(u==UNI&&X_&&X_.M==M&&(ABA=="ranking"||ABA=="ficha"))render()}
+(function(){const _r3=render;render=function(){_r3.apply(this,arguments);try{if(D.length&&X_)offLoad(UNI,X_.M)}catch(e){console.error(e)}};
  try{if(D.length)render()}catch(_){}})();
 </script>
