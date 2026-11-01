@@ -197,7 +197,7 @@ const titulo=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase
 
 /* ---------- estado ---------- */
 let D=[], BV=[], BIm={}, REPm={}, ORGm={}, FONTE_NF="", ULT_BGL=null, ABA="resumo", ULT=null;
-const ABAS=[["resumo","Resumo"],["ranking","Ranking"],["ficha","Ficha da dupla"],["clientes","Clientes & churn"],["mix","Setores & rotas"],["margem","Margem & preço"]];
+const ABAS=[["resumo","Resumo"],["mix","Setores & rotas"],["ranking","Ranking"],["ficha","Ficha da dupla"],["clientes","Clientes & churn"],["margem","Margem & preço"]];
 abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("");
 abas.onclick=e=>{const b=e.target.closest("button");if(!b)return;ABA=b.dataset.k;try{localStorage.setItem("dir_aba",ABA)}catch(_){}render()};
 try{ABA=localStorage.getItem("dir_aba")||ABA}catch(_){}
