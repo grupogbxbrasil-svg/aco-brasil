@@ -329,7 +329,7 @@ function vResumo(X){
   let ac=0; const sYtd=sFat.map(v=>ac+=v);
   const ref=parcial?proj:fat, vsMed=med3?ref/med3*100:0, vsAnt=fatA?ref/fatA*100:0;
   const mix=X.bi?X.bi.set:Object.entries(grp(cur,"setor")).map(([k,a])=>[titulo(k),sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]);
-  const topD=X.DU?null:Object.entries(grp(cur.filter(x=>x.dupla!="Outros"),"dupla")).map(([d,a])=>[nomeD(d),sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]);
+  const topD=X.DU?null:Object.entries(grp(cur.filter(x=>x.dupla!="Outros"),"dupla")).map(([d,a])=>[nomeD(d),offT(nomeD(d),M,sum(a,x=>x.t))]).sort((a,b)=>b[1]-a[1]);
   return `<section class="hero">
     <div>
       <div class="h-sup">${parcial?"Ritmo do mês":"Fechamento"} · ${MES[M-1]}/26${X.DU?" · "+esc(nomeD(X.DU)):" · DBA "+UNIDADES[UNI].nome}</div>
@@ -362,16 +362,18 @@ function vResumo(X){
   </div>
   <div class="g ${topD?"g2":""}">
     <div class="box"><h2>Alertas do mês</h2><div class="sub">O que merece atenção agora</div>${al.slice(0,6).map(([c,a,b])=>`<div class="al ${c}"><span class="al-i">${c=="r"?"!":c=="a"?"•":"↑"}</span><div><b>${a}</b>${b}</div></div>`).join("")}</div>
-    ${topD?`<div class="box"><h2>Duplas no mês</h2><div class="sub">Volume (t)${X.bi?` · base de notas até ${dataNF}`:" · clique na aba Ranking para detalhes"}</div>${hbars(topD)}</div>`:""}
+    ${topD?`<div class="box"><h2>Duplas no mês</h2><div class="sub">Volume (t) · total do quadro de cada vendedor (Power BI)</div>${hbars(topD)}</div>`:""}
   </div>`;
 }
 
 /* ---------- ABA: RANKING ---------- */
+/* total oficial do vendedor/dupla no mês (quadro "vendas" = Power BI); se não houver, usa o valor das notas */
+function offT(nome,m,v){try{const o=typeof offGet=="function"?offGet(nome,m):null;return o&&o.t>0?o.t:v}catch(_){return v}}
 function linhaRank(nome,a,X,tot){
-  const {M,parcial,duT,duD}=X;const c=sum(a.filter(x=>x.m==M),x=>x.t), p=sum(a.filter(x=>x.m==M-1),x=>x.t);
+  const {M,parcial,duT,duD}=X;const c=sum(a.filter(x=>x.m==M),x=>x.t), p=offT(nome,M-1,sum(a.filter(x=>x.m==M-1),x=>x.t));
   const ofc=typeof offGet=="function"?offGet(nome,M):null; const c_=ofc?ofc.t:c;
-  const pj=parcial?c_/duD*duT:c_; const s=serie(a,M).slice(-6);s[s.length-1]=pj; const cl=ofc?ofc.cl:new Set(a.filter(x=>x.m==M).map(x=>x.cli)).size;
-  const ytd=sum(a.filter(x=>x.m<=M),x=>x.t), med=[M-1,M-2,M-3].filter(m=>m>0).map(m=>sum(a.filter(x=>x.m==m),x=>x.t));
+  const pj=parcial?c_/duD*duT:c_; const s=serie(a,M).map((v,i)=>offT(nome,i+1,v)).slice(-6);s[s.length-1]=pj; const cl=ofc?ofc.cl:new Set(a.filter(x=>x.m==M).map(x=>x.cli)).size;
+  const ytd=sum(a.filter(x=>x.m<=M),x=>x.t), med=[M-1,M-2,M-3].filter(m=>m>0).map(m=>offT(nome,m,sum(a.filter(x=>x.m==m),x=>x.t)));
   const md=med.length?sum(med,x=>x)/med.length:0;
   const ytd_=ytd-c+c_;return {nome,c:c_,p,pj,s,cl,ytd:ytd_,md,v:pct(pj,p),sh:tot?c_/tot*100:0,tk:cl?c_/cl:0};
 }
@@ -391,7 +393,7 @@ function vRanking(X){
   const pod=rd.filter(r=>r.nome!="Outros").slice(0,3);
   const ordem=[1,0,2].filter(i=>pod[i]);
   const ms=[...Array(M).keys()].map(i=>i+1).slice(-9);
-  const dz=Object.entries(grp(base.filter(x=>x.dupla!="Outros"),"dupla")).map(([d,a])=>[nomeD(d),ms.map(m=>sum(a.filter(x=>x.m==m),x=>x.t))]).sort((x,y)=>y[1][y[1].length-1]-x[1][x[1].length-1]);
+  const dz=Object.entries(grp(base.filter(x=>x.dupla!="Outros"),"dupla")).map(([d,a])=>[nomeD(d),ms.map(m=>offT(nomeD(d),m,sum(a.filter(x=>x.m==m),x=>x.t)))]).sort((x,y)=>y[1][y[1].length-1]-x[1][x[1].length-1]);
   return tit(`Ranking · ${MES[M-1]}/26`,"Quem está entregando",X.parcial?"Projeção = volume do mês ÷ dias úteis apurados × dias úteis do mês. Variação calculada pela projeção.":"")+
   `<div class="podio">${ordem.map(i=>{const r=pod[i];return `<div class="pd pd${i+1}"><div class="pd-n">${i+1}º</div><div class="pd-nome">${esc(r.nome)}</div><div class="pd-v">${f1(r.c)} t</div><div class="pd-s"><span class="tag ${!isFinite(r.v)?"tg-c":r.v>=0?"tg-v":"tg-r"}">${fp(r.v)}</span> · ${r.cl} clientes · ${f1(r.sh)}% do total</div><div class="pd-base" style="height:${[0,90,64,46][i+1]}px">${i+1}</div></div>`}).join("")}</div>
   <div class="g g3">${kpi(best&&best.v<0?"Menor queda":"Maior crescimento",esc(best?.nome||"–"),best?fp(best.v)+" vs mês anterior":"","#1f9d55")}${kpi("Vendedores ativos",rv.filter(r=>r.c>0).length,"com faturamento no mês","#1f57a3")}${kpi("Volume da equipe",f1(sum(rd.filter(r=>r.nome!="Outros"),r=>r.c))+" t",f1(tot?sum(rd.filter(r=>r.nome!="Outros"),r=>r.c)/tot*100:0)+"% da filial","#f26b1d")}</div>
@@ -632,7 +634,7 @@ async function offLoad(u,M){const k=u+":"+M;if(OFF[k]||OFF_ING[k])return;OFF_ING
  const ab=vqN(MES[M-1]||"").slice(0,3),o={};
  await Promise.all(Object.keys(VQ_GID[u]||{}).map(async n=>{try{const bl=await vqLoad(u,n);const b=bl&&bl.find(x=>x.mes.startsWith(ab));
   if(b&&b.t){const tx=v=>{const x=String(v||"").trim();return !x||x=="-"?0:num(x)};o[n]={t:tx(b.t[1]),cl:tx(b.t[2])}}}catch(_){}}));
- OFF[k]=o;delete OFF_ING[k];if(u==UNI&&X_&&X_.M==M&&(ABA=="ranking"||ABA=="ficha"))render()}
-(function(){const _r3=render;render=function(){_r3.apply(this,arguments);try{if(D.length&&X_)offLoad(UNI,X_.M)}catch(e){console.error(e)}};
+ OFF[k]=o;delete OFF_ING[k];if(u==UNI&&X_&&M<=X_.M&&(ABA=="ranking"||ABA=="ficha"||ABA=="resumo"))render()}
+(function(){const _r3=render;render=function(){_r3.apply(this,arguments);try{if(D.length&&X_)for(let m=X_.M;m>=1;m--)offLoad(UNI,m)}catch(e){console.error(e)}};
  try{if(D.length)render()}catch(_){}})();
 </script>
