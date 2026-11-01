@@ -480,12 +480,14 @@ function vClientes(X){
 }
 
 /* ---------- ABA: MIX (ano inteiro, filtros de setor e BGL) ---------- */
-let MXS="", MXB="todos";
+let MXS="", MXB="todos", MXV="";
 function vMix(X){
   const {M,base}=X; const ms=[]; for(let m=1;m<=M;m++)ms.push(m);
-  const temBGL=UNI!="belem"&&base.some(x=>x.bgl);
+  const temBGL=base.some(x=>x.bgl);
   if(!temBGL)MXB="todos";
-  const b0=base.filter(x=>x.m<=M&&(MXB=="todos"||(MXB=="com"?x.bgl:!x.bgl)));
+  const vends=Object.entries(grp(base.filter(x=>x.m<=M&&x.vend),"vend")).map(([v,a])=>[v,sum(a,x=>x.t)]).filter(x=>x[1]>=1).sort((a,b)=>a[0].localeCompare(b[0])).map(x=>x[0]);
+  if(MXV&&!vends.includes(MXV))MXV="";
+  const b0=base.filter(x=>x.m<=M&&(!MXV||x.vend==MXV)&&(MXB=="todos"||(MXB=="com"?x.bgl:!x.bgl)));
   const sets=[...new Set(b0.map(x=>x.setor).concat(Object.values(BIm).flatMap(o=>(o.sd||[]).map(x=>x.s))).map(x=>String(x||"").toUpperCase().trim()))].filter(Boolean).sort();
   if(MXS&&!sets.includes(MXS))MXS="";
   const bs=MXS?b0.filter(x=>String(x.setor||"").toUpperCase().trim()==MXS):b0;
@@ -495,6 +497,7 @@ function vMix(X){
   const bglNF=m=>sum(base.filter(x=>x.m==m&&x.bgl),x=>x.t);
   const bglOf=m=>REPm[m]&&ORGm[m]?Math.max(0,REPm[m]-ORGm[m]):bglNF(m);
   const ofSet=m=>{const rep=REPm[m],bi=BIm[m];let rows;
+    if(MXV)return Object.entries(grp(b0.filter(x=>x.m==m),"setor")).map(([s_,a])=>({s:U(s_),t:sum(a,x=>x.t)}));
     if(bi&&bi.sd&&bi.t&&(!rep||Math.abs(bi.t-rep)/rep<0.03))rows=bi.sd.map(x=>({s:U(x.s),t:x.t}));
     else{const nt=base.filter(x=>x.m==m);const tn=sum(nt,x=>x.t);const k=rep&&tn?rep/tn:1;rows=Object.entries(grp(nt,"setor")).map(([s_,a])=>({s:U(s_),t:sum(a,x=>x.t)*k}))}
     const pl=rows.find(x=>/PLANOS/.test(x.s))||(rows.push({s:"PLANOS E DERIVADOS",t:0}),rows[rows.length-1]);const bg=bglOf(m);
@@ -508,21 +511,22 @@ function vMix(X){
   /* Rotas: notas fiscais; a diferença para o total oficial entra numa linha de ajuste, para fechar com o BI */
   const rotas=Object.entries(grp(bs,"rota")).map(([r,a])=>{const v=porMes(a);return{r,v,t:sum(v,x=>x),cl:new Set(a.map(x=>x.cli)).size}}).sort((x,y)=>y.t-x.t);
   const nfV=porMes(bs), adj=ms.map((m,i)=>totV[i]-nfV[i]);
-  if(adj.some(x=>Math.abs(x)>0.5))rotas.push({r:"Ajuste ao BI (não detalhado nas notas)",v:adj,t:sum(adj,x=>x),cl:0,aj:1});
+  if(!MXV&&adj.some(x=>Math.abs(x)>0.5))rotas.push({r:"Ajuste ao BI (não detalhado nas notas)",v:adj,t:sum(adj,x=>x),cl:0,aj:1});
   const fam=Object.entries(grp(bs,"fam")).map(([f,a])=>[f||"(sem família)",sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const cid=Object.entries(grp(bs,"cid")).map(([f,a])=>[f,sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const fora=sum(bs.filter(x=>/fora/i.test(x.rota)),x=>x.t), totNF=sum(bs,x=>x.t);
   const st='style="font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--borda);margin-right:8px"';
   const filtros=`<div class="box" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center"><b>Filtros</b>
    <label>Setor <select ${st} onchange="MXS=this.value;render()"><option value="">Todos os setores</option>${sets.map(s=>`<option value="${esc(s)}" ${s==MXS?"selected":""}>${esc(titulo(s))}</option>`).join("")}</select></label>
-   ${temBGL?`<label>BGL <select ${st} onchange="MXB=this.value;render()"><option value="todos" ${MXB=="todos"?"selected":""}>Com e sem BGL</option><option value="sem" ${MXB=="sem"?"selected":""}>Sem BGL</option><option value="com" ${MXB=="com"?"selected":""}>Só BGL (Galvolume VEGA)</option></select></label>`:""}</div>`;
+   <label>Vendedor <select ${st} onchange="MXV=this.value;render()"><option value="">Todos os vendedores</option>${vends.map(v=>`<option value="${esc(v)}" ${v==MXV?"selected":""}>${esc(v)}</option>`).join("")}</select></label>
+   ${temBGL?`<label>BGL <select ${st} onchange="MXB=this.value;render()"><option value="todos" ${MXB=="todos"?"selected":""}>Com e sem BGL</option><option value="sem" ${MXB=="sem"?"selected":""}>Sem BGL</option><option value="com" ${MXB=="com"?"selected":""}>Só BGL (Galvolume)</option></select></label>`:""}</div>`;
   const rotB=MXB=="sem"?" · sem BGL":MXB=="com"?" · só BGL":"";
   const mesTh=ms.map(m=>`<th class="n">${MES[m-1]}</th>`).join("");
   const pf=typeof __PF=="function"?__PF():1;
   const tag=(c,p)=>{c=c*pf;return `<span class="tag ${!isFinite(pct(c,p))?"tg-c":pct(c,p)>=0?"tg-v":"tg-r"}">${fp(pct(c,p))}</span>`};
-  return tit(`Setores & rotas · Jan–${MES[M-1]}/26`,"Onde está o volume no ano"+(MXS?" · "+titulo(MXS):"")+rotB,"")+filtros+
+  return tit(`Setores & rotas · Jan–${MES[M-1]}/26`,"Onde está o volume no ano"+(MXV?" · "+MXV:"")+(MXS?" · "+titulo(MXS):"")+rotB,"")+filtros+
   `<div class="g g4">${kpi("Volume no ano",f0(totAno)+" t",`média de ${f1(totAno/Math.max(1,M))} t/mês`,"var(--laranja)")}${kpi(MXS?"Setor":"Setor líder no ano",titulo(MXS||DISP[tabS[0]?.s]||tabS[0]?.s||"–"),f0(tabS[0]?.t||0)+" t no ano")}${kpi("Rotas prioritárias",f1(totNF?(totNF-fora)/totNF*100:0)+"%",`Rota Fora DBA: ${f0(fora)} t no ano`,"#2e7d57")}${kpi("Cidades atendidas",new Set(bs.map(x=>x.cid)).size,"no ano","#7a47aa")}</div>
-  <div class="box" style="margin-bottom:14px"><h2>Setores — ano inteiro</h2><div class="sub">Volume (t) por mês · total oficial do BI${MXB!="todos"?" · BGL = Galvolume faturado pela VEGA":""}</div><div class="rol"><table><thead><tr><th>Setor</th>${mesTh}<th class="n">Ano</th><th class="n">% ano</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
+  <div class="box" style="margin-bottom:14px"><h2>Setores — ano inteiro</h2><div class="sub">Volume (t) por mês · ${MXV?"notas fiscais de "+esc(MXV):"total oficial do BI"}${MXB!="todos"?" · BGL = Galvolume faturado pela VEGA":""}</div><div class="rol"><table><thead><tr><th>Setor</th>${mesTh}<th class="n">Ano</th><th class="n">% ano</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
    ${tabS.map(r=>`<tr><td><b>${esc(titulo(DISP[r.s]||r.s))}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${f1(totAno?r.t/totAno*100:0)}%</td><td class="n">${tag(r.v[M-1],r.v[M-2])}</td><td>${spark(r.v)}</td></tr>`).join("")||`<tr><td colspan="${M+5}" class="vazio">Sem volume com esses filtros</td></tr>`}
    <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(totAno)}</td><td class="n">100%</td><td class="n">${tag(totV[M-1],totV[M-2])}</td><td></td></tr></tbody></table></div>${X.parcial?`<div class="nota">${MES[M-1]} ainda parcial (${X.duD} de ${X.duT} dias úteis).</div>`:""}</div>
   <div class="box" style="margin-bottom:14px"><h2>Rotas — ano inteiro</h2><div class="sub">Volume (t) por mês pelas notas fiscais, clientes no ano e tendência · o total fecha com o BI</div><div class="rol"><table><thead><tr><th>Rota</th>${mesTh}<th class="n">Ano</th><th class="n">Clientes</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
