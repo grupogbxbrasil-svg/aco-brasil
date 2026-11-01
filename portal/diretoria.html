@@ -145,10 +145,10 @@ try{if(sessionStorage.getItem("dir_ok")==="1")gate.remove()}catch(_){}
    Enquanto um gid estiver vazio, aquela fonte é ignorada (FAT vazio = painel avisa). */
 const PUB_MAB="https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=";
 const PUB_BEL="https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=";
-const GID_BEL={FAT:"1363505846", NOVO:"", DP:"", BV:"", BI:"1366626833"}; // FAT = aba "faturamento 2026" · BI = aba "INFORMAÇÃO BI"
+const GID_BEL={FAT:"1363505846", NOVO:"", DP:"", BV:"1875147214", BI:"1366626833"}; // BV = aba "Base Vendedores" (Power BI por vendedor/setor) // FAT = aba "faturamento 2026" · BI = aba "INFORMAÇÃO BI"
 const UNIDADES={
   maraba:{nome:"Marabá", fontes:null},
-  belem:{nome:"Belém", semDuplas:true, fontes:Object.fromEntries(Object.entries(GID_BEL).map(([k,g])=>[k,g?PUB_BEL+g:""]))}
+  belem:{nome:"Belém", duplas:{"Fabio":"Fabio / Marcelle","Marcelle":"Fabio / Marcelle","Alessandra":"Alessandra / Jessica","Jessica":"Alessandra / Jessica"}, fontes:Object.fromEntries(Object.entries(GID_BEL).map(([k,g])=>[k,g?PUB_BEL+g:""]))}
 };
 let UNI="maraba";
 try{UNI=new URLSearchParams(location.search).get("u")||localStorage.getItem("dir_uni")||UNI}catch(_){}
@@ -237,13 +237,15 @@ async function carregar(manual){
     D=DN.length?DN.concat(D26.filter(x=>x.bgl)):D26;
     /* Unidade sem duplas (Belém): cada vendedor vira a sua própria "dupla" */
     if(UNIDADES[UNI].semDuplas)D.forEach(x=>x.dupla=x.vend||"Outros");
+    /* Belém: a coluna Dupla (aux) traz o vendedor; junta as duplas CLT (Fabio & Marcelle, Alessandra & Jessica) */
+    if(UNIDADES[UNI].duplas){const DP_=UNIDADES[UNI].duplas;D.forEach(x=>{const k=titulo(String(x.dupla||"").split(/\s+/)[0]);x.dupla=DP_[k]||(x.dupla&&x.dupla!="Outros"?titulo(x.dupla):"Outros")})}
     FONTE_NF=DN.length?"FAT NOVO 2026 + BGL da FAT 2026 ATUAL":"FAT 2026 ATUAL";
     ULT=(DN.length?DN:D26).reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
     ULT_BGL=D26.filter(x=>x.bgl).reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
     BV=[];if(t2){csv(t2).forEach(r=>{const ms=r[3]||"";const mm=MES.indexOf(ms.slice(0,3).toLowerCase());if(mm<0||!/26$/.test(ms))return;BV.push({vend:r[0],dupla:r[1],m:mm+1,setor:r[4],t:num(r[5]),cli:num(r[6]),pvl:num(r[8]),mk:(v=>Math.abs(v)<1?v*100:v)(num(r[9])),rag:num(r[10]),rec:num(r[12])})})}
     BIm={};if(t3){let mm=0;csv(t3).forEach(r=>{const a=(r[0]||"").trim().toLowerCase();const k=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"].findIndex(n=>a.startsWith(n));if(k>=0&&/2026/.test(a)){mm=k+1;return}
       if(!mm||!r[1]||/setor/i.test(r[1]))return;const t=num(r[2]);if(!t)return;const o=BIm[mm]=BIm[mm]||{t:0,cli:0,rec:0,pv:0,mk:0,rg:0,set:[]};
-      const pvl=num(r[5]),mk=(v=>Math.abs(v)<1?v*100:v)(num(r[6])),rag=num(r[7]),rec=num(r[9]);o.t+=t;o.cli+=num(r[3]);o.rec+=rec;o.pv+=pvl*t;o.rg+=rag*t;o.mk+=mk*rec;o.set.push([titulo(r[1]),t])});
+      const pvl=num(r[5]),mk=(v=>Math.abs(v)<1?v*100:v)(num(r[6])),rag=num(r[7]),rec=num(r[9]);o.t+=t;o.cli+=num(r[3]);o.rec+=rec;o.pv+=pvl*t;o.rg+=rag*t;o.mk+=mk*rec;o.set.push([titulo(r[1]),t]);(o.sd=o.sd||[]).push({s:r[1],t,pvl,mk,rag,rec})});
       Object.values(BIm).forEach(o=>{o.pvl=o.pv/o.t;o.rag=o.rg/o.t;o.mkp=o.rec?o.mk/o.rec:0;o.set.sort((a,b)=>b[1]-a[1])})}
     montarFiltros();render();
     stEl.innerHTML='<span class="dot"></span>notas até '+(ULT?ULT.toLocaleDateString("pt-BR"):"–")+' · lido às '+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
@@ -330,7 +332,7 @@ function vResumo(X){
   const topD=X.DU?null:Object.entries(grp(cur.filter(x=>x.dupla!="Outros"),"dupla")).map(([d,a])=>[nomeD(d),sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]);
   return `<section class="hero">
     <div>
-      <div class="h-sup">${parcial?"Ritmo do mês":"Fechamento"} · ${MES[M-1]}/26${X.DU?" · "+esc(nomeD(X.DU)):" · DBA Marabá"}</div>
+      <div class="h-sup">${parcial?"Ritmo do mês":"Fechamento"} · ${MES[M-1]}/26${X.DU?" · "+esc(nomeD(X.DU)):" · DBA "+UNIDADES[UNI].nome}</div>
       ${parcial?`<div class="h-duo">
         <div><span class="h-lab">Faturado real</span><div class="h-num h-real">${f1(fat)}<small> t</small></div></div>
         <div><span class="h-lab">Projeção do mês</span><div class="h-num h-proj">${f1(proj)}<small> t</small></div></div>
@@ -486,12 +488,15 @@ function vMargem(X){
   let b=BV.filter(x=>x.m==mm); const dsel=X.DU?X.DU.split("/").map(s=>s.trim().toLowerCase()):null;
   if(dsel)b=b.filter(x=>dsel.some(n=>x.vend.toLowerCase().includes(n.split(" ")[0])));
   const ag=a=>{const t=sum(a,x=>x.t),r=sum(a,x=>x.rec);return{t,pvl:t?sum(a,x=>x.pvl*x.t)/t:0,rag:t?sum(a,x=>x.rag*x.t)/t:0,mk:r?sum(a,x=>x.mk*x.rec)/r:0,rec:r}};
-  const tot=ag(b);
+  let tot=ag(b);
+  /* Visão geral (sem filtro de dupla): totais da filial direto da aba RESULTADO/INFORMAÇÃO BI */
+  const biG=!X.DU&&BIm[mm]&&BIm[mm].t?BIm[mm]:null;
+  if(biG)tot={t:biG.t,pvl:biG.pvl,rag:biG.rag,mk:biG.mkp,rec:biG.rec};
   const pv=Object.entries(grp(b,"vend")).map(([v,a])=>({v,...ag(a)})).sort((x,y)=>y.rag*y.t-x.rag*x.t);
-  const ps=Object.entries(grp(b,"setor")).map(([s,a])=>({s,...ag(a)})).sort((x,y)=>y.t-x.t);
-  const ev=ms.map(m=>({m,...ag(BV.filter(x=>x.m==m&&(!dsel||dsel.some(n=>x.vend.toLowerCase().includes(n.split(" ")[0])))))}));
+  const ps=(biG&&biG.sd?biG.sd.map(x=>({s:x.s,t:x.t,pvl:x.pvl,mk:x.mk,rag:x.rag,rec:x.rec})):Object.entries(grp(b,"setor")).map(([s,a])=>({s,...ag(a)}))).sort((x,y)=>y.t-x.t);
+  const ev=ms.map(m=>(!dsel&&BIm[m]&&BIm[m].t)?{m,t:BIm[m].t,rag:BIm[m].rag,pvl:BIm[m].pvl,mk:BIm[m].mkp,rec:BIm[m].rec}:({m,...ag(BV.filter(x=>x.m==m&&(!dsel||dsel.some(n=>x.vend.toLowerCase().includes(n.split(" ")[0])))))}));
   const mxr=Math.max(1,...ev.map(e=>e.rag));
-  return tit(`Margem & preço · ${MES[mm-1]}/26`,"Estamos vendendo bem ou só vendendo muito?",`Fonte: Power BI (aba BV) · PVL e RAG ponderados pelo volume, markup pela receita${mm!=M?` · último mês disponível: ${MES[mm-1]}`:""}`)+
+  return tit(`Margem & preço · ${MES[mm-1]}/26`,"Estamos vendendo bem ou só vendendo muito?",`Fonte: Power BI · ${biG?"totais da filial pela aba RESULTADO BI; por vendedor pela base de vendedores":"base de vendedores"} · PVL e RAG ponderados pelo volume, markup pela receita${mm!=M?` · último mês disponível: ${MES[mm-1]}`:""}`)+
   `<div class="g g4">${kpi("PVL médio","R$ "+f0(tot.pvl)+"/t","preço líquido de venda","var(--laranja)")}${kpi("Markup",f1(tot.mk)+"%","ponderado pela receita","#2e7d57")}${kpi("RAG médio","R$ "+f0(tot.rag)+"/t","resultado por tonelada","#1f57a3")}${kpi("Resultado (RAG × t)","R$ "+f0(tot.rag*tot.t),`${f1(tot.t)} t · receita R$ ${f0(tot.rec)}`,"#c8930d")}</div>
   <div class="g g21"><div class="box"><h2>Por vendedor</h2><div class="sub">Ordenado pela contribuição (RAG × volume)</div><div class="rol"><table><thead><tr><th>Vendedor</th><th class="n">Volume (t)</th><th class="n">PVL (R$/t)</th><th class="n">vs média</th><th class="n">Markup</th><th class="n">RAG (R$/t)</th><th class="n">Contribuição</th></tr></thead><tbody>
    ${pv.map(p=>`<tr><td><b>${esc(p.v)}</b></td><td class="n">${f1(p.t)}</td><td class="n">${f0(p.pvl)}</td><td class="n"><span class="tag ${p.pvl>=tot.pvl?"tg-v":"tg-r"}">${fp(pct(p.pvl,tot.pvl))}</span></td><td class="n">${f1(p.mk)}%</td><td class="n">${f0(p.rag)}</td><td class="n"><b>R$ ${f0(p.rag*p.t)}</b></td></tr>`).join("")}</tbody></table></div></div>
