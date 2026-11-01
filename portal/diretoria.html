@@ -94,7 +94,7 @@ main>*{animation:sobe .45s ease both}main>*:nth-child(2){animation-delay:.05s}ma
 .pd1 .pd-base{background:linear-gradient(#ff8a45,#f26b1d)}
 .heat td{border-bottom:2px solid #fff;font-weight:600}
 .btn.ap{background:var(--laranja);border-color:var(--laranja)}
-#apNav{display:none;position:fixed;right:18px;bottom:18px;z-index:99;gap:8px;align-items:center;background:#0b2a55ee;color:#fff;padding:8px 10px;border-radius:12px;box-shadow:0 6px 20px #0004;font-size:14px}#apNav button{font:inherit;background:#ffffff1f;color:#fff;border:1px solid #ffffff40;border-radius:8px;padding:6px 12px;cursor:pointer}#apNav button:hover{background:var(--laranja)}#apNav span{padding:0 6px;font-weight:700}
+#apNav{display:none;gap:8px;align-items:center;margin-right:8px}#apNav span{color:#fff;font-weight:700;padding:0 6px;white-space:nowrap}
 body.apres .abas,body.apres .fil select,body.apres .fil .btn:not(.ap){display:none}
 body.apres main{max-width:1700px}body.apres{font-size:17px}
 @media(max-width:900px){.hero{grid-template-columns:1fr}.h-num{font-size:2.6rem}.hbar{grid-template-columns:110px 1fr 46px}.hbar small{display:none}.pd{width:100%}}
@@ -579,7 +579,7 @@ function apresentar(){
   document.body.classList.add("apres");btAp.textContent="■ Parar";
   try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}catch(_){}
   AP={i:Math.max(0,AP_ORD.indexOf(ABA))};ABA=AP_ORD[AP.i];render();scrollTo(0,0);
-  let n=document.getElementById("apNav");if(!n){n=document.createElement("div");n.id="apNav";n.innerHTML='<button onclick="apIr(-1)">◀ Anterior</button><span></span><button onclick="apIr(1)">Próxima ▶</button><button onclick="pararAp()">■ Parar</button>';document.body.appendChild(n)}
+  let n=document.getElementById("apNav");if(!n){n=document.createElement("span");n.id="apNav";n.innerHTML='<button class="btn ap" onclick="apIr(-1)">◀ Anterior</button><span></span><button class="btn ap" onclick="apIr(1)">Próxima ▶</button>';btAp.parentNode.insertBefore(n,btAp)}
   n.style.display="flex";apNavTxt();
 }
 function pararAp(){AP=null;document.body.classList.remove("apres");btAp.textContent="▶ Apresentar";const n=document.getElementById("apNav");if(n)n.style.display="none";try{document.fullscreenElement&&document.exitFullscreen()}catch(_){}render()}
