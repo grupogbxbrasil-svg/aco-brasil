@@ -363,8 +363,13 @@ function vResumo(X){
   <div class="g ${topD?"g2":""}">
     <div class="box"><h2>Alertas do mês</h2><div class="sub">O que merece atenção agora</div>${al.slice(0,6).map(([c,a,b])=>`<div class="al ${c}"><span class="al-i">${c=="r"?"!":c=="a"?"•":"↑"}</span><div><b>${a}</b>${b}</div></div>`).join("")}</div>
     ${topD?`<div class="box"><h2>Duplas no mês</h2><div class="sub">Volume (t) · total do quadro de cada vendedor (Power BI)</div>${hbars(topD)}</div>`:""}
-  </div>`;
+  </div>
+  <div class="g g2" style="margin-top:14px"><div class="box"><h2>Top 10 clientes do mês</h2><div class="sub">${MES[M-1]}/26 · notas faturadas (t)</div>${topCli(cur,10,1)}</div><div class="box"><h2>Top 10 clientes do ano</h2><div class="sub">Jan–${MES[M-1]}/26 · notas faturadas (t)</div>${topCli(base.filter(x=>x.m<=M),10,1)}</div></div>`;
 }
+
+/* ---------- maiores clientes (tabela) ---------- */
+function topCli(a,n,ext){const tot=sum(a,x=>x.t);const r=Object.entries(grp(a,"cli")).map(([c,b])=>{const t=sum(b,x=>x.t);const u=b[0];return{nome:titulo(u.nome||c),cid:u.cid,set:u.setor,dup:u.dupla,t,nf:b.length}}).sort((x,y)=>y.t-x.t).slice(0,n);
+  return `<div class="rol"><table><thead><tr><th>#</th><th>Cliente</th><th>Cidade</th>${ext?"<th>Setor</th>":""}<th>Dupla</th><th class="n">Volume (t)</th><th class="n">% do total</th></tr></thead><tbody>${r.map((c,i)=>`<tr><td>${i+1}</td><td><b>${esc(c.nome)}</b></td><td>${esc(c.cid||"")}</td>${ext?`<td>${esc(titulo(c.set))}</td>`:""}<td>${esc(nomeD(c.dup))}</td><td class="n"><b>${f1(c.t)}</b></td><td class="n">${f1(tot?c.t/tot*100:0)}%</td></tr>`).join("")||`<tr><td colspan="7" class="vazio">Sem clientes</td></tr>`}</tbody></table></div>`}
 
 /* ---------- ABA: RANKING ---------- */
 /* total oficial do vendedor/dupla no mês (quadro "vendas" = Power BI); se não houver, usa o valor das notas */
@@ -496,6 +501,8 @@ function vMix(X){
   <div class="box" style="margin-bottom:14px"><h2>Rotas — ano inteiro</h2><div class="sub">Volume (t) por mês, clientes no ano e tendência</div><div class="rol"><table><thead><tr><th>Rota</th>${mesTh}<th class="n">Ano</th><th class="n">Clientes</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
    ${rotas.map(r=>`<tr><td><b>${esc(r.r)}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${r.cl}</td><td class="n">${tag(r.v[M-1],r.v[M-2])}</td><td>${spark(r.v)}</td></tr>`).join("")}
    <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(totAno)}</td><td class="n">${new Set(bs.map(x=>x.cli)).size}</td><td></td><td></td></tr></tbody></table></div></div>
+  <div class="box" style="margin-bottom:14px"><h2>Maiores clientes ${MXS?"· "+esc(titulo(MXS)):"por setor"}</h2><div class="sub">Volume no ano (t)${MXS?" · top 15 do setor":" · top 5 de cada setor (use o filtro de setor para ver mais)"}</div>
+   ${MXS?topCli(bs,15):tabS.map(r=>`<h3 style="margin:14px 0 6px;color:var(--marinho)">${esc(titulo(r.s))} <span style="font-weight:400;color:#667">· ${f0(r.t)} t</span></h3>${topCli(bs.filter(x=>x.setor==r.s),5)}`).join("")}</div>
   <div class="g g2"><div class="box"><h2>Top famílias de produto</h2><div class="sub">t no ano</div>${hbars(fam)}</div><div class="box"><h2>Top cidades</h2><div class="sub">t no ano</div>${hbars(cid)}</div></div>`;
 }
 
