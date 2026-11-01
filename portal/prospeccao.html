@@ -188,11 +188,11 @@ async function carregar(){
 function destPlanilha(v){const s=nn(v);if(!s)return"";const ds=UNI[U].destinos;
   const d=ds.find(x=>nn(x)==s)||ds.find(x=>x.includes("/")&&x.split("/").every(p=>s.includes(nn(p).slice(0,5))));return d||""}
 function aplicaAcoes(){
-  const ult={},hist={};ACOES.forEach(a=>{(hist[a.chave]=hist[a.chave]||[]).push(a)});
+  const ult={},hist={},hd={};ACOES.forEach(a=>{const o=a.tipo=="dupla"?hd:hist;(o[a.chave]=o[a.chave]||[]).push(a)});
   Object.values(hist).forEach(h=>h.sort((a,b)=>new Date(a.data)-new Date(b.data)));
   LEADS.forEach(l=>{const h=hist[l.chave]||[];l.hist=h;const a=h[h.length-1];
     l.etapa=a&&a.etapa?a.etapa:l.etapaPl;l.destino=destPlanilha(l.vend);for(let i=h.length-1;i>=0;i--)if(h[i].destino){l.destino=h[i].destino;break}
-    l.proximo=a?a.proximo:"";l.relato=a&&a.relato?a.relato:l.relatoPl;l.ultAcao=a?a.data:null;l.trab=!!l.etapa})
+    l.proximo=a?a.proximo:"";l.relato=a&&a.relato?a.relato:l.relatoPl;l.ultAcao=a?a.data:null;l.trab=!!l.etapa;const d=hd[l.chave]||[];const ud=d[d.length-1];l.stDupla=ud?ud.statusDupla:"";l.obsDupla=ud?ud.obs:""})
 }
 
 /* ===================== RENDER ===================== */
@@ -269,7 +269,7 @@ function vLeads(){
   <div class="rol"><table><thead><tr><th>Nº</th><th>Razão social</th><th>Cidade · Rota</th><th>Telefone</th><th>Etapa</th><th>Dupla / vendedor</th><th>Última ação</th></tr></thead><tbody>
   ${pg.map(l=>`<tr class="cl" data-c="${esc(l.chave)}"><td>${esc(l.n)}</td><td><b>${esc(l.razao)}</b><br><small style="color:var(--sub)">${esc(l.status||"")}</small></td><td>${esc(l.cid)}<br><small style="color:var(--sub)">${esc(l.rota)}</small></td>
    <td>${esc(l.tel1||"–")}</td><td>${tagE(l.etapa)}</td>
-   <td>${l.destino?`<b>${esc(l.destino)}</b>`:'<span style="color:var(--sub)">–</span>'}</td><td>${l.ultAcao?dataHoraBR(l.ultAcao):'<span style="color:var(--sub)">pela planilha</span>'}</td></tr>`).join("")||'<tr><td colspan="7" class="vazio">Nenhum lead com esses filtros</td></tr>'}
+   <td>${l.destino?`<b>${esc(l.destino)}</b>${l.stDupla?`<br><small style="color:var(--sub)">${esc(l.stDupla)}</small>`:""}`:'<span style="color:var(--sub)">–</span>'}</td><td>${l.ultAcao?dataHoraBR(l.ultAcao):'<span style="color:var(--sub)">pela planilha</span>'}</td></tr>`).join("")||'<tr><td colspan="7" class="vazio">Nenhum lead com esses filtros</td></tr>'}
   </tbody></table></div>
   <div class="pag"><button onclick="PAG=Math.max(0,PAG-1);render()">◀</button><span>Página ${PAG+1} de ${np}</span><button onclick="PAG=Math.min(${np-1},PAG+1);render()">▶</button></div></div>`;
 }
@@ -291,7 +291,7 @@ function abrir(chave){
   <div class="bd">
    <div class="dl"><b>CNPJ</b><span>${esc(l.cnpj||"–")}</span><b>Telefone 1</b><span>${waLink(l.tel1)||"–"}</span><b>Telefone 2</b><span>${waLink(l.tel2)||"–"}</span>
     <b>E-mail</b><span>${esc(l.email||"–")}</span><b>Comprador</b><span>${esc(ult.comprador||l.comprador||"–")}</span><b>Status</b><span>${esc(l.status||"–")}</span>
-    <b>Última compra</b><span>${esc(l.ult||"–")}</span><b>Vendedor atual</b><span>${esc(l.vend||"–")}</span><b>Dupla destino</b><span>${esc(l.destino||"–")}</span></div>
+    <b>Última compra</b><span>${esc(l.ult||"–")}</span><b>Vendedor atual</b><span>${esc(l.vend||"–")}</span><b>Dupla destino</b><span>${esc(l.destino||"–")}</span>${l.stDupla||l.obsDupla?`<b>Retorno da dupla</b><span><b>${esc(l.stDupla||"–")}</b>${l.obsDupla?" · "+esc(l.obsDupla):""}</span>`:""}</div>
    ${l.relato?`<div class="box" style="padding:10px;margin-bottom:12px;background:#f8fafd"><b style="font-size:12px;color:var(--sub)">RELATO ATUAL</b><div>${esc(l.relato)}</div></div>`:""}
    <div class="fm">
     <label>O que foi feito agora</label><div class="chips" id="chE">${ETAPAS.map(e=>`<button class="chip ${e=="Qualificado"?"q":/Sem qualif/.test(e)?"x":""}" data-e="${esc(e)}">${esc(e)}</button>`).join("")}</div>
