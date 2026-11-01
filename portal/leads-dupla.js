@@ -3,6 +3,10 @@
    Carregado pela página do vendedor no Wix (u6hb2) e injetado no painel. Sem senhas aqui: o acesso é validado no servidor. */
 (function(){
 const LD_LEADS="https://docs.google.com/spreadsheets/d/e/2PACX-1vSWkUwIA-PcekRj-_pjqx5QaorNtpov6LEijjKBumZacl1zn4qzelC9Ck3ikI0s0d-6WnAC9VKuwIIB/pub?single=true&output=csv&gid=191255704";
+const LD_PUB="https://docs.google.com/spreadsheets/d/e/2PACX-1vSWkUwIA-PcekRj-_pjqx5QaorNtpov6LEijjKBumZacl1zn4qzelC9Ck3ikI0s0d-6WnAC9VKuwIIB/pub?single=true&output=csv&gid=";
+/* abas que as duplas já preenchiam na planilha (Status e Observação) */
+const LD_ABAS={"Rafael / Martinho":"301912048","Israel / Stefanny":"428476033","Jadson / Rebeca":"597943590"};
+const LD_EMAIL={"rafaelmartinho":"Rafael / Martinho","israelstefanny":"Israel / Stefanny","jadsonrebeca":"Jadson / Rebeca"};
 const LD_DUPLAS=["Israel / Stefanny","Jadson / Rebeca","Rafael / Martinho","Jessica","Matheus"];
 const LD_COR={"Em contato":"#1f57a3","Em cotação":"#b07600","Vendido":"#13703c","Sem interesse":"#b3261e","Não atende":"#66758a","Novo":"#7a47aa"};
 let LD={st:"", leads:null, acoes:null, dupla:null, todos:false, status:[], filtro:"", fdupla:"", erro:"", aberto:null};
@@ -15,29 +19,32 @@ const ldNn=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase(
 const ldEsc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ldTit=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
 const ldData=iso=>{const d=new Date(iso);return isNaN(d)?"–":d.toLocaleDateString("pt-BR")};
+function ldDestEmail(e){const k=String(e||"").toLowerCase().split("@")[0].replace(/le+ads$/,"");return LD_EMAIL[k]||""}
 function ldDest(v){const s=ldNn(v);if(!s)return"";return LD_DUPLAS.find(x=>ldNn(x)==s)||LD_DUPLAS.find(x=>x.includes("/")&&x.split("/").every(p=>s.includes(ldNn(p).slice(0,5))))||""}
 function ldWa(t){const d=ldDig(t);if(d.length<10)return ldEsc(t||"–");return `<a href="https://wa.me/${d.length<=11?"55"+d:d}" target="_blank" style="color:#128c4b;font-weight:700;text-decoration:none">${ldEsc(t)} ↗</a>`}
 
 async function ldCarrega(){
   LD.st="carregando";LD.erro="";
-  const [fx,rb]=await Promise.all([ldPede({tipo:"fx",url:LD_LEADS+"&t="+Date.now()},90000),ldPede({tipo:"pld",op:"listar"})]);
+  const [fx,rb,...abas]=await Promise.all([ldPede({tipo:"fx",url:LD_LEADS+"&t="+Date.now()},90000),ldPede({tipo:"pld",op:"listar"})].concat(Object.values(LD_ABAS).map(g=>ldPede({tipo:"fx",url:LD_PUB+g+"&t="+Date.now()},90000))));
+  /* status e observação que já estavam na planilha de cada dupla (por CNPJ) */
+  LD.plan={};abas.forEach(a=>{ldCsv(a.text||"").forEach(x=>{const c=ldDig(x[1]);if(c.length>=11&&(x[5]||x[6]))LD.plan["c"+c]={status:(x[5]||"").trim(),obs:(x[6]||"").trim()}})});
   const r=rb.r||{};
   if(!r.ok){LD.st="erro";LD.erro=r.erro||"Não consegui ler os leads.";ldRedesenha();return}
   LD.dupla=r.dupla;LD.todos=r.todos;LD.status=r.status||[];LD.acoes=r.itens||[];
   const L=ldCsv(fx.text||"");const h=L.findIndex(x=>x[1]&&/raz/i.test(x[1]));const out=[];
   L.slice(h+1).forEach(x=>{if(!x[1]||!x[1].trim())return;const cnpj=ldDig(x[6]),sap=ldDig(x[17]).replace(/^0+/,"");
     out.push({chave:cnpj?("c"+cnpj):sap?("s"+sap):("n"+ldNn(x[1]).slice(0,40)),razao:x[1].trim(),etapaPl:(x[2]||"").trim(),cnpj,cid:ldTit(x[7]),rota:ldTit((x[9]||"").replace(/^rota\s+/i,"")),
-      vend:x[10],comprador:x[12],tel1:x[13],tel2:x[14],relatoPl:x[16],email:x[18]})});
+      email:x[18],vend:x[10],comprador:x[12],tel1:x[13],tel2:x[14],relatoPl:x[16],email:x[18]})});
   LD.leads=out;LD.st="ok";ldAplica();ldRedesenha();
 }
 function ldAplica(){
   const hc={},hd={};LD.acoes.forEach(a=>{(a.tipo=="dupla"?hd:hc)[a.chave]=((a.tipo=="dupla"?hd:hc)[a.chave]||[]).concat([a])});
   LD.leads.forEach(l=>{const c=hc[l.chave]||[],d=hd[l.chave]||[];const ult=c[c.length-1];
-    l.etapa=ult&&ult.etapa?ult.etapa:l.etapaPl;l.destino=ldDest(l.vend);let qd=null;
+    l.etapa=ult&&ult.etapa?ult.etapa:l.etapaPl;l.destino=ldDestEmail(l.email)||ldDest(l.vend);let qd=null;
     for(let i=c.length-1;i>=0;i--){if(c[i].destino){l.destino=c[i].destino;break}}
     for(let i=c.length-1;i>=0;i--){if(c[i].etapa=="Qualificado"){qd=c[i].data;break}}
     l.qualEm=qd;l.relatoC=(ult&&ult.relato)||l.relatoPl||"";l.comprador=(ult&&ult.comprador)||l.comprador;l.tel=(ult&&ult.telefone)||l.tel1;
-    l.histD=d;const ud=d[d.length-1];l.status=ud&&ud.statusDupla?ud.statusDupla:"";l.obs=ud?ud.obs:"";l.atualizado=ud?ud.data:null;
+    l.histD=d;const ud=d[d.length-1];const pl=(LD.plan||{})[l.chave];l.status=ud?ud.statusDupla||"":(pl&&LD.status.includes(pl.status)?pl.status:"");l.obs=ud?ud.obs:(pl?pl.obs:"");l.atualizado=ud?ud.data:null;
     l.comprou=0;try{if(typeof D!="undefined"&&D.length){const k=ldNn(l.razao);l.comprou=D.filter(n=>n.m>=6&&ldNn(n.nome)==k).reduce((s,n)=>s+n.t,0)}}catch(_){}});
 }
 function ldMeus(){return (LD.leads||[]).filter(l=>l.etapa=="Qualificado"&&l.destino&&(LD.todos?(!LD.fdupla||l.destino==LD.fdupla):l.destino==LD.dupla))}

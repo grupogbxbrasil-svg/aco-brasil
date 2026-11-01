@@ -185,13 +185,15 @@ async function carregar(){
   CARREGANDO=false;
 }
 /* na planilha, a coluna "Vendedor Atual" já traz a dupla quando o lead foi direcionado (ex.: "Rafael / Martinho") */
+const EMAIL_DUPLA={"rafaelmartinho":"Rafael / Martinho","israelstefanny":"Israel / Stefanny","jadsonrebeca":"Jadson / Rebeca"};
+function destEmail(e){const k=String(e||"").toLowerCase().split("@")[0].replace(/le+ads$/,"");return U=="maraba"?(EMAIL_DUPLA[k]||""):""}
 function destPlanilha(v){const s=nn(v);if(!s)return"";const ds=UNI[U].destinos;
   const d=ds.find(x=>nn(x)==s)||ds.find(x=>x.includes("/")&&x.split("/").every(p=>s.includes(nn(p).slice(0,5))));return d||""}
 function aplicaAcoes(){
   const ult={},hist={},hd={};ACOES.forEach(a=>{const o=a.tipo=="dupla"?hd:hist;(o[a.chave]=o[a.chave]||[]).push(a)});
   Object.values(hist).forEach(h=>h.sort((a,b)=>new Date(a.data)-new Date(b.data)));
   LEADS.forEach(l=>{const h=hist[l.chave]||[];l.hist=h;const a=h[h.length-1];
-    l.etapa=a&&a.etapa?a.etapa:l.etapaPl;l.destino=destPlanilha(l.vend);for(let i=h.length-1;i>=0;i--)if(h[i].destino){l.destino=h[i].destino;break}
+    l.etapa=a&&a.etapa?a.etapa:l.etapaPl;l.destino=destEmail(l.email)||destPlanilha(l.vend);for(let i=h.length-1;i>=0;i--)if(h[i].destino){l.destino=h[i].destino;break}
     l.proximo=a?a.proximo:"";l.relato=a&&a.relato?a.relato:l.relatoPl;l.ultAcao=a?a.data:null;l.trab=!!l.etapa;const d=hd[l.chave]||[];const ud=d[d.length-1];l.stDupla=ud?ud.statusDupla:"";l.obsDupla=ud?ud.obs:""})
 }
 
