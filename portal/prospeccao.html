@@ -184,11 +184,14 @@ async function carregar(){
   }catch(e){app.innerHTML='<div class="box vazio">Não consegui ler a lista de leads agora. Clique em Atualizar. ('+esc(e.message||e)+')</div>'}
   CARREGANDO=false;
 }
+/* na planilha, a coluna "Vendedor Atual" já traz a dupla quando o lead foi direcionado (ex.: "Rafael / Martinho") */
+function destPlanilha(v){const s=nn(v);if(!s)return"";const ds=UNI[U].destinos;
+  const d=ds.find(x=>nn(x)==s)||ds.find(x=>x.includes("/")&&x.split("/").every(p=>s.includes(nn(p).slice(0,5))));return d||""}
 function aplicaAcoes(){
   const ult={},hist={};ACOES.forEach(a=>{(hist[a.chave]=hist[a.chave]||[]).push(a)});
   Object.values(hist).forEach(h=>h.sort((a,b)=>new Date(a.data)-new Date(b.data)));
   LEADS.forEach(l=>{const h=hist[l.chave]||[];l.hist=h;const a=h[h.length-1];
-    l.etapa=a&&a.etapa?a.etapa:l.etapaPl;l.destino="";for(let i=h.length-1;i>=0;i--)if(h[i].destino){l.destino=h[i].destino;break}
+    l.etapa=a&&a.etapa?a.etapa:l.etapaPl;l.destino=destPlanilha(l.vend);for(let i=h.length-1;i>=0;i--)if(h[i].destino){l.destino=h[i].destino;break}
     l.proximo=a?a.proximo:"";l.relato=a&&a.relato?a.relato:l.relatoPl;l.ultAcao=a?a.data:null;l.trab=!!l.etapa})
 }
 
