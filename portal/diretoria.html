@@ -463,23 +463,39 @@ function vClientes(X){
    ${risco.map(c=>{const d=dias(c);return `<tr><td><b>${esc(titulo(c.nome))}</b></td><td>${esc(c.cid)}</td><td>${esc(nomeD(c.dupla))}</td><td>${esc(c.rota)}</td><td class="n">${f1(c.t)}</td><td class="n">${c.ult?c.ult.toLocaleDateString("pt-BR"):"–"}</td><td class="n"><span class="tag ${d>90?"tg-r":"tg-a"}">${d}</span></td></tr>`}).join("")||'<tr><td colspan="7" class="vazio">Nenhum cliente nessa faixa</td></tr>'}</tbody></table></div></div>`;
 }
 
-/* ---------- ABA: MIX ---------- */
+/* ---------- ABA: MIX (ano inteiro, filtros de setor e BGL) ---------- */
+let MXS="", MXB="todos";
 function vMix(X){
-  const {M,base,cur}=X; const ms=[M-5,M-4,M-3,M-2,M-1,M].filter(m=>m>0);
-  const sets=[...new Set(base.map(x=>x.setor))];
-  const tabS=sets.map(s=>{const v=ms.map(m=>sum(base.filter(x=>x.m==m&&x.setor==s),x=>x.t));return[s,v]}).sort((a,b)=>b[1][b[1].length-1]-a[1][a[1].length-1]);
-  const rotas=Object.entries(grp(base.filter(x=>x.m<=M),"rota")).map(([r,a])=>{const c=a.filter(x=>x.m==M);return{r,c:sum(c,x=>x.t),p:sum(a.filter(x=>x.m==M-1),x=>x.t),ytd:sum(a,x=>x.t),cl:new Set(c.map(x=>x.cli)).size,s:serie(a,M).slice(-6)}}).sort((a,b)=>b.c-a.c);
-  const fam=Object.entries(grp(cur,"fam")).map(([f,a])=>[f||"(sem família)",sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const cid=Object.entries(grp(cur,"cid")).map(([f,a])=>[f,sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const fat=sum(cur,x=>x.t), fora=sum(cur.filter(x=>/fora/i.test(x.rota)),x=>x.t);
-  return tit(`Setores & rotas · ${MES[M-1]}/26`,"Onde está o volume","")+
-  `<div class="g g4">${kpi("Setor líder",titulo(tabS[0]?.[0]||"–"),f1(tabS[0]?.[1].slice(-1)[0]||0)+" t","var(--laranja)")}${kpi("Rotas ativas",rotas.filter(r=>r.c>0).length,"com faturamento no mês")}${kpi("Rotas prioritárias",f1(fat?(fat-fora)/fat*100:0)+"%",`Rota Fora DBA: ${f1(fora)} t`,"#2e7d57")}${kpi("Cidades atendidas",new Set(cur.map(x=>x.cid)).size,"no mês","#7a47aa")}</div>
-  <div class="box" style="margin-bottom:14px"><h2>Setores — últimos 6 meses</h2><div class="sub">Volume (t)</div><div class="rol"><table><thead><tr><th>Setor</th>${ms.map(m=>`<th class="n">${MES[m-1]}</th>`).join("")}<th class="n">Var. mês</th><th>Tendência</th></tr></thead><tbody>
-   ${tabS.map(([s,v])=>`<tr><td><b>${esc(titulo(s))}</b></td>${v.map((x,i)=>`<td class="n" ${i==v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><span class="tag ${pct(v[v.length-1],v[v.length-2])>=0?"tg-v":"tg-r"}">${fp(pct(v[v.length-1],v[v.length-2]))}</span></td><td>${spark(v)}</td></tr>`).join("")}
-   <tr class="tot"><td>Total</td>${ms.map((m,i)=>`<td class="n">${f1(sum(tabS,x=>x[1][i]))}</td>`).join("")}<td></td><td></td></tr></tbody></table></div>${X.parcial?`<div class="nota">${MES[M-1]} ainda parcial (${X.duD} de ${X.duT} dias úteis).</div>`:""}</div>
-  <div class="box" style="margin-bottom:14px"><h2>Rotas</h2><div class="sub">Volume (t), clientes e tendência</div><div class="rol"><table><thead><tr><th>Rota</th><th class="n">Mês</th><th class="n">Mês ant.</th><th class="n">Var.</th><th class="n">Clientes</th><th class="n">Acum. ano</th><th>6 meses</th></tr></thead><tbody>
-   ${rotas.map(r=>`<tr><td><b>${esc(r.r)}</b></td><td class="n"><b>${f1(r.c)}</b></td><td class="n">${f1(r.p)}</td><td class="n"><span class="tag ${!isFinite(pct(r.c,r.p))?"tg-c":pct(r.c,r.p)>=0?"tg-v":"tg-r"}">${fp(pct(r.c,r.p))}</span></td><td class="n">${r.cl}</td><td class="n">${f0(r.ytd)}</td><td>${spark(r.s)}</td></tr>`).join("")}</tbody></table></div></div>
-  <div class="g g2"><div class="box"><h2>Top famílias de produto</h2><div class="sub">t no mês</div>${hbars(fam)}</div><div class="box"><h2>Top cidades</h2><div class="sub">t no mês</div>${hbars(cid)}</div></div>`;
+  const {M,base}=X; const ms=[]; for(let m=1;m<=M;m++)ms.push(m);
+  const temBGL=UNI!="belem"&&base.some(x=>x.bgl);
+  if(!temBGL)MXB="todos";
+  const b0=base.filter(x=>x.m<=M&&(MXB=="todos"||(MXB=="com"?x.bgl:!x.bgl)));
+  const sets=[...new Set(b0.map(x=>x.setor))].sort();
+  if(MXS&&!sets.includes(MXS))MXS="";
+  const bs=MXS?b0.filter(x=>x.setor==MXS):b0;
+  const porMes=a=>ms.map(m=>sum(a.filter(x=>x.m==m),x=>x.t));
+  const tabS=Object.entries(grp(bs,"setor")).map(([s,a])=>{const v=porMes(a);return{s,v,t:sum(v,x=>x)}}).sort((x,y)=>y.t-x.t);
+  const rotas=Object.entries(grp(bs,"rota")).map(([r,a])=>{const v=porMes(a);return{r,v,t:sum(v,x=>x),cl:new Set(a.map(x=>x.cli)).size}}).sort((x,y)=>y.t-x.t);
+  const totAno=sum(bs,x=>x.t), totV=porMes(bs);
+  const fam=Object.entries(grp(bs,"fam")).map(([f,a])=>[f||"(sem família)",sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const cid=Object.entries(grp(bs,"cid")).map(([f,a])=>[f,sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const fora=sum(bs.filter(x=>/fora/i.test(x.rota)),x=>x.t);
+  const st='style="font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--borda);margin-right:8px"';
+  const filtros=`<div class="box" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center"><b>Filtros</b>
+   <label>Setor <select ${st} onchange="MXS=this.value;render()"><option value="">Todos os setores</option>${sets.map(s=>`<option value="${esc(s)}" ${s==MXS?"selected":""}>${esc(titulo(s))}</option>`).join("")}</select></label>
+   ${temBGL?`<label>BGL <select ${st} onchange="MXB=this.value;render()"><option value="todos" ${MXB=="todos"?"selected":""}>Com e sem BGL</option><option value="sem" ${MXB=="sem"?"selected":""}>Sem BGL</option><option value="com" ${MXB=="com"?"selected":""}>Só BGL</option></select></label>`:""}</div>`;
+  const rotB=MXB=="sem"?" · sem BGL":MXB=="com"?" · só BGL":"";
+  const mesTh=ms.map(m=>`<th class="n">${MES[m-1]}</th>`).join("");
+  const tag=(c,p)=>`<span class="tag ${!isFinite(pct(c,p))?"tg-c":pct(c,p)>=0?"tg-v":"tg-r"}">${fp(pct(c,p))}</span>`;
+  return tit(`Setores & rotas · Jan–${MES[M-1]}/26`,"Onde está o volume no ano"+(MXS?" · "+titulo(MXS):"")+rotB,"")+filtros+
+  `<div class="g g4">${kpi("Volume no ano",f0(totAno)+" t",`média de ${f1(totAno/Math.max(1,M))} t/mês`,"var(--laranja)")}${kpi(MXS?"Setor":"Setor líder no ano",titulo(MXS||tabS[0]?.s||"–"),f0(tabS[0]?.t||0)+" t no ano")}${kpi("Rotas prioritárias",f1(totAno?(totAno-fora)/totAno*100:0)+"%",`Rota Fora DBA: ${f0(fora)} t no ano`,"#2e7d57")}${kpi("Cidades atendidas",new Set(bs.map(x=>x.cid)).size,"no ano","#7a47aa")}</div>
+  <div class="box" style="margin-bottom:14px"><h2>Setores — ano inteiro</h2><div class="sub">Volume (t) por mês</div><div class="rol"><table><thead><tr><th>Setor</th>${mesTh}<th class="n">Ano</th><th class="n">% ano</th><th class="n">Var. mês</th><th>Tendência</th></tr></thead><tbody>
+   ${tabS.map(r=>`<tr><td><b>${esc(titulo(r.s))}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${f1(totAno?r.t/totAno*100:0)}%</td><td class="n">${tag(r.v[M-1],r.v[M-2])}</td><td>${spark(r.v)}</td></tr>`).join("")||`<tr><td colspan="${M+5}" class="vazio">Sem volume com esses filtros</td></tr>`}
+   <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(totAno)}</td><td class="n">100%</td><td class="n">${tag(totV[M-1],totV[M-2])}</td><td></td></tr></tbody></table></div>${X.parcial?`<div class="nota">${MES[M-1]} ainda parcial (${X.duD} de ${X.duT} dias úteis).</div>`:""}</div>
+  <div class="box" style="margin-bottom:14px"><h2>Rotas — ano inteiro</h2><div class="sub">Volume (t) por mês, clientes no ano e tendência</div><div class="rol"><table><thead><tr><th>Rota</th>${mesTh}<th class="n">Ano</th><th class="n">Clientes</th><th class="n">Var. mês</th><th>Tendência</th></tr></thead><tbody>
+   ${rotas.map(r=>`<tr><td><b>${esc(r.r)}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${r.cl}</td><td class="n">${tag(r.v[M-1],r.v[M-2])}</td><td>${spark(r.v)}</td></tr>`).join("")}
+   <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(totAno)}</td><td class="n">${new Set(bs.map(x=>x.cli)).size}</td><td></td><td></td></tr></tbody></table></div></div>
+  <div class="g g2"><div class="box"><h2>Top famílias de produto</h2><div class="sub">t no ano</div>${hbars(fam)}</div><div class="box"><h2>Top cidades</h2><div class="sub">t no ano</div>${hbars(cid)}</div></div>`;
 }
 
 /* ---------- ABA: MARGEM ---------- */
