@@ -5,7 +5,8 @@
 const LD_LEADS="https://docs.google.com/spreadsheets/d/e/2PACX-1vSWkUwIA-PcekRj-_pjqx5QaorNtpov6LEijjKBumZacl1zn4qzelC9Ck3ikI0s0d-6WnAC9VKuwIIB/pub?single=true&output=csv&gid=191255704";
 const LD_PUB="https://docs.google.com/spreadsheets/d/e/2PACX-1vSWkUwIA-PcekRj-_pjqx5QaorNtpov6LEijjKBumZacl1zn4qzelC9Ck3ikI0s0d-6WnAC9VKuwIIB/pub?single=true&output=csv&gid=";
 /* abas que as duplas já preenchiam na planilha (Status e Observação) */
-const LD_ABAS={"Rafael / Martinho":"301912048","Israel / Stefanny":"428476033","Jadson / Rebeca":"597943590"};
+const LD_ABAS=[LD_PUB+"301912048",LD_PUB+"428476033",LD_PUB+"597943590",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOHMlqaOkAL4MWtLtYNbTMF3zv9hQWEhanys7dSxnXWJV2d3WuejDnPG5LYdqRLgiodaGF6TncUo8n/pub?single=true&output=csv&gid=1765537608" /* cópia preenchida por Martinho e Rafael */];
 const LD_EMAIL={"rafaelmartinho":"Rafael / Martinho","israelstefanny":"Israel / Stefanny","jadsonrebeca":"Jadson / Rebeca"};
 const LD_DUPLAS=["Israel / Stefanny","Jadson / Rebeca","Rafael / Martinho","Jessica","Matheus"];
 const LD_COR={"Em contato":"#1f57a3","Em cotação":"#b07600","Vendido":"#13703c","Sem interesse":"#b3261e","Não atende":"#66758a","Novo":"#7a47aa"};
@@ -25,7 +26,7 @@ function ldWa(t){const d=ldDig(t);if(d.length<10)return ldEsc(t||"–");return `
 
 async function ldCarrega(){
   LD.st="carregando";LD.erro="";
-  const [fx,rb,...abas]=await Promise.all([ldPede({tipo:"fx",url:LD_LEADS+"&t="+Date.now()},90000),ldPede({tipo:"pld",op:"listar"})].concat(Object.values(LD_ABAS).map(g=>ldPede({tipo:"fx",url:LD_PUB+g+"&t="+Date.now()},90000))));
+  const [fx,rb,...abas]=await Promise.all([ldPede({tipo:"fx",url:LD_LEADS+"&t="+Date.now()},90000),ldPede({tipo:"pld",op:"listar"})].concat(LD_ABAS.map(u=>ldPede({tipo:"fx",url:u+"&t="+Date.now()},90000))));
   /* status e observação que já estavam na planilha de cada dupla (por CNPJ) */
   LD.plan={};abas.forEach(a=>{ldCsv(a.text||"").forEach(x=>{const c=ldDig(x[1]);if(c.length>=11&&(x[5]||x[6]))LD.plan["c"+c]={status:(x[5]||"").trim(),obs:(x[6]||"").trim()}})});
   const r=rb.r||{};
