@@ -94,7 +94,7 @@ main>*{animation:sobe .45s ease both}main>*:nth-child(2){animation-delay:.05s}ma
 .pd1 .pd-base{background:linear-gradient(#ff8a45,#f26b1d)}
 .heat td{border-bottom:2px solid #fff;font-weight:600}
 .btn.ap{background:var(--laranja);border-color:var(--laranja)}
-#apBar{position:fixed;left:0;top:0;height:3px;background:var(--laranja);z-index:99;width:0}
+#apNav{display:none;position:fixed;right:18px;bottom:18px;z-index:99;gap:8px;align-items:center;background:#0b2a55ee;color:#fff;padding:8px 10px;border-radius:12px;box-shadow:0 6px 20px #0004;font-size:14px}#apNav button{font:inherit;background:#ffffff1f;color:#fff;border:1px solid #ffffff40;border-radius:8px;padding:6px 12px;cursor:pointer}#apNav button:hover{background:var(--laranja)}#apNav span{padding:0 6px;font-weight:700}
 body.apres .abas,body.apres .fil select,body.apres .fil .btn:not(.ap){display:none}
 body.apres main{max-width:1700px}body.apres{font-size:17px}
 @media(max-width:900px){.hero{grid-template-columns:1fr}.h-num{font-size:2.6rem}.hbar{grid-template-columns:110px 1fr 46px}.hbar small{display:none}.pd{width:100%}}
@@ -570,21 +570,20 @@ function render(){setTimeout(semDuplasTxt,0);
   const av=X.bi&&ABA!="resumo"&&ABA!="margem"?`<div class="al a" style="margin-bottom:14px"><span class="al-i">•</span><div><b>Como ler ${MES[X.M-1]} nesta aba</b>Os números são das notas sem BGL até ${ULT?ULT.toLocaleDateString("pt-BR"):"–"}. O total da filial pelo Power BI (${f1(X.bi.t)} t, com BGL) está no Resumo.</div></div>`:"";
   try{app.innerHTML=av+V(X)}catch(e){app.innerHTML=`<div class="box vazio">Erro ao montar esta aba: ${esc(e.message)}</div>`;console.error(e)}
 }
-/* ---------- modo apresentação (tela cheia, troca de aba sozinho) ---------- */
-let AP=null;const AP_SEG=25;
+/* ---------- modo apresentação (tela cheia, sem tempo: quem apresenta troca de aba e decide quando parar) ---------- */
+let AP=null;const AP_ORD=["resumo","mix","ranking","clientes","margem"];
+function apIr(d){if(!AP)return;AP.i=(AP.i+d+AP_ORD.length)%AP_ORD.length;ABA=AP_ORD[AP.i];render();scrollTo({top:0});apNavTxt()}
+function apNavTxt(){const n=document.getElementById("apNav");if(!n)return;const nm=Object.fromEntries(ABAS);n.querySelector("span").textContent=(nm[ABA]||ABA)+" · "+(AP.i+1)+"/"+AP_ORD.length}
 function apresentar(){
   if(AP){pararAp();return}
   document.body.classList.add("apres");btAp.textContent="■ Parar";
   try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}catch(_){}
-  let bar=document.getElementById("apBar");if(!bar){bar=document.createElement("div");bar.id="apBar";document.body.appendChild(bar)}
-  const ordem=["resumo","ranking","clientes","mix","margem"];let i=Math.max(0,ordem.indexOf(ABA)),t0=Date.now();
-  ABA=ordem[i];render();scrollTo(0,0);
-  AP=setInterval(()=>{const p=(Date.now()-t0)/(AP_SEG*1000);bar.style.width=Math.min(p,1)*100+"%";
-    if(p>=1){i=(i+1)%ordem.length;ABA=ordem[i];render();scrollTo({top:0});t0=Date.now()}},200);
+  AP={i:Math.max(0,AP_ORD.indexOf(ABA))};ABA=AP_ORD[AP.i];render();scrollTo(0,0);
+  let n=document.getElementById("apNav");if(!n){n=document.createElement("div");n.id="apNav";n.innerHTML='<button onclick="apIr(-1)">◀ Anterior</button><span></span><button onclick="apIr(1)">Próxima ▶</button><button onclick="pararAp()">■ Parar</button>';document.body.appendChild(n)}
+  n.style.display="flex";apNavTxt();
 }
-function pararAp(){clearInterval(AP);AP=null;document.body.classList.remove("apres");btAp.textContent="▶ Apresentar";const b=document.getElementById("apBar");if(b)b.style.width=0;try{document.fullscreenElement&&document.exitFullscreen()}catch(_){}render()}
-document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&AP)pararAp()});
-document.addEventListener("keydown",e=>{if(e.key=="Escape"&&AP)pararAp()});
+function pararAp(){AP=null;document.body.classList.remove("apres");btAp.textContent="▶ Apresentar";const n=document.getElementById("apNav");if(n)n.style.display="none";try{document.fullscreenElement&&document.exitFullscreen()}catch(_){}render()}
+document.addEventListener("keydown",e=>{if(!AP)return;if(e.key=="ArrowRight"||e.key=="PageDown"){e.preventDefault();apIr(1)}else if(e.key=="ArrowLeft"||e.key=="PageUp"){e.preventDefault();apIr(-1)}});
 setUni(UNI);carregar(); setInterval(carregar, ATUALIZA_MIN*60*1000);
 </script>
 </body>
