@@ -113,10 +113,10 @@ const UNI={
 };
 const INICIO_TRABALHO="2026-06-01";       // a Contactei começou em junho/2026
 const META_DIA=40;                        // meta de leads trabalhados por dia (ideia: barra de progresso)
-const ETAPAS=["1ª tentativa","2ª tentativa","3ª tentativa","Qualificado","Sem qualificação (3 tent.)","Transferido","Reagendar"];
+const ETAPAS=["1ª tentativa","2ª tentativa","3ª tentativa","Qualificado","Sem qualificação (3 tent.)","Transferido"];
 const ETAPA_TAG={"1ª tentativa":"t1","2ª tentativa":"t2","3ª tentativa":"t3","Qualificado":"tq","Sem qualificação (3 tent.)":"tx","Transferido":"tt","Reagendar":"tr"};
 const MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-const ABAS=[["dash","Dashboard"],["leads","Leads"],["agenda","Agenda de retornos"],["vendas","Vendas desde junho"],["hist","Histórico"]];
+const ABAS=[["dash","Dashboard"],["leads","Leads"],["vendas","Vendas desde junho"],["hist","Histórico"]];
 
 /* ===================== PONTE COM O SITE ===================== */
 const DENTRO=window.parent!==window; let SEQ=0; const PEND={};
@@ -208,7 +208,7 @@ function iniciar(){
 function render(){
   document.querySelectorAll("#abas [data-k]").forEach(b=>b.classList.toggle("on",b.dataset.k==ABA));
   if(!LEADS.length){app.innerHTML='<div class="carga"><div class="spin"></div>Carregando…</div>';return}
-  const V={dash:vDash,leads:vLeads,agenda:vAgenda,vendas:vVendas,hist:vHist}[ABA]||vDash;app.innerHTML=V();
+  const V={dash:vDash,leads:vLeads,vendas:vVendas,hist:vHist}[ABA]||vDash;app.innerHTML=V();
   if(ABA=="leads")ligaLeads();if(ABA=="vendas"&&!VENDAS)carregaVendas();
 }
 const kpi=(l,v,d,c)=>`<div class="kpi" style="border-left-color:${c||"var(--azul)"}"><div class="l">${l}</div><div class="v">${v}</div><div class="d">${d||""}</div></div>`;
@@ -220,7 +220,6 @@ function vDash(){
   const dir=LEADS.filter(l=>l.destino),hj=hojeISO();
   const acHoje=ACOES.filter(a=>String(a.data).slice(0,10)==hj||new Date(a.data).toDateString()==new Date().toDateString());
   const leadsHoje=new Set(acHoje.map(a=>a.chave)).size;
-  const venc=LEADS.filter(l=>l.proximo&&l.proximo<=hj&&!/Qualificado|Sem qualif|Transferido/.test(l.etapa));
   const porEt=ETAPAS.map(e=>[e,LEADS.filter(l=>l.etapa==e).length]).filter(x=>x[1]);porEt.unshift(["Não iniciado",tot-trab.length]);
   const rotas={};LEADS.forEach(l=>{const o=rotas[l.rota]=rotas[l.rota]||{t:0,w:0,q:0};o.t++;if(l.trab)o.w++;if(l.etapa=="Qualificado")o.q++});
   const rt=Object.entries(rotas).sort((a,b)=>b[1].t-a[1].t);
@@ -236,7 +235,7 @@ function vDash(){
    <div class="box"><h2>Meta do dia</h2><div class="sub">Leads trabalhados hoje no site · meta de ${META_DIA} por dia</div>
     <div style="font-size:30px;font-weight:800;color:var(--marinho)">${leadsHoje} <span style="font-size:14px;color:var(--sub);font-weight:600">de ${META_DIA}</span></div>
     <div class="meta"><i style="width:${Math.min(100,pc(leadsHoje,META_DIA))}%"></i></div>
-    <div class="sub" style="margin-top:10px">${venc.length?`<span class="lnk" onclick="ABA='agenda';render()">${venc.length} retorno(s) agendado(s) para hoje ou atrasado(s)</span>`:"Nenhum retorno atrasado."}</div></div>
+</div>
    <div class="box"><h2>Produtividade · últimos 14 dias</h2><div class="sub">Leads com ação registrada no site por dia</div>
     <div class="cols">${dias.map(([d,v])=>`<div class="c"><b>${v||""}</b><i style="height:${v/mxD*110}px"></i>${d}</div>`).join("")}</div></div>
   </div>
@@ -269,7 +268,7 @@ function vLeads(){
   </div>
   <div class="rol"><table><thead><tr><th>Nº</th><th>Razão social</th><th>Cidade · Rota</th><th>Telefone</th><th>Etapa</th><th>Dupla / vendedor</th><th>Última ação</th></tr></thead><tbody>
   ${pg.map(l=>`<tr class="cl" data-c="${esc(l.chave)}"><td>${esc(l.n)}</td><td><b>${esc(l.razao)}</b><br><small style="color:var(--sub)">${esc(l.status||"")}</small></td><td>${esc(l.cid)}<br><small style="color:var(--sub)">${esc(l.rota)}</small></td>
-   <td>${esc(l.tel1||"–")}</td><td>${tagE(l.etapa)}${l.proximo&&!/Qualificado|Sem qualif|Transferido/.test(l.etapa)?`<br><small style="color:${l.proximo<=hojeISO()?"var(--bad)":"var(--sub)"}">retorno ${dataBR(l.proximo+"T12:00")}</small>`:""}</td>
+   <td>${esc(l.tel1||"–")}</td><td>${tagE(l.etapa)}</td>
    <td>${l.destino?`<b>${esc(l.destino)}</b>`:'<span style="color:var(--sub)">–</span>'}</td><td>${l.ultAcao?dataHoraBR(l.ultAcao):'<span style="color:var(--sub)">pela planilha</span>'}</td></tr>`).join("")||'<tr><td colspan="7" class="vazio">Nenhum lead com esses filtros</td></tr>'}
   </tbody></table></div>
   <div class="pag"><button onclick="PAG=Math.max(0,PAG-1);render()">◀</button><span>Página ${PAG+1} de ${np}</span><button onclick="PAG=Math.min(${np-1},PAG+1);render()">▶</button></div></div>`;
@@ -279,8 +278,8 @@ function ligaLeads(){
   fr.onchange=()=>{FIL.rota=fr.value;FIL.cid="";PAG=0;render()};fc.onchange=()=>{FIL.cid=fc.value;PAG=0;render()};fe.onchange=()=>{FIL.etapa=fe.value;PAG=0;render()};fd.onchange=()=>{FIL.dest=fd.value;PAG=0;render()};
   document.querySelectorAll("tr[data-c]").forEach(tr=>tr.onclick=()=>abrir(tr.dataset.c));
 }
-function exportar(){const F=filtrados();const cols=["Nº","Razão Social","CNPJ","Cidade","Rota","Telefone 1","Telefone 2","Email","Etapa","Dupla/vendedor","Comprador","Relato","Próximo contato"];
-  const lin=[cols].concat(F.map(l=>[l.n,l.razao,l.cnpj,l.cid,l.rota,l.tel1,l.tel2,l.email,l.etapa,l.destino,(l.hist.slice(-1)[0]||{}).comprador||l.comprador,l.relato,l.proximo]));
+function exportar(){const F=filtrados();const cols=["Nº","Razão Social","CNPJ","Cidade","Rota","Telefone 1","Telefone 2","Email","Etapa","Dupla/vendedor","Comprador","Relato"];
+  const lin=[cols].concat(F.map(l=>[l.n,l.razao,l.cnpj,l.cid,l.rota,l.tel1,l.tel2,l.email,l.etapa,l.destino,(l.hist.slice(-1)[0]||{}).comprador||l.comprador,l.relato]));
   const t="\ufeff"+lin.map(r=>r.map(x=>'"'+String(x==null?"":x).replace(/"/g,'""')+'"').join(";")).join("\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"}));a.download="leads-"+U+"-"+hojeISO()+".csv";a.click()}
 
@@ -299,21 +298,18 @@ function abrir(chave){
     <label>Contato confirmado?</label><div class="chips" id="chC"><button class="chip" data-v="Sim">Sim</button><button class="chip" data-v="Não">Não</button></div>
     <div id="boxDest" style="display:none"><label>Direcionar para (obrigatório no Qualificado)</label>
      <div class="dest"><select id="fDest"><option value="">Escolha a dupla ou o vendedor…</option>${UNI[U].destinos.map(d=>`<option ${d==l.destino?"selected":""}>${esc(d)}</option>`).join("")}</select></div></div>
-    <div id="boxProx"><label>Próximo contato (retorno)</label><input type="date" id="fProx" value="${esc(l.proximo||"")}"></div>
     <label>Nome do comprador</label><input id="fComp" value="${esc(ult.comprador||l.comprador||"")}">
     <label>Telefone confirmado</label><input id="fTel" value="${esc(ult.telefone||l.tel1||"")}">
     <label>Relato</label><textarea id="fRel" placeholder="O que o cliente disse, o que ele compra, volume, concorrente, melhor horário…"></textarea>
     <button class="salvar" id="btSalvar" disabled>Salvar</button>
    </div>
    <h3 style="font-size:14px;color:var(--marinho);margin:22px 0 6px">Histórico deste lead</h3>
-   <div class="hist">${l.hist.length?l.hist.slice().reverse().map(a=>`<div>${tagE(a.etapa)} ${a.destino?"→ <b>"+esc(a.destino)+"</b>":""}<br>${esc(a.relato||"")}<br><small>${dataHoraBR(a.data)} · ${esc(a.usuario||"")}${a.confirmado?" · confirmado: "+esc(a.confirmado):""}${a.proximo?" · retorno "+dataBR(a.proximo+"T12:00"):""}</small></div>`).join(""):`<div><small>Sem ações no site ainda.${l.etapaPl?" Pela planilha: "+esc(l.etapaPl):""}</small></div>`}</div>
+   <div class="hist">${l.hist.length?l.hist.slice().reverse().map(a=>`<div>${tagE(a.etapa)} ${a.destino?"→ <b>"+esc(a.destino)+"</b>":""}<br>${esc(a.relato||"")}<br><small>${dataHoraBR(a.data)} · ${esc(a.usuario||"")}${a.confirmado?" · confirmado: "+esc(a.confirmado):""}</small></div>`).join(""):`<div><small>Sem ações no site ainda.${l.etapaPl?" Pela planilha: "+esc(l.etapaPl):""}</small></div>`}</div>
   </div>`;
   ov.classList.add("on");pn.classList.add("on");pn.scrollTop=0;
   const valida=()=>{const q=ATUAL.etapa=="Qualificado";document.getElementById("boxDest").style.display=q?"block":"none";
-    document.getElementById("boxProx").style.display=/tentativa|Reagendar/.test(ATUAL.etapa)||!ATUAL.etapa?"block":"none";
     btSalvar.disabled=!ATUAL.etapa||(q&&!fDest.value)};
-  chE.onclick=e=>{const b=e.target.closest("[data-e]");if(!b)return;ATUAL.etapa=b.dataset.e;chE.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c==b));
-    if(/tentativa/.test(ATUAL.etapa)&&!fProx.value){const d=new Date();d.setDate(d.getDate()+(d.getDay()==5?3:d.getDay()==6?2:1));fProx.value=d.toISOString().slice(0,10)}valida()};
+  chE.onclick=e=>{const b=e.target.closest("[data-e]");if(!b)return;ATUAL.etapa=b.dataset.e;chE.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c==b));valida()};
   chC.onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;ATUAL.conf=b.dataset.v;chC.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c==b))};
   fDest.onchange=valida;btSalvar.onclick=salvar;valida();
 }
@@ -322,23 +318,11 @@ ov.onclick=fechar;
 async function salvar(){
   const l=ATUAL.l,q=ATUAL.etapa=="Qualificado";if(q&&!fDest.value){toast("Escolha a dupla ou o vendedor");return}
   btSalvar.disabled=true;btSalvar.textContent="Salvando…";
-  const a={unidade:U,chave:l.chave,razao:l.razao,etapa:ATUAL.etapa,confirmado:ATUAL.conf,destino:q?fDest.value:"",comprador:fComp.value.trim(),telefone:fTel.value.trim(),relato:fRel.value.trim(),
-    proximo:/tentativa|Reagendar/.test(ATUAL.etapa)?fProx.value:""};
+  const a={unidade:U,chave:l.chave,razao:l.razao,etapa:ATUAL.etapa,confirmado:ATUAL.conf,destino:q?fDest.value:"",comprador:fComp.value.trim(),telefone:fTel.value.trim(),relato:fRel.value.trim()};
   const r=await back("reg",{tk:SESS.token,a});
   if(!r.ok){btSalvar.disabled=false;btSalvar.textContent="Salvar";toast(r.erro||"Não salvou. Tente de novo.");if(/Sess/.test(r.erro||"")){SESS=null;fechar();telaLogin(r.erro)}return}
   ACOES.push({...a,usuario:SESS.nome,data:r.data||new Date().toISOString()});aplicaAcoes();fechar();render();
   toast(q?`Qualificado e direcionado para ${a.destino} ✔`:"Registrado ✔");
-}
-
-/* ---------- AGENDA ---------- */
-function vAgenda(){
-  const hj=hojeISO();const L=LEADS.filter(l=>l.proximo&&!/Qualificado|Sem qualif|Transferido/.test(l.etapa)).sort((a,b)=>a.proximo<b.proximo?-1:1);
-  const at=L.filter(l=>l.proximo<hj),hoje=L.filter(l=>l.proximo==hj),fut=L.filter(l=>l.proximo>hj);
-  const tb=(arr,c)=>arr.length?`<div class="rol"><table><thead><tr><th>Retorno</th><th>Razão social</th><th>Cidade</th><th>Telefone</th><th>Etapa</th><th>Último relato</th></tr></thead><tbody>${arr.map(l=>`<tr class="cl" onclick="abrir('${esc(l.chave)}')"><td><b style="color:${c}">${dataBR(l.proximo+"T12:00")}</b></td><td><b>${esc(l.razao)}</b></td><td>${esc(l.cid)}</td><td>${esc(l.tel1||"–")}</td><td>${tagE(l.etapa)}</td><td>${esc((l.relato||"").slice(0,90))}</td></tr>`).join("")}</tbody></table></div>`:'<div class="vazio">Nada aqui</div>';
-  return tit("Agenda · "+UNI[U].nome,"Retornos agendados")+
-  `<div class="g g3">${kpi("Atrasados",at.length,"retorno com data vencida","var(--bad)")}${kpi("Para hoje",hoje.length,dataBR(hj+"T12:00"),"var(--laranja)")}${kpi("Próximos",fut.length,"agendados","var(--ok)")}</div>
-  <div class="box" style="margin-top:14px"><h2>Atrasados e de hoje</h2><div class="sub">Clique no lead para registrar o contato</div>${tb(at.concat(hoje),"var(--bad)")}</div>
-  <div class="box"><h2>Próximos</h2>${tb(fut,"var(--marinho)")}</div>`;
 }
 
 /* ---------- HISTÓRICO ---------- */
