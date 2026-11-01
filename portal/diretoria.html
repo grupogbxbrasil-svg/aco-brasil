@@ -145,7 +145,7 @@ try{if(sessionStorage.getItem("dir_ok")==="1")gate.remove()}catch(_){}
    Enquanto um gid estiver vazio, aquela fonte é ignorada (FAT vazio = painel avisa). */
 const PUB_MAB="https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=";
 const PUB_BEL="https://docs.google.com/spreadsheets/d/e/2PACX-1vR48DjCVdLNMOQzoD-C_LGMecUY4Ypk2SNSxyc95hg5X9YRuGXIUbC9E5sQHu8DYvNM53jUShwU0PXA/pub?single=true&output=csv&gid=";
-const GID_BEL={FAT:"1363505846", NOVO:"", DP:"", BV:"1875147214", BI:"1366626833"}; // BV = aba "Base Vendedores" (Power BI por vendedor/setor) // FAT = aba "faturamento 2026" · BI = aba "INFORMAÇÃO BI"
+const GID_BEL={REP:"",ORG:"",FAT:"1363505846", NOVO:"", DP:"", BV:"1875147214", BI:"1366626833"}; // BV = aba "Base Vendedores" (Power BI por vendedor/setor) // FAT = aba "faturamento 2026" · BI = aba "INFORMAÇÃO BI"
 const UNIDADES={
   maraba:{nome:"Marabá", fontes:null},
   belem:{nome:"Belém", duplas:{"Fabio":"Fabio / Marcelle","Marcelle":"Fabio / Marcelle","Alessandra":"Alessandra / Jessica","Jessica":"Alessandra / Jessica"}, fontes:Object.fromEntries(Object.entries(GID_BEL).map(([k,g])=>[k,g?PUB_BEL+g:""]))}
@@ -161,7 +161,10 @@ const FONTES = {
   DP:   "https://docs.google.com/spreadsheets/d/e/2PACX-1vRawbhvAjRq68EavM2MejbGZYjPLZDZ9-pmI3t56E3tgudNnnkcHGwYj6HAOFTZ0t-lfVBOQ1LGGK8H/pub?single=true&output=csv&gid=910000002",
   BV:  "https://docs.google.com/spreadsheets/d/1ItMeQ0Z8T7TTeO3l2Iq1ZyOpiQy1buRX5ZBSzQ2g4ng/gviz/tq?tqx=out:csv&headers=0&gid=777001",
   // BI: aba "BI SITE" (IMPORTRANGE da aba INFORMAÇÃO BI de "Resultado BI - Marabá") — total da filial por setor, sempre atual
-  BI:  PUB_MAB+"1735550437" // aba "INFORMAÇÃO BI" do Painel Comercial DBA Marabá (atualizada pela rotina com o Power BI)
+  BI:  PUB_MAB+"1735550437", // aba "INFORMAÇÃO BI" do Painel Comercial DBA Marabá (atualizada pela rotina com o Power BI)
+  // Totais oficiais do mês (batem com o BI): Executive Review — Reported (com BGL) e — Organic (sem BGL)
+  REP: PUB_MAB+"1005259843",
+  ORG: PUB_MAB+"293735571"
 };
 UNIDADES.maraba.fontes={...FONTES};
 function setUni(u){UNI=u;try{localStorage.setItem("dir_uni",u)}catch(_){}
@@ -174,7 +177,7 @@ const C = {grp:13, vend:63, cli:49, nome:50, cid:52, data:100, dupla:229, ano:23
 // Belém: a aba "faturamento 2026" tem 4 colunas a mais antes das colunas (aux)
 const C_MAB={...C}, C_BEL={grp:13, vend:63, cli:49, nome:50, cid:52, data:100, dupla:233, ano:234, ton:235, rota:237, mes:238, fam:246, setor:250};
 const colsUni=()=>Object.assign(C, UNI=="belem"?C_BEL:C_MAB);
-const BGL = "GV484";
+const BGL = "GV484", CENTRO_VEGA = "9697";
 const MES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 const ATUALIZA_MIN = 10;
 
@@ -193,7 +196,7 @@ const grp=(a,k)=>{const o={};a.forEach(x=>{const kk=typeof k=="function"?k(x):x[
 const titulo=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
 
 /* ---------- estado ---------- */
-let D=[], BV=[], BIm={}, FONTE_NF="", ULT_BGL=null, ABA="resumo", ULT=null;
+let D=[], BV=[], BIm={}, REPm={}, ORGm={}, FONTE_NF="", ULT_BGL=null, ABA="resumo", ULT=null;
 const ABAS=[["resumo","Resumo"],["ranking","Ranking"],["ficha","Ficha da dupla"],["clientes","Clientes & churn"],["mix","Setores & rotas"],["margem","Margem & preço"]];
 abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("");
 abas.onclick=e=>{const b=e.target.closest("button");if(!b)return;ABA=b.dataset.k;try{localStorage.setItem("dir_aba",ABA)}catch(_){}render()};
@@ -208,12 +211,14 @@ async function carregar(manual){
   try{
     stEl.innerHTML='<span class="dot"></span>atualizando…';
     const ft=u=>u?fetch(u+(u.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"}):Promise.resolve({ok:false,status:"sem gid configurado",text:()=>""});
-    const [t1,t2,t3,t4,t5]=await Promise.all([
+    const [t1,t2,t3,t4,t5,t6,t7]=await Promise.all([
       ft(FONTES.FAT).then(r=>{if(!r.ok)throw new Error("FAT "+r.status);return r.text()}),
       ft(FONTES.BV).then(r=>r.ok?r.text():"").catch(()=>""),
       ft(FONTES.BI).then(r=>r.ok?r.text():"").catch(()=>""),
       ft(FONTES.NOVO).then(r=>r.ok?r.text():"").catch(()=>""),
-      ft(FONTES.DP).then(r=>r.ok?r.text():"").catch(()=>"")
+      ft(FONTES.DP).then(r=>r.ok?r.text():"").catch(()=>""),
+      ft(FONTES.REP).then(r=>r.ok?r.text():"").catch(()=>""),
+      ft(FONTES.ORG).then(r=>r.ok?r.text():"").catch(()=>"")
     ]);
     if(U0!==UNI)return; // trocou de unidade durante a leitura
     /* 1) Base antiga (FAT 2026 ATUAL): usada para o grupo BGL (GV484) e para os de-para de material, cliente e cidade */
@@ -232,9 +237,15 @@ async function carregar(manual){
       const dt=new Date(+ds[2],+ds[1]-1,+ds[0]),mm=mapMat[r[6]],du=(r[21]||"").trim();
       DN.push({m:+ds[1],t,dupla:!du||/mapear/i.test(du)?"Outros":du,vend:vendEq[(r[15]||"").trim()]||(r[15]||""),cli:r[10],nome:(r[11]||"").trim(),cid:titulo(r[14]),
         rota:mapCliRota[r[10]]||mapCidRota[(r[14]||"").toUpperCase()]||"Sem rota",setor:mm?mm.setor:(setLbl[(r[20]||"").toLowerCase()]||"TERCEIROS"),
-        fam:mm?mm.fam:titulo((r[7]||"").split(" ")[0]),bgl:r[12]==BGL,dt})});
+        fam:mm?mm.fam:titulo((r[7]||"").split(" ")[0]),bgl:r[12]==BGL||String(r[1]).trim()==CENTRO_VEGA||/^BGL\b/i.test(r[7]||""),dt});
+      const z=DN[DN.length-1];if(z.bgl&&!mm)z.setor="PLANOS E DERIVADOS"});
     /* Junta: se a base nova veio, ela substitui as notas fora do BGL da base antiga */
-    D=DN.length?DN.concat(D26.filter(x=>x.bgl)):D26;
+    /* BGL (Galvolume, faturado pela VEGA): a FAT NOVO só traz as notas da VEGA a partir de outubro; antes disso o BGL vem da FAT 2026 ATUAL (GV484). Não soma duas vezes o mesmo mês. */
+    const mBglNovo=new Set(DN.filter(x=>x.bgl).map(x=>x.m));
+    D=DN.length?DN.concat(D26.filter(x=>x.bgl&&!mBglNovo.has(x.m))):D26;
+    /* Totais oficiais por mês (Executive Review — Reported e Organic) */
+    const totLinha=t=>{const o={};if(!t)return o;const L=csv(t);const h=L.find(r=>r.some(c=>/^jan\.?-26$/i.test((c||"").trim())));const ti=L.find(r=>/^TOTAL GERAL/i.test((r[0]||"").trim()));if(!h||!ti)return o;h.forEach((c,i)=>{const k=MES.indexOf((c||"").trim().slice(0,3).toLowerCase());if(k>=0&&/26$/.test((c||"").trim())){const v=num(ti[i]);if(v)o[k+1]=v}});return o};
+    REPm=totLinha(t6);ORGm=totLinha(t7);
     /* Unidade sem duplas (Belém): cada vendedor vira a sua própria "dupla" */
     if(UNIDADES[UNI].semDuplas)D.forEach(x=>x.dupla=x.vend||"Outros");
     /* Belém: a coluna Dupla (aux) traz o vendedor; junta as duplas CLT (Fabio & Marcelle, Alessandra & Jessica) */
@@ -475,34 +486,50 @@ function vMix(X){
   const temBGL=UNI!="belem"&&base.some(x=>x.bgl);
   if(!temBGL)MXB="todos";
   const b0=base.filter(x=>x.m<=M&&(MXB=="todos"||(MXB=="com"?x.bgl:!x.bgl)));
-  const sets=[...new Set(b0.map(x=>x.setor))].sort();
+  const sets=[...new Set(b0.map(x=>x.setor).concat(Object.values(BIm).flatMap(o=>(o.sd||[]).map(x=>x.s))).map(x=>String(x||"").toUpperCase().trim()))].filter(Boolean).sort();
   if(MXS&&!sets.includes(MXS))MXS="";
-  const bs=MXS?b0.filter(x=>x.setor==MXS):b0;
+  const bs=MXS?b0.filter(x=>String(x.setor||"").toUpperCase().trim()==MXS):b0;
   const porMes=a=>ms.map(m=>sum(a.filter(x=>x.m==m),x=>x.t));
-  const tabS=Object.entries(grp(bs,"setor")).map(([s,a])=>{const v=porMes(a);return{s,v,t:sum(v,x=>x)}}).sort((x,y)=>y.t-x.t);
+  /* Setores: total oficial do BI por setor (aba INFORMAÇÃO BI). Se o BI do mês não fecha com o total oficial (Executive Review), usa as notas ajustadas ao total oficial. */
+  const U=x=>String(x||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+  const bglNF=m=>sum(base.filter(x=>x.m==m&&x.bgl),x=>x.t);
+  const bglOf=m=>REPm[m]&&ORGm[m]?Math.max(0,REPm[m]-ORGm[m]):bglNF(m);
+  const ofSet=m=>{const rep=REPm[m],bi=BIm[m];let rows;
+    if(bi&&bi.sd&&bi.t&&(!rep||Math.abs(bi.t-rep)/rep<0.03))rows=bi.sd.map(x=>({s:U(x.s),t:x.t}));
+    else{const nt=base.filter(x=>x.m==m);const tn=sum(nt,x=>x.t);const k=rep&&tn?rep/tn:1;rows=Object.entries(grp(nt,"setor")).map(([s_,a])=>({s:U(s_),t:sum(a,x=>x.t)*k}))}
+    const pl=rows.find(x=>/PLANOS/.test(x.s))||(rows.push({s:"PLANOS E DERIVADOS",t:0}),rows[rows.length-1]);const bg=bglOf(m);
+    if(MXB=="sem")pl.t=Math.max(0,pl.t-bg);else if(MXB=="com")rows=[{s:pl.s,t:bg}];
+    return rows};
+  const DISP={};base.forEach(x=>{const k=U(x.setor);if(!DISP[k]||/[ÇÃÁÉÍÓÚ]/i.test(x.setor))DISP[k]=String(x.setor).toUpperCase()});
+  const OF=ms.map(m=>ofSet(m));
+  const setNomes=[...new Set(OF.flat().map(x=>x.s))];
+  const tabS=setNomes.filter(s_=>!MXS||U(MXS)==s_).map(s_=>{const v=OF.map(r=>sum(r.filter(x=>x.s==s_),x=>x.t));return{s:s_,v,t:sum(v,x=>x)}}).filter(r=>r.t>0.05).sort((x,y)=>y.t-x.t);
+  const totV=ms.map((m,i)=>sum(tabS,r=>r.v[i])), totAno=sum(totV,x=>x);
+  /* Rotas: notas fiscais; a diferença para o total oficial entra numa linha de ajuste, para fechar com o BI */
   const rotas=Object.entries(grp(bs,"rota")).map(([r,a])=>{const v=porMes(a);return{r,v,t:sum(v,x=>x),cl:new Set(a.map(x=>x.cli)).size}}).sort((x,y)=>y.t-x.t);
-  const totAno=sum(bs,x=>x.t), totV=porMes(bs);
+  const nfV=porMes(bs), adj=ms.map((m,i)=>totV[i]-nfV[i]);
+  if(adj.some(x=>Math.abs(x)>0.5))rotas.push({r:"Ajuste ao BI (não detalhado nas notas)",v:adj,t:sum(adj,x=>x),cl:0,aj:1});
   const fam=Object.entries(grp(bs,"fam")).map(([f,a])=>[f||"(sem família)",sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const cid=Object.entries(grp(bs,"cid")).map(([f,a])=>[f,sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const fora=sum(bs.filter(x=>/fora/i.test(x.rota)),x=>x.t);
+  const fora=sum(bs.filter(x=>/fora/i.test(x.rota)),x=>x.t), totNF=sum(bs,x=>x.t);
   const st='style="font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--borda);margin-right:8px"';
   const filtros=`<div class="box" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center"><b>Filtros</b>
    <label>Setor <select ${st} onchange="MXS=this.value;render()"><option value="">Todos os setores</option>${sets.map(s=>`<option value="${esc(s)}" ${s==MXS?"selected":""}>${esc(titulo(s))}</option>`).join("")}</select></label>
-   ${temBGL?`<label>BGL <select ${st} onchange="MXB=this.value;render()"><option value="todos" ${MXB=="todos"?"selected":""}>Com e sem BGL</option><option value="sem" ${MXB=="sem"?"selected":""}>Sem BGL</option><option value="com" ${MXB=="com"?"selected":""}>Só BGL</option></select></label>`:""}</div>`;
+   ${temBGL?`<label>BGL <select ${st} onchange="MXB=this.value;render()"><option value="todos" ${MXB=="todos"?"selected":""}>Com e sem BGL</option><option value="sem" ${MXB=="sem"?"selected":""}>Sem BGL</option><option value="com" ${MXB=="com"?"selected":""}>Só BGL (Galvolume VEGA)</option></select></label>`:""}</div>`;
   const rotB=MXB=="sem"?" · sem BGL":MXB=="com"?" · só BGL":"";
   const mesTh=ms.map(m=>`<th class="n">${MES[m-1]}</th>`).join("");
   const pf=typeof __PF=="function"?__PF():1;
   const tag=(c,p)=>{c=c*pf;return `<span class="tag ${!isFinite(pct(c,p))?"tg-c":pct(c,p)>=0?"tg-v":"tg-r"}">${fp(pct(c,p))}</span>`};
   return tit(`Setores & rotas · Jan–${MES[M-1]}/26`,"Onde está o volume no ano"+(MXS?" · "+titulo(MXS):"")+rotB,"")+filtros+
-  `<div class="g g4">${kpi("Volume no ano",f0(totAno)+" t",`média de ${f1(totAno/Math.max(1,M))} t/mês`,"var(--laranja)")}${kpi(MXS?"Setor":"Setor líder no ano",titulo(MXS||tabS[0]?.s||"–"),f0(tabS[0]?.t||0)+" t no ano")}${kpi("Rotas prioritárias",f1(totAno?(totAno-fora)/totAno*100:0)+"%",`Rota Fora DBA: ${f0(fora)} t no ano`,"#2e7d57")}${kpi("Cidades atendidas",new Set(bs.map(x=>x.cid)).size,"no ano","#7a47aa")}</div>
-  <div class="box" style="margin-bottom:14px"><h2>Setores — ano inteiro</h2><div class="sub">Volume (t) por mês</div><div class="rol"><table><thead><tr><th>Setor</th>${mesTh}<th class="n">Ano</th><th class="n">% ano</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
-   ${tabS.map(r=>`<tr><td><b>${esc(titulo(r.s))}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${f1(totAno?r.t/totAno*100:0)}%</td><td class="n">${tag(r.v[M-1],r.v[M-2])}</td><td>${spark(r.v)}</td></tr>`).join("")||`<tr><td colspan="${M+5}" class="vazio">Sem volume com esses filtros</td></tr>`}
+  `<div class="g g4">${kpi("Volume no ano",f0(totAno)+" t",`média de ${f1(totAno/Math.max(1,M))} t/mês`,"var(--laranja)")}${kpi(MXS?"Setor":"Setor líder no ano",titulo(MXS||DISP[tabS[0]?.s]||tabS[0]?.s||"–"),f0(tabS[0]?.t||0)+" t no ano")}${kpi("Rotas prioritárias",f1(totNF?(totNF-fora)/totNF*100:0)+"%",`Rota Fora DBA: ${f0(fora)} t no ano`,"#2e7d57")}${kpi("Cidades atendidas",new Set(bs.map(x=>x.cid)).size,"no ano","#7a47aa")}</div>
+  <div class="box" style="margin-bottom:14px"><h2>Setores — ano inteiro</h2><div class="sub">Volume (t) por mês · total oficial do BI${MXB!="todos"?" · BGL = Galvolume faturado pela VEGA":""}</div><div class="rol"><table><thead><tr><th>Setor</th>${mesTh}<th class="n">Ano</th><th class="n">% ano</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
+   ${tabS.map(r=>`<tr><td><b>${esc(titulo(DISP[r.s]||r.s))}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${f1(totAno?r.t/totAno*100:0)}%</td><td class="n">${tag(r.v[M-1],r.v[M-2])}</td><td>${spark(r.v)}</td></tr>`).join("")||`<tr><td colspan="${M+5}" class="vazio">Sem volume com esses filtros</td></tr>`}
    <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(totAno)}</td><td class="n">100%</td><td class="n">${tag(totV[M-1],totV[M-2])}</td><td></td></tr></tbody></table></div>${X.parcial?`<div class="nota">${MES[M-1]} ainda parcial (${X.duD} de ${X.duT} dias úteis).</div>`:""}</div>
-  <div class="box" style="margin-bottom:14px"><h2>Rotas — ano inteiro</h2><div class="sub">Volume (t) por mês, clientes no ano e tendência</div><div class="rol"><table><thead><tr><th>Rota</th>${mesTh}<th class="n">Ano</th><th class="n">Clientes</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
-   ${rotas.map(r=>`<tr><td><b>${esc(r.r)}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${r.cl}</td><td class="n">${tag(r.v[M-1],r.v[M-2])}</td><td>${spark(r.v)}</td></tr>`).join("")}
+  <div class="box" style="margin-bottom:14px"><h2>Rotas — ano inteiro</h2><div class="sub">Volume (t) por mês pelas notas fiscais, clientes no ano e tendência · o total fecha com o BI</div><div class="rol"><table><thead><tr><th>Rota</th>${mesTh}<th class="n">Ano</th><th class="n">Clientes</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
+   ${rotas.map(r=>`<tr ${r.aj?'style="color:#667;font-style:italic"':""}><td><b>${esc(r.r)}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${r.aj?"–":r.cl}</td><td class="n">${r.aj?"":tag(r.v[M-1],r.v[M-2])}</td><td>${r.aj?"":spark(r.v)}</td></tr>`).join("")}
    <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(totAno)}</td><td class="n">${new Set(bs.map(x=>x.cli)).size}</td><td></td><td></td></tr></tbody></table></div></div>
   <div class="box" style="margin-bottom:14px"><h2>Maiores clientes ${MXS?"· "+esc(titulo(MXS)):"por setor"}</h2><div class="sub">Volume no ano (t)${MXS?" · top 15 do setor":" · top 5 de cada setor (use o filtro de setor para ver mais)"}</div>
-   ${MXS?topCli(bs,15):tabS.map(r=>`<h3 style="margin:14px 0 6px;color:var(--marinho)">${esc(titulo(r.s))} <span style="font-weight:400;color:#667">· ${f0(r.t)} t</span></h3>${topCli(bs.filter(x=>x.setor==r.s),5)}`).join("")}</div>
+   ${MXS?topCli(bs,15):tabS.map(r=>`<h3 style="margin:14px 0 6px;color:var(--marinho)">${esc(titulo(DISP[r.s]||r.s))} <span style="font-weight:400;color:#667">· ${f0(r.t)} t</span></h3>${topCli(bs.filter(x=>U(x.setor)==r.s),5)}`).join("")}</div>
   <div class="g g2"><div class="box"><h2>Top famílias de produto</h2><div class="sub">t no ano</div>${hbars(fam)}</div><div class="box"><h2>Top cidades</h2><div class="sub">t no ano</div>${hbars(cid)}</div></div>`;
 }
 
