@@ -7,7 +7,7 @@
 const LD_PUBM="https://docs.google.com/spreadsheets/d/e/2PACX-1vSWkUwIA-PcekRj-_pjqx5QaorNtpov6LEijjKBumZacl1zn4qzelC9Ck3ikI0s0d-6WnAC9VKuwIIB/pub?single=true&output=csv&gid=";
 const LD_PUBB="https://docs.google.com/spreadsheets/d/e/2PACX-1vS7Cz40wQ3c1egLW4eIM7PtA1IDEo0mGxM_Zee3b-Og1fIkx-HZZut8kuhuVHZ9ZHMafJ1eZB80Feh-/pub?single=true&output=csv&gid=";
 const CFG={
-  maraba:{nome:"Marabá",leads:LD_PUBM+"191255704",modo:"contactei",inicio:6,mesIni:"jun",
+  maraba:{nome:"Marabá",leads:LD_PUBM+"191255704",modo:"contactei",inicio:8,mesIni:"ago",
     abas:[LD_PUBM+"301912048",LD_PUBM+"428476033",LD_PUBM+"597943590",
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOHMlqaOkAL4MWtLtYNbTMF3zv9hQWEhanys7dSxnXWJV2d3WuejDnPG5LYdqRLgiodaGF6TncUo8n/pub?single=true&output=csv&gid=1765537608" /* cópia preenchida por Martinho e Rafael */,
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQSyPxMYQ79oc9eFsGyRnOSSj_L01bTsKigqdmTdQZk5ktedLg4ebCr6dNrhen-KnqWA0hL02Ug4ZAQ/pub?output=csv" /* preenchida por Israel e Stefanny */,
