@@ -615,7 +615,7 @@ function bcQuem(){try{if(typeof __SIG!="undefined"&&__SIG){if(typeof __BEL!="und
   const d=BC_SIG_DUPLA[String(__SIG).toLowerCase()];if(d)return{modo:"dupla",uni:"maraba",dup:d,rot:d}}}catch(_){}
   const u=(typeof UNI!="undefined"&&UNI)||"maraba";return{modo:"todos",uni:u,rot:u=="belem"?"DBA Belém":"DBA Marabá"}}
 const bcPn=s=>bcN(s).split(/[\s\/&]+/).filter(Boolean);
-function bcMinha(c,Q){if(Q.modo=="dupla")return c.escU=="MAB"&&c.papel==Q.dup;const nm=bcPn(Q.nome);return c.escU=="BEL"&&bcPn(c.dono).some(x=>nm.includes(x))}
+function bcMinha(c,Q){if(Q.modo=="dupla")return c.escU=="MAB"&&c.papel==Q.dup;const nm=bcPn(Q.nome);return c.escU=="BEL"&&!/inativ/i.test(c.dono)&&bcPn(c.dono).some(x=>nm.includes(x))}
 function bcOport(c,Q){if(Q.modo=="dupla")return c.s=="O51"&&(c.dest==Q.dup||c.dest=="Todos (Marabá)");return c.s=="LB"&&!bcMinha(c,Q)}
 function bcEscopo(c,Q){
   if(Q.modo=="todos")return Q.uni=="belem"?(c.escU=="BEL"||c.s=="TB"):(c.escU=="MAB"||c.s=="O51"||c.s=="TM");
@@ -642,8 +642,8 @@ async function bcCarregar(){
       const e=String(r[I.esc]||""),dono=String(r[I.dono]||"").trim(),cid=bcN(r[I.cid]);
       const escU=/051/.test(e)?"051":/130|Marab/i.test(e)?"MAB":/159|Bel/i.test(e)?"BEL":"?";
       const inM=MAB.has(cid),inB=BEL.has(cid),reg=inM&&inB?"AMBAS":inM?"MAB":inB?"BEL":"FORA";
-      const dn=bcN(dono).toLowerCase();let dDup="";if(escU!="BEL")for(const [re,d] of BC_VEND)if(re.test(dn)){dDup=d;break}
-      const papel=dDup||(/gilvan/.test(dn)?"Gerência (Gilvan)":/integracao|^$/.test(dn)?"Sistema (sem vendedor)":"Outros");
+      const dn=bcN(dono).toLowerCase(),inat=/\[inativ/i.test(dono);let dDup="";if(escU!="BEL"&&!inat)for(const [re,d] of BC_VEND)if(re.test(dn)){dDup=d;break}
+      const papel=dDup||(inat?"Vendedor inativo":/gilvan/.test(dn)?"Gerência (Gilvan)":/integracao|^$/.test(dn)?"Sistema (sem vendedor)":"Outros");
       const ro=ROTA[cid]||null,rd=ro?ro.dupla:(inM?"Todos":"");
       const p=String(r[I.ult]||"").split("/"),ult=p.length==3?new Date(+p[2],+p[1]-1,+p[0]):null,dias=ult?Math.floor((hoje-ult)/864e5):null;
       let s="OK",dest="",mot="";
@@ -654,6 +654,7 @@ async function bcCarregar(){
       else if(escU=="BEL"&&reg=="BEL"&&dias!==null&&dias>BC_LIVRE){s="LB";dest="Qualquer vendedor (Belém)";mot=dias+" dias sem compra"}
       else if((escU=="MAB"||escU=="BEL")&&reg=="AMBAS"){s="ZC";mot="Cidade nas rotas de Marabá e de Belém"}
       else if(reg=="FORA"){s="FO";mot="Cidade fora das áreas de Marabá e Belém"}
+      if(inat&&(s=="OK"||s=="ZC"||s=="FO")){s="DI";dest=rd&&rd!="Todos"?rd:"A definir (diretoria)";mot="Conta em nome de vendedor inativo no EON ("+dono.replace(/\[inativ[oa]\]\s*/i,"")+")"+(ro?" · Rota "+ro.rota:"")}
       C.push({escU,esc:e,dono:titulo(dono),papel:escU=="BEL"?titulo(dono):papel,st:r[I.st]||"",rel:r[I.rel]||"",nome:r[I.nome]||"",cid:titulo(r[I.cid]),uf:r[I.uf]||"",cnpj:r[I.cnpj]||"",sap:r[I.sap]||"",ult:r[I.ult]||"",dias,abc:r[I.abc]||"",seg:r[I.seg]||"",tipo:r[I.tipo]||"",tel:r[I.tel]||"",rota:ro?ro.rota:(RB[cid]||""),s,dest,mot})}
     BC.C=C;BC.st="ok";BC.lido=new Date();
   }catch(e){BC.st="erro";BC.erro=e.message}
