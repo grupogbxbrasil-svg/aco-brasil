@@ -348,7 +348,7 @@ async function carregaVendas(){
   try{
     const [tf,tb]=await Promise.all([ft(UNI[u].fat),UNI[u].base?ft(UNI[u].base):Promise.resolve("")]);
     if(u!=U)return;
-    const c2s={};if(tb){const B=csv(tb);const h=B.findIndex(r=>r.some(c=>/C.digo\s+SAP/i.test(c||"")));if(h>=0){const iS=B[h].findIndex(c=>/C.digo\s+SAP/i.test(c||"")),iC=B[h].findIndex(c=>/^CNPJ$/i.test((c||"").trim()));B.slice(h+1).forEach(r=>{if(r[iC]&&r[iS])c2s[dig(r[iC])]=z0(r[iS])})}}
+    const c2s={};if(tb){const B=csv(tb);const h=B.findIndex(r=>r.some(c=>/C.digo\s*\(?SAP/i.test(c||"")));if(h>=0){const iS=B[h].findIndex(c=>/C.digo\s*\(?SAP/i.test(c||"")),iC=B[h].findIndex(c=>/^CNPJ$/i.test((c||"").trim()));B.slice(h+1).forEach(r=>{if(r[iC]&&r[iS])c2s[dig(r[iC])]=z0(r[iS])})}}
     const F=csv(tf),NF=[];
     if(UNI[u].fmt=="novo"){F.slice(1).forEach(r=>{const d=(r[18]||"").split("/");if(d.length!=3||d[2]!="2026")return;const t=num(r[17]);if(!t)return;NF.push({cli:z0(r[10]),nome:r[11],m:+d[1],dt:d[2]+"-"+d[1].padStart(2,"0")+"-"+d[0].padStart(2,"0"),t,dupla:(r[21]||"").trim()})})}
     else{F.slice(1).forEach(r=>{if(r[234]!="2026")return;const t=num(r[235]);if(!t)return;const m=parseInt(r[238])||0;if(!m)return;const p=(r[100]||"").split("/");const dt=p.length==3?p[2]+"-"+p[0].padStart(2,"0")+"-"+p[1].padStart(2,"0"):"2026-"+String(m).padStart(2,"0")+"-01";NF.push({cli:z0(r[49]),nome:r[50],m,dt,t,dupla:titulo(r[233])})})}

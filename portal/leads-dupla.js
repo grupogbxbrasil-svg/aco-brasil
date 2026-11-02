@@ -45,7 +45,7 @@ async function ldCarrega(){
   LD.uni=CFG[r.unidade]?r.unidade:"maraba";LD.dupla=r.dupla;LD.todos=!!r.todos;LD.sup=!!r.sup;LD.status=r.status||[];LD.acoes=r.itens||[];
   const [fx,fb,...abas]=await Promise.all([ldPede({tipo:"fx",url:C().leads+"&t="+Date.now()},90000),C().base?ldPede({tipo:"fx",url:C().base+"&t="+Date.now()},90000):Promise.resolve({text:""})].concat(C().abas.map(u=>ldPede({tipo:"fx",url:u+"&t="+Date.now()},90000))));
   /* base de clientes: CNPJ -> código SAP (igual à página da Contactei) */
-  const c2s={};try{const B=ldCsv(fb.text||"");const hb=B.findIndex(r=>r.some(c=>/C.digo\s+SAP/i.test(c||"")));if(hb>=0){const iS=B[hb].findIndex(c=>/C.digo\s+SAP/i.test(c||"")),iC=B[hb].findIndex(c=>/^CNPJ$/i.test((c||"").trim()));B.slice(hb+1).forEach(r=>{if(r[iC]&&r[iS])c2s[ldDig(r[iC])]=ldZ(r[iS])})}}catch(_){}
+  const c2s={};try{const B=ldCsv(fb.text||"");const hb=B.findIndex(r=>r.some(c=>/C.digo\s*\(?SAP/i.test(c||"")));if(hb>=0){const iS=B[hb].findIndex(c=>/C.digo\s*\(?SAP/i.test(c||"")),iC=B[hb].findIndex(c=>/^CNPJ$/i.test((c||"").trim()));B.slice(hb+1).forEach(r=>{if(r[iC]&&r[iS])c2s[ldDig(r[iC])]=ldZ(r[iS])})}}catch(_){}
   LD.plan={};abas.forEach(a=>{ldCsv(a.text||"").forEach(x=>{const c=ldDig(x[1]);if(c.length>=11&&(x[5]||x[6]))LD.plan["c"+c]={status:(x[5]||"").trim(),obs:(x[6]||"").trim()}})});
   const L=ldCsv(fx.text||"");const h=L.findIndex(x=>x[1]&&/raz/i.test(x[1]));const out=[];
   L.slice(h+1).forEach(x=>{if(!x[1]||!x[1].trim())return;const cnpj=ldDig(x[6]),sap=ldZ(x[17])||c2s[cnpj]||"";
