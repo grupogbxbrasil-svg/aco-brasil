@@ -197,7 +197,7 @@ const titulo=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase
 
 /* ---------- estado ---------- */
 let D=[], BV=[], BIm={}, REPm={}, ORGm={}, FONTE_NF="", ULT_BGL=null, ABA="resumo", ULT=null;
-const ABAS=[["resumo","Resumo"],["mix","Setores & rotas"],["ranking","Ranking"],["ficha","Ficha da dupla"],["clientes","Clientes & churn"],["margem","Margem & preço"],["base","Base Clientes"]];
+const ABAS=[["resumo","Resumo"],["mix","Setores & rotas"],["ranking","Ranking"],["ficha","Ficha da dupla"],["clientes","Clientes & churn"],["margem","Margem & preço"]];
 abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("");
 abas.onclick=e=>{const b=e.target.closest("button");if(!b)return;ABA=b.dataset.k;try{localStorage.setItem("dir_aba",ABA)}catch(_){}render()};
 try{ABA=localStorage.getItem("dir_aba")||ABA}catch(_){}
@@ -571,7 +571,7 @@ function render(){setTimeout(semDuplasTxt,0);
   [...abas.children].forEach(b=>b.classList.toggle("on",b.dataset.k==ABA));
   const X=ctx(); X_=X;
   const V={resumo:vResumo,ranking:vRanking,ficha:vFicha,clientes:vClientes,mix:vMix,margem:vMargem,base:vBase}[ABA]||vResumo;
-  const av=X.bi&&ABA!="resumo"&&ABA!="margem"&&ABA!="base"?`<div class="al a" style="margin-bottom:14px"><span class="al-i">•</span><div><b>Como ler ${MES[X.M-1]} nesta aba</b>Os números são das notas sem BGL até ${ULT?ULT.toLocaleDateString("pt-BR"):"–"}. O total da filial pelo Power BI (${f1(X.bi.t)} t, com BGL) está no Resumo.</div></div>`:"";
+  const av=X.bi&&["resumo","margem","metodologia","funil","credito","leads","base"].indexOf(ABA)<0?`<div class="al a" style="margin-bottom:14px"><span class="al-i">•</span><div><b>Como ler ${MES[X.M-1]} nesta aba</b>Os números são das notas sem BGL até ${ULT?ULT.toLocaleDateString("pt-BR"):"–"}. O total da filial pelo Power BI (${f1(X.bi.t)} t, com BGL) está no Resumo.</div></div>`:"";
   try{app.innerHTML=av+V(X)}catch(e){app.innerHTML=`<div class="box vazio">Erro ao montar esta aba: ${esc(e.message)}</div>`;console.error(e)}
 }
 /* ---------- modo apresentação (tela cheia, sem tempo: quem apresenta troca de aba e decide quando parar) ---------- */
