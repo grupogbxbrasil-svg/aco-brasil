@@ -250,6 +250,8 @@ async function carregar(manual){
     if(UNIDADES[UNI].semDuplas)D.forEach(x=>x.dupla=x.vend||"Outros");
     /* Belém: a coluna Dupla (aux) traz o vendedor; junta as duplas CLT (Fabio & Marcelle, Alessandra & Jessica) */
     if(UNIDADES[UNI].duplas){const DP_=UNIDADES[UNI].duplas;D.forEach(x=>{const k=titulo(String(x.dupla||"").split(/\s+/)[0]);x.dupla=DP_[k]||(x.dupla&&x.dupla!="Outros"?titulo(x.dupla):"Outros")})}
+    /* Painel do vendedor (Wix): Fabio/Marcelle e Alessandra/Jessica são duplas em Belém — o nome sozinho vira a dupla */
+    try{const DP2=UNIDADES[UNI].duplas;if(DP2&&window.__DU){const k=titulo(String(window.__DU).split(/\s+/)[0]);if(DP2[k])window.__DU=DP2[k]}}catch(_){}
     FONTE_NF=DN.length?"FAT NOVO 2026 + BGL da FAT 2026 ATUAL":"FAT 2026 ATUAL";
     ULT=(DN.length?DN:D26).reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
     ULT_BGL=D26.filter(x=>x.bgl).reduce((a,x)=>x.dt&&(!a||x.dt>a)?x.dt:a,null);
