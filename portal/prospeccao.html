@@ -111,12 +111,12 @@ const UNI={
   belem:{nome:"DBA Belém",leads:PUB_LEADS.belem+"191255704",base:"",fat:PUB_BEL+"1363505846",fmt:"belem",
     destinos:["Alcir","Francitonio","Raphael","Cibelle","Renato","Jennifer","Alvaro","Fabio / Marcelle","Alessandra / Jessica"]}
 };
-const INICIO_TRABALHO="2026-06-01";       // a Contactei começou em junho/2026
+const INICIO={maraba:"2026-06-01",belem:"2026-09-01"}; // início do trabalho da Contactei: Marabá em junho, Belém em setembro/2026
 const META_DIA=40;                        // meta de leads trabalhados por dia (ideia: barra de progresso)
 const ETAPAS=["1ª tentativa","2ª tentativa","3ª tentativa","Qualificado","Sem qualificação (3 tent.)","Transferido","Div. banner"];
 const ETAPA_TAG={"1ª tentativa":"t1","2ª tentativa":"t2","3ª tentativa":"t3","Qualificado":"tq","Sem qualificação (3 tent.)":"tx","Transferido":"tt","Div. banner":"tr","Reagendar":"tr"};
 const MES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-const ABAS=[["dash","Dashboard"],["leads","Leads"],["vendas","Vendas desde junho"],["hist","Histórico"]];
+const ABAS=[["dash","Dashboard"],["leads","Leads"],["vendas","Vendas da prospecção"],["hist","Histórico"]];
 
 /* ===================== PONTE COM O SITE ===================== */
 const DENTRO=window.parent!==window; let SEQ=0; const PEND={};
@@ -352,7 +352,7 @@ async function carregaVendas(){
     if(UNI[u].fmt=="novo"){F.slice(1).forEach(r=>{const d=(r[18]||"").split("/");if(d.length!=3||d[2]!="2026")return;const t=num(r[17]);if(!t)return;NF.push({cli:z0(r[10]),nome:r[11],m:+d[1],dt:d[2]+"-"+d[1].padStart(2,"0")+"-"+d[0].padStart(2,"0"),t,dupla:(r[21]||"").trim()})})}
     else{F.slice(1).forEach(r=>{if(r[234]!="2026")return;const t=num(r[235]);if(!t)return;const m=parseInt(r[238])||0;if(!m)return;const p=(r[100]||"").split("/");const dt=p.length==3?p[2]+"-"+p[0].padStart(2,"0")+"-"+p[1].padStart(2,"0"):"2026-"+String(m).padStart(2,"0")+"-01";NF.push({cli:z0(r[49]),nome:r[50],m,dt,t,dupla:titulo(r[233])})})}
     const porCli={},porNome={};NF.forEach(x=>{(porCli[x.cli]=porCli[x.cli]||[]).push(x);porNome[nn(x.nome)]=x.cli});
-    const ini=INICIO_TRABALHO,mIni=+ini.slice(5,7),res=[];
+    const ini=INICIO[u],mIni=+ini.slice(5,7),res=[];
     LEADS.forEach(l=>{let k=l.sap||c2s[l.cnpj]||"",via=l.sap?"código SAP":k?"CNPJ":"";if(!k&&porNome[nn(l.razao)]){k=porNome[nn(l.razao)];via="nome"}
       const nf=k&&porCli[k];if(!nf)return;const dep=nf.filter(x=>x.dt>=ini);if(!dep.length)return;const ant=nf.filter(x=>x.dt<ini);
       const pm={};dep.forEach(x=>pm[x.m]=(pm[x.m]||0)+x.t);const prim=dep.reduce((a,x)=>x.dt<a?x.dt:a,"9999");
@@ -364,25 +364,25 @@ async function carregaVendas(){
   if(ABA=="vendas"&&u==U)render();
 }
 function vVendas(){
-  if(!VENDAS||VENDAS.carregando||VENDAS.u!=U)return tit("Vendas · "+UNI[U].nome,"Leads que compraram desde junho")+'<div class="carga"><div class="spin"></div>Cruzando os leads com o faturamento…</div>';
+  if(!VENDAS||VENDAS.carregando||VENDAS.u!=U)return tit("Vendas · "+UNI[U].nome,"Leads que compraram desde o início do trabalho")+'<div class="carga"><div class="spin"></div>Cruzando os leads com o faturamento…</div>';
   if(VENDAS.erro)return '<div class="box vazio">Não consegui ler o faturamento: '+esc(VENDAS.erro)+'</div>';
   const R=VENDAS.res,ms=[];for(let m=VENDAS.mIni;m<=VENDAS.mFim;m++)ms.push(m);
   const tT=sum(R,x=>x.t),nov=R.filter(x=>x.novo),reat=R.filter(x=>!x.novo),qual=LEADS.filter(l=>l.etapa=="Qualificado"),qComp=R.filter(x=>x.l.etapa=="Qualificado");
   const pmT=ms.map(m=>sum(R,x=>x.pm[m]||0));const mx=Math.max(1,...pmT);
   const porV={};R.forEach(x=>porV[x.vendeu]=(porV[x.vendeu]||0)+x.t);
-  return tit("Vendas · "+UNI[U].nome,"Leads da prospecção que compraram desde junho/2026")+
-  `<div class="g g4">${kpi("Leads que compraram",f0(R.length),"com nota faturada desde 01/06","var(--ok)")}
+  return tit("Vendas · "+UNI[U].nome,"Leads da prospecção que compraram desde "+(U=="belem"?"setembro":"junho")+"/2026")+
+  `<div class="g g4">${kpi("Leads que compraram",f0(R.length),"com nota faturada desde "+(U=="belem"?"01/09":"01/06"),"var(--ok)")}
    ${kpi("Volume vendido",f1(tT)+" t",f0(sum(R,x=>x.nf))+" itens de nota","var(--laranja)")}
-   ${kpi("Clientes novos",f0(nov.length),f1(sum(nov,x=>x.t))+" t · sem compra em 2026 antes de junho","var(--azul)")}
+   ${kpi("Clientes novos",f0(nov.length),f1(sum(nov,x=>x.t))+" t · sem compra em 2026 antes de "+(U=="belem"?"setembro":"junho"),"var(--azul)")}
    ${kpi("Qualificados que compraram",f0(qComp.length),f1(pc(qComp.length,qual.length))+"% dos "+f0(qual.length)+" qualificados","var(--roxo)")}</div>
   <div class="g g2" style="margin-top:14px">
    <div class="box"><h2>Volume por mês</h2><div class="sub">Toneladas faturadas para os leads</div><div class="cols">${ms.map((m,i)=>`<div class="c"><b>${f1(pmT[i])}</b><i style="height:${pmT[i]/mx*110}px"></i>${MES[m-1]}</div>`).join("")}</div></div>
    <div class="box"><h2>Quem vendeu</h2><div class="sub">Toneladas por dupla / vendedor da nota</div>${hbars(Object.entries(porV).sort((a,b)=>b[1]-a[1]),v=>f1(v)+" t")}</div>
   </div>
-  <div class="box"><h2>Leads que compraram</h2><div class="sub">Novo = não comprou em 2026 antes de junho · Reativado = já comprava · etapa e dupla vêm da prospecção</div>
+  <div class="box"><h2>Leads que compraram</h2><div class="sub">Novo = não comprou em 2026 antes do início do trabalho · Reativado = já comprava · etapa e dupla vêm da prospecção</div>
   <div class="rol"><table><thead><tr><th>Cliente</th><th>Cidade</th><th>Etapa na prospecção</th><th>Tipo</th><th>Vendedor da nota</th>${ms.map(m=>`<th class="n">${MES[m-1]}</th>`).join("")}<th class="n">Total (t)</th><th class="n">1ª compra</th></tr></thead><tbody>
   ${R.map(x=>`<tr class="cl" onclick="abrir('${esc(x.l.chave)}')"><td><b>${esc(x.l.razao)}</b><br><small style="color:var(--sub)">ligado por ${esc(x.via)}</small></td><td>${esc(x.l.cid)}</td><td>${tagE(x.l.etapa)}${x.l.destino?"<br><small>→ "+esc(x.l.destino)+"</small>":""}</td>
-   <td>${x.novo?'<span class="tag tq">Novo</span>':'<span class="tag t1">Reativado</span>'}</td><td>${esc(x.vendeu)}</td>${ms.map(m=>`<td class="n">${x.pm[m]?f1(x.pm[m]):""}</td>`).join("")}<td class="n"><b>${f1(x.t)}</b></td><td class="n">${dataBR(x.prim+"T12:00")}</td></tr>`).join("")||`<tr><td colspan="${ms.length+7}" class="vazio">Nenhum lead da lista comprou desde junho</td></tr>`}
+   <td>${x.novo?'<span class="tag tq">Novo</span>':'<span class="tag t1">Reativado</span>'}</td><td>${esc(x.vendeu)}</td>${ms.map(m=>`<td class="n">${x.pm[m]?f1(x.pm[m]):""}</td>`).join("")}<td class="n"><b>${f1(x.t)}</b></td><td class="n">${dataBR(x.prim+"T12:00")}</td></tr>`).join("")||`<tr><td colspan="${ms.length+7}" class="vazio">Nenhum lead da lista comprou desde o início do trabalho</td></tr>`}
   <tr style="font-weight:800;background:#f6f8fc"><td colspan="5">Total</td>${pmT.map(v=>`<td class="n">${f1(v)}</td>`).join("")}<td class="n">${f1(tT)}</td><td></td></tr></tbody></table></div></div>`;
 }
 
