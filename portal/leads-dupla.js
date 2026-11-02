@@ -121,14 +121,21 @@ window.vLeadsD=function(){
 function f0auto(M){const a=M.filter(l=>l.auto).length;return a?a+" automático(s) por venda":"com vendedor definido"}
 /* Diretoria/Supervisão: todos os leads da prospecção (qualificados ou não) que compraram desde o início do trabalho — igual à visão "Vendas" da página Prospecção */
 function ldCompraram(){
-  const ini=C().inicio,R=(LD.leads||[]).filter(l=>l.comprou>0).map(l=>{const nv=ldVendas(l);let ant=[];try{const k=ldNn(l.razao);ant=(typeof D!="undefined"?D:[]).filter(n=>n.m<ini&&((l.sap&&ldZ(n.cli)==l.sap)||ldNn(n.nome)==k))}catch(_){}
-    const prim=nv.reduce((a,n)=>n.dt&&(!a||n.dt<a)?n.dt:a,null);return{l,t:l.comprou,nf:nv.length,prim,novo:!ant.length}}).sort((a,b)=>b.t-a.t);
-  if(!R.length)return `<div class="box"><h2>Leads que compraram</h2><div class="sub">Nenhum lead da prospecção com nota desde ${C().mesIni}/2026.</div></div>`;
-  const tot=R.reduce((s,x)=>s+x.t,0),q=R.filter(x=>x.l.etapa=="Qualificado").length,nv=R.filter(x=>x.novo).length;
-  const pv={};R.forEach(x=>{const v=x.l.vendeu||"Outros";pv[v]=(pv[v]||0)+x.t});
-  return `<div class="box" style="border:2px solid #bfe7cd"><h2>Leads que compraram</h2><div class="sub">Todos os leads da prospecção (qualificados ou não) com nota faturada desde ${C().mesIni}/2026 · ${R.length} clientes · ${ldF1(tot)} t · ${q} qualificados · ${nv} novos (não compravam em 2026 antes) · quem vendeu: ${Object.entries(pv).sort((a,b)=>b[1]-a[1]).map(([v,t])=>ldEsc(v)+" "+ldF1(t)+" t").join(" · ")}</div>
-   <div class="rol"><table><thead><tr><th>Empresa</th><th>Cidade</th><th>Etapa na prospecção</th><th>Dupla da prospecção</th><th>Quem vendeu</th><th>Cliente</th><th class="n">Toneladas</th><th class="n">Notas</th><th class="n">1ª compra</th></tr></thead><tbody>
-   ${R.map(x=>`<tr><td><b>${ldEsc(x.l.razao)}</b></td><td>${ldEsc(x.l.cid)}</td><td>${ldEsc(x.l.etapa||"–")}</td><td>${ldEsc(x.l.destino||"–")}</td><td><b>${ldEsc(x.l.vendeu||"–")}</b></td><td>${x.novo?'<span class="tag" style="background:#dcf5e5;color:#13703c">Novo</span>':'<span class="tag" style="background:#eef2f8;color:#0b2a55">Reativado</span>'}</td><td class="n"><b>${ldF1(x.t)}</b></td><td class="n">${x.nf}</td><td class="n">${x.prim?x.prim.toLocaleDateString("pt-BR"):"–"}</td></tr>`).join("")}</tbody></table></div></div>`;
+  const ini=C().inicio,info=l=>{const nv=ldVendas(l);let ant=[];try{const k=ldNn(l.razao);ant=(typeof D!="undefined"?D:[]).filter(n=>n.m<ini&&((l.sap&&ldZ(n.cli)==l.sap)||ldNn(n.nome)==k))}catch(_){}
+    const prim=nv.reduce((a,n)=>n.dt&&(!a||n.dt<a)?n.dt:a,null);return{l,t:l.comprou||0,nf:nv.length,prim,novo:!ant.length}};
+  const tag=x=>x.t>0?(x.novo?'<span class="tag" style="background:#dcf5e5;color:#13703c">Novo</span>':'<span class="tag" style="background:#eef2f8;color:#0b2a55">Reativado</span>'):'<span style="color:#9aa6b8">sem compra</span>';
+  const pvT=A=>{const pv={};A.filter(x=>x.t>0).forEach(x=>{const v=x.l.vendeu||"Outros";pv[v]=(pv[v]||0)+x.t});return Object.entries(pv).sort((a,b)=>b[1]-a[1]).map(([v,t])=>ldEsc(v)+" "+ldF1(t)+" t").join(" · ")};
+  /* 1) os leads qualificados/direcionados — quem comprou primeiro */
+  const M=ldMeus(),setM=new Set(M.map(l=>l.chave));
+  const Q=M.map(info).sort((a,b)=>b.t-a.t||String(a.l.razao).localeCompare(String(b.l.razao)));const qc=Q.filter(x=>x.t>0);
+  /* 2) compraram mas NÃO foram qualificados */
+  const N=(LD.leads||[]).filter(l=>l.comprou>0&&!setM.has(l.chave)).map(info).sort((a,b)=>b.t-a.t);
+  const linha=(x,qualif)=>`<tr${x.t>0?"":' style="opacity:.75"'}><td><b>${ldEsc(x.l.razao)}</b></td><td>${ldEsc(x.l.cid)}</td>${qualif?`<td>${ldEsc(x.l.destino||"–")}</td><td>${ldEsc(x.l.status||"Novo")}</td>`:`<td>${ldEsc(x.l.etapa||"–")}</td>`}<td><b>${ldEsc(x.t>0?(x.l.vendeu||"Outros"):"–")}</b></td><td>${tag(x)}</td><td class="n"><b>${x.t>0?ldF1(x.t):"–"}</b></td><td class="n">${x.nf||"–"}</td><td class="n">${x.prim?x.prim.toLocaleDateString("pt-BR"):"–"}</td></tr>`;
+  const cabT=qualif=>`<thead><tr><th>Empresa</th><th>Cidade</th>${qualif?"<th>Dupla direcionada</th><th>Status do vendedor</th>":"<th>Etapa na prospecção</th>"}<th>Quem vendeu</th><th>Cliente</th><th class="n">Toneladas</th><th class="n">Notas</th><th class="n">1ª compra</th></tr></thead>`;
+  return `<div class="box" style="border:2px solid #bfe7cd"><h2>Leads qualificados · ${M.length}</h2><div class="sub">Os leads qualificados pela Contactei e direcionados às duplas. Primeiro os que já compraram (nota desde ${C().mesIni}/2026): ${qc.length} de ${M.length} · ${ldF1(qc.reduce((s,x)=>s+x.t,0))} t${qc.length?" · quem vendeu: "+pvT(qc):""}</div>
+   <div class="rol"><table>${cabT(1)}<tbody>${Q.map(x=>linha(x,1)).join("")||'<tr><td colspan="9" class="vazio">Nenhum lead qualificado.</td></tr>'}</tbody></table></div></div>
+  <div class="box" style="border:2px solid #f3dfb0"><h2>Compraram sem ter sido qualificados · ${N.length}</h2><div class="sub">Leads da prospecção que não foram qualificados, mas têm nota desde ${C().mesIni}/2026 · ${ldF1(N.reduce((s,x)=>s+x.t,0))} t · ${N.filter(x=>x.novo).length} novos${N.length?" · quem vendeu: "+pvT(N):""}</div>
+   <div class="rol"><table>${cabT(0)}<tbody>${N.map(x=>linha(x,0)).join("")||'<tr><td colspan="8" class="vazio">Nenhum.</td></tr>'}</tbody></table></div></div>`;
 }
 window.LD_recarregar=()=>{LD.st="";ldRedesenha()};
 window.LD_dupla=d=>{LD.fdupla=d;ldRedesenha()};
