@@ -615,10 +615,11 @@ function bcQuem(){try{if(typeof __SIG!="undefined"&&__SIG){if(typeof __BEL!="und
   const d=BC_SIG_DUPLA[String(__SIG).toLowerCase()];if(d)return{modo:"dupla",uni:"maraba",dup:d,rot:d}}}catch(_){}
   const u=(typeof UNI!="undefined"&&UNI)||"maraba";return{modo:"todos",uni:u,rot:u=="belem"?"DBA Belém":"DBA Marabá"}}
 const bcPn=s=>bcN(s).split(/[\s\/&]+/).filter(Boolean);
+function bcMinha(c,Q){if(Q.modo=="dupla")return c.escU=="MAB"&&c.papel==Q.dup;const nm=bcPn(Q.nome);return c.escU=="BEL"&&bcPn(c.dono).some(x=>nm.includes(x))}
+function bcOport(c,Q){if(Q.modo=="dupla")return c.s=="O51"&&(c.dest==Q.dup||c.dest=="Todos (Marabá)");return c.s=="LB"&&!bcMinha(c,Q)}
 function bcEscopo(c,Q){
   if(Q.modo=="todos")return Q.uni=="belem"?(c.escU=="BEL"||c.s=="TB"):(c.escU=="MAB"||c.s=="O51"||c.s=="TM");
-  if(Q.modo=="dupla")return c.dest==Q.dup||(c.s=="O51"&&c.dest=="Todos (Marabá)")||(c.escU=="MAB"&&c.papel==Q.dup);
-  const nm=bcPn(Q.nome);return (c.escU=="BEL"&&bcPn(c.dono).some(x=>nm.includes(x)))||c.s=="LB";
+  return bcMinha(c,Q)||bcOport(c,Q);
 }
 const bcN=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/^CENTRO\s*-\s*/i,"").replace(/\s+/g," ").trim().toUpperCase();
 /* No site (página KPIs) a leitura passa pelo Wix, como as outras abas; fora dele, lê direto */
@@ -667,6 +668,7 @@ function bcLista(){const F=BC.F,q=bcN(F.q);return bcUniv().filter(c=>{const g=BC
 function bcSet(k,v){BC.F[k]=v;if(k=="sit")BC.F.dest="";BC.pag=0;render()}
 function vBase(){
   if(BC.st==""){bcCarregar();BC.st="lendo"}
+  if(BC.st=="ok"&&bcQuem().modo!="todos")return vBaseD(bcQuem());
   if(BC.st=="lendo")return tit("Carteira · EON (051 + 130 + 159)","Base de Clientes","")+'<div class="carga"><div class="spin"></div>Lendo a base de clientes do EON…</div>';
   if(BC.st=="erro")return tit("Carteira · EON (051 + 130 + 159)","Base de Clientes","")+`<div class="box vazio">Não foi possível ler a base (${esc(BC.erro)}). <a href="#" onclick="BC.st='';render();return false">Tentar de novo</a></div>`;
   const F=BC.F,U=bcUniv(),cnt=g=>U.filter(c=>BC_SIT[c.s].g==g).length,cs=s=>U.filter(c=>c.s==s).length;
@@ -708,12 +710,47 @@ function vBase(){
 /* Excel: carrega a biblioteca só quando pedir o download */
 function bcXlsx(){return window.XLSX?Promise.resolve():new Promise((ok,er)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=ok;s.onerror=()=>er(new Error("biblioteca do Excel"));document.head.appendChild(s)})}
 function bcLinha(c){return{"Situação":BC_SIT[c.s].t,"Vai para":c.dest,"Motivo":c.mot,"Cliente":c.nome,"Código SAP":c.sap,"CNPJ":c.cnpj,"Cidade":c.cid,"UF":c.uf,"Rota":c.rota,"Escritório":c.esc,"Proprietário":c.dono,"Status da conta":c.st,"Relacionamento":c.rel,"Última compra":c.ult,"Dias sem compra":c.dias??"","Classe ABC":c.abc,"Segmento":c.seg,"Tipo de conta":c.tipo,"Telefone":c.tel}}
+/* ---- Painel da dupla / vendedor: carteira real + oportunidades (sem transferências: quem organiza é a diretoria) ---- */
+function bcListaD(Q){const F=BC.F,q=bcN(F.q),bel=Q.modo=="vend";return bcUniv().filter(c=>{
+  if(F.sit=="minha"&&!bcMinha(c,Q))return false;if(F.sit=="oport"&&!bcOport(c,Q))return false;
+  if(F.sit.startsWith("rel:")&&!(bcMinha(c,Q)&&c.rel==F.sit.slice(4)))return false;
+  if(q&&!bcN(c.nome+" "+c.cid+" "+c.sap+" "+c.cnpj).includes(q))return false;return true}).sort((a,b)=>(bcMinha(b,Q)-bcMinha(a,Q))||((a.dias??99999)-(b.dias??99999)))}
+function vBaseD(Q){
+  if(!["tudo","minha","oport"].includes(BC.F.sit)&&!BC.F.sit.startsWith("rel:"))BC.F.sit="tudo";
+  const F=BC.F,U=bcUniv(),bel=Q.modo=="vend",M=U.filter(c=>bcMinha(c,Q)),O=U.filter(c=>bcOport(c,Q));
+  const at=M.filter(c=>/ativo com compra|recuperado/i.test(c.rel)).length,fri=M.filter(c=>c.dias!==null&&c.dias>90).length;
+  const rel={};M.forEach(c=>rel[c.rel||"(sem status)"]=(rel[c.rel||"(sem status)"]||0)+1);const relL=Object.entries(rel).sort((a,b)=>b[1]-a[1]),relM=Math.max(1,...relL.map(x=>x[1]));
+  const oc={};O.forEach(c=>oc[c.cid]=(oc[c.cid]||0)+1);const ocL=Object.entries(oc).sort((a,b)=>b[1]-a[1]).slice(0,12),ocM=Math.max(1,...ocL.map(x=>x[1]));
+  const lbl=bel?"Livres em Belém":"Oportunidades 051",subO=bel?"clientes de Belém sem compra há mais de 6 meses":"base direta (051) na sua rota e em Marabá/Parauapebas";
+  const L=bcListaD(Q),PP=200,pg=Math.max(1,Math.ceil(L.length/PP));if(BC.pag>=pg)BC.pag=0;const vis=L.slice(BC.pag*PP,(BC.pag+1)*PP);
+  const ck=(k,l,v,sub,cor)=>`<div onclick="bcSet('sit','${k}')" style="cursor:pointer${F.sit==k?";outline:2px solid "+cor+";border-radius:12px":""}">${kpi(l,f0(v),sub,cor)}</div>`;
+  return tit("Carteira · EON · "+esc(Q.rot),"Minha base de clientes",`${f0(M.length)} clientes na sua carteira · ${f0(O.length)} ${bel?"livres para atender":"oportunidades da base 051"} · base do EON atualizada todo sábado às 7h`)+
+  `<div class="g g4">${ck("minha","Minha carteira",M.length,"clientes no seu nome no EON","#0b4a9a")}${ck("rel:Ativo com Compra","Ativos com compra",at,"compraram recentemente","#1f9d55")}<div>${kpi("Sem compra há 90+ dias",f0(fri),"da sua carteira · prioridade de visita","#e2483d")}</div>${ck("oport",lbl,O.length,subO,"#7a47aa")}</div>
+  <div class="g g2"><div class="box"><h2>Minha carteira por relacionamento</h2><div class="sub">Status de relacionamento no EON · clique para ver a lista</div>
+   ${relL.map(([r,n])=>`<div class="hb" style="cursor:pointer" onclick="bcSet('sit','rel:${esc(r)}')"><span>${esc(r)}</span><div class="barra"><i style="width:${n/relM*100}%"></i></div><b>${f0(n)}</b></div>`).join("")||'<div class="vazio">Nenhum cliente no seu nome</div>'}</div>
+  <div class="box"><h2>${lbl} por cidade</h2><div class="sub">${subO}</div>
+   ${ocL.map(([c,n])=>`<div class="hb"><span>${esc(c)}</span><div class="barra"><i style="width:${n/ocM*100}%;background:var(--ok)"></i></div><b>${f0(n)}</b></div>`).join("")||'<div class="vazio">Nenhuma oportunidade agora</div>'}</div></div>
+  <div class="box"><h2>Lista de clientes</h2><div class="sub">${f0(L.length)} clientes · carteira primeiro, por compra mais recente</div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    <select onchange="bcSet('sit',this.value)" style="font:inherit;font-size:.82rem;padding:6px 10px;border:1px solid var(--borda);border-radius:8px">${[["tudo","Carteira + "+lbl.toLowerCase()],["minha","Só minha carteira"],["oport","Só "+lbl.toLowerCase()],...relL.map(([r])=>["rel:"+r,"Carteira · "+r])].map(([v,t])=>`<option value="${esc(v)}"${F.sit==v?" selected":""}>${esc(t)}</option>`).join("")}</select>
+    <input type="search" placeholder="Buscar cliente, cidade, SAP ou CNPJ" value="${esc(F.q)}" onchange="bcSet('q',this.value)" style="font:inherit;font-size:.82rem;padding:6px 10px;border:1px solid var(--borda);border-radius:8px;flex:1;min-width:200px">
+    <button class="btn" style="background:var(--marinho);color:#fff;border-color:var(--marinho)" onclick="bcBaixar('filtro')">⬇ Baixar Excel</button>
+   </div>
+   <div class="rol"><table><thead><tr><th></th><th>Cliente</th><th>Cidade</th><th>Rota</th><th class="n">Última compra</th><th class="n">Dias</th><th>ABC</th><th>Relacionamento</th><th>Telefone</th><th>SAP</th></tr></thead><tbody>
+    ${vis.map(c=>`<tr><td>${bcMinha(c,Q)?'<span class="tag tg-c">Minha carteira</span>':`<span class="tag tg-v">${bel?"Livre":"Oportunidade 051"}</span>`}</td><td style="white-space:normal;min-width:200px"><b>${esc(c.nome)}</b></td><td>${esc(c.cid)}/${esc(c.uf)}</td><td>${esc(c.rota)}</td><td class="n">${esc(c.ult)||"–"}</td><td class="n">${c.dias??"–"}</td><td>${esc(c.abc)}</td><td>${esc(c.rel)}</td><td>${esc(c.tel)}</td><td>${esc(c.sap)}</td></tr>`).join("")||'<tr><td colspan="10" class="vazio">Nenhum cliente com esse filtro</td></tr>'}
+   </tbody></table></div>
+   ${pg>1?`<div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:10px;font-size:.8rem;color:var(--cinza)">Página ${BC.pag+1} de ${pg} <button class="btn" style="color:var(--marinho);border-color:var(--borda)" onclick="BC.pag=Math.max(0,BC.pag-1);render()">‹</button><button class="btn" style="color:var(--marinho);border-color:var(--borda)" onclick="BC.pag=Math.min(${pg-1},BC.pag+1);render()">›</button></div>`:""}
+  </div>`;
+}
 async function bcBaixar(modo){
   try{await bcXlsx()}catch(e){alert("Não foi possível carregar o Excel. Tente de novo.");return}
   const wb=XLSX.utils.book_new(),U=bcUniv(),d=new Date().toISOString().slice(0,10);
   const aba=(n,a)=>{const ws=XLSX.utils.json_to_sheet(a.map(bcLinha));ws["!cols"]=[22,24,48,40,12,16,22,5,18,22,26,12,24,12,10,8,22,20,16].map(w=>({wch:w}));if(ws["!ref"])ws["!autofilter"]={ref:ws["!ref"]};XLSX.utils.book_append_sheet(wb,ws,n)};
   let nome;
-  if(modo=="filtro"){aba("Clientes",bcLista());nome=`Base Clientes - filtro - ${d}.xlsx`}
+  const Q=bcQuem();
+  if(Q.modo!="todos"){const L=bcListaD(Q).map(c=>({"Tipo":bcMinha(c,Q)?"Minha carteira":(Q.modo=="vend"?"Livre (6+ meses)":"Oportunidade 051"),"Cliente":c.nome,"Código SAP":c.sap,"CNPJ":c.cnpj,"Cidade":c.cid,"UF":c.uf,"Rota":c.rota,"Última compra":c.ult,"Dias sem compra":c.dias??"","Classe ABC":c.abc,"Relacionamento":c.rel,"Segmento":c.seg,"Telefone":c.tel}));
+    const ws=XLSX.utils.json_to_sheet(L);ws["!cols"]=[16,40,12,16,22,5,18,12,10,8,24,22,16].map(w=>({wch:w}));if(ws["!ref"])ws["!autofilter"]={ref:ws["!ref"]};XLSX.utils.book_append_sheet(wb,ws,"Minha base");nome=`Minha base - ${Q.rot.replace(/[\/]/g,"-")} - ${d}.xlsx`}
+  else if(modo=="filtro"){aba("Clientes",bcLista());nome=`Base Clientes - filtro - ${d}.xlsx`}
   else{const ws=XLSX.utils.json_to_sheet(Object.entries(BC_SIT).map(([k,v])=>({"Situação":v.t,"Clientes":U.filter(c=>c.s==k).length})));XLSX.utils.book_append_sheet(wb,ws,"Resumo");
     aba("A transferir",U.filter(c=>BC_SIT[c.s].g=="transf"));aba("A distribuir",U.filter(c=>c.s=="DI"));aba("Oportunidades 051",U.filter(c=>c.s=="O51"));aba("Livres Belém",U.filter(c=>c.s=="LB"));aba("Todas as contas",BC.C);
     nome=`Base Clientes - Diretoria - ${d}.xlsx`}
