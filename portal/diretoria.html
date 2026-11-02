@@ -327,7 +327,7 @@ function vResumo(X){
   // alertas
   const al=[];
   const cls_=clientes(base.filter(x=>x.m<M&&x.m>=M-3)).filter(c=>!cliC.has(c.cli)).sort((a,b)=>b.t-a.t);
-  if(X.bi)al.push(["a",`Total de ${MES[M-1]} pelo Power BI: ${f1(fat)} t`,`As notas sem BGL até ${dataNF} somam ${f1(fatNF-bglNF)} t. A diferença de ${f1(fat-fatNF)} t ${UNI=="belem"?"são notas que ainda não entraram na base (ou estão fora dos escritórios 159)":`é o BGL (GV484)${ULT_BGL?`, lançado nas notas só até ${ULT_BGL.toLocaleDateString("pt-BR")}`:""}, e notas ainda fora da base`}.`]);
+  if(X.bi&&Math.abs(fat-fatNF)>=0.5)al.push(["a",`Total de ${MES[M-1]} pelo Power BI: ${f1(fat)} t`,`As notas sem BGL até ${dataNF} somam ${f1(fatNF-bglNF)} t. A diferença de ${f1(fat-fatNF)} t ${UNI=="belem"?"são notas que ainda não entraram na base (ou estão fora dos escritórios 159)":`é o BGL (GV484)${ULT_BGL?`, lançado nas notas só até ${ULT_BGL.toLocaleDateString("pt-BR")}`:""}, e notas ainda fora da base`}.`]);
   if(cls_.length&&!X.bi)al.push(["r",`${cls_.length} clientes compraram nos 3 meses anteriores e ainda não compraram em ${MES[M-1]}`,`Maiores: ${cls_.slice(0,3).map(c=>esc(titulo(c.nome))+" ("+f1(c.t)+" t)").join(", ")}.`]);
   const sets=(X.bi?X.bi.set.map(([s,t])=>[s.toUpperCase(),[{t}]]):Object.entries(grp(cur,"setor"))).map(([s,a])=>{const v=sum(a,x=>x.t)/duD*duT,b=sum(base.filter(x=>x.m==M-1&&x.setor==s),x=>x.t);return[s,v,b]}).filter(x=>x[2]>5);
   sets.filter(x=>pct(x[1],x[2])<-20).forEach(([s,v,b])=>al.push(["a",`${titulo(s)}: projeção ${fp(pct(v,b))} vs ${MES[M-2]||"mês anterior"}`,`Ritmo atual aponta ${f1(v)} t contra ${f1(b)} t no mês anterior.`]));
