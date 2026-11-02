@@ -342,7 +342,7 @@ function vHist(){
   </tbody></table></div></div>`;
 }
 
-/* ---------- VENDAS DESDE JUNHO ---------- */
+/* ---------- VENDAS DESDE O INÍCIO DA CONTACTEI ---------- */
 async function carregaVendas(){
   const u=U;VENDAS={carregando:true,u};
   try{
@@ -371,10 +371,10 @@ function vVendas(){
   const tT=sum(R,x=>x.t),nov=R.filter(x=>x.novo),reat=R.filter(x=>!x.novo),qual=LEADS.filter(l=>l.etapa=="Qualificado"),qComp=R.filter(x=>x.l.etapa=="Qualificado");
   const pmT=ms.map(m=>sum(R,x=>x.pm[m]||0));const mx=Math.max(1,...pmT);
   const porV={};R.forEach(x=>porV[x.vendeu]=(porV[x.vendeu]||0)+x.t);
-  return tit("Vendas · "+UNI[U].nome,"Leads da prospecção que compraram desde "+(U=="belem"?"setembro":"junho")+"/2026")+
+  return tit("Vendas · "+UNI[U].nome,"Leads da prospecção que compraram desde "+(U=="belem"?"setembro":"agosto")+"/2026")+
   `<div class="g g4">${kpi("Leads que compraram",f0(R.length),"com nota faturada desde "+(U=="belem"?"01/09":"01/06"),"var(--ok)")}
    ${kpi("Volume vendido",f1(tT)+" t",f0(sum(R,x=>x.nf))+" itens de nota","var(--laranja)")}
-   ${kpi("Clientes novos",f0(nov.length),f1(sum(nov,x=>x.t))+" t · sem compra em 2026 antes de "+(U=="belem"?"setembro":"junho"),"var(--azul)")}
+   ${kpi("Clientes novos",f0(nov.length),f1(sum(nov,x=>x.t))+" t · sem compra em 2026 antes de "+(U=="belem"?"setembro":"agosto"),"var(--azul)")}
    ${kpi("Qualificados que compraram",f0(qComp.length),f1(pc(qComp.length,qual.length))+"% dos "+f0(qual.length)+" qualificados","var(--roxo)")}</div>
   <div class="g g2" style="margin-top:14px">
    <div class="box"><h2>Volume por mês</h2><div class="sub">Toneladas faturadas para os leads</div><div class="cols">${ms.map((m,i)=>`<div class="c"><b>${f1(pmT[i])}</b><i style="height:${pmT[i]/mx*110}px"></i>${MES[m-1]}</div>`).join("")}</div></div>
