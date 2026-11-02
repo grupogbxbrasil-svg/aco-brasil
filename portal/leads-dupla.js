@@ -18,7 +18,7 @@ const CFG={
     destinos:["Alcir","Francitonio","Raphael","Cibelle","Renato","Jennifer","Alvaro","Fabio / Marcelle","Alessandra / Jessica"]}
 };
 const LD_COR={"Em contato":"#1f57a3","Em cotação":"#b07600","Vendido":"#13703c","Sem interesse":"#b3261e","Não atende":"#66758a","Novo":"#7a47aa"};
-let LD={st:"",uni:"",leads:null,acoes:null,dupla:null,todos:false,sup:false,status:[],filtro:"",fdupla:"",erro:"",soRet:true};
+let LD={st:"",uni:"",leads:null,acoes:null,dupla:null,todos:false,sup:false,status:[],filtro:"",fdupla:"",fetapa:"",erro:"",soRet:true};
 let LD_SEQ=0;const LD_PEND={};
 addEventListener("message",e=>{const d=e.data||{};if((d.tipo=="pldr"||d.tipo=="fxr")&&d.id&&LD_PEND[d.id]){LD_PEND[d.id](d);delete LD_PEND[d.id]}});
 function ldPede(m,to){return new Promise(res=>{const id="ld"+(++LD_SEQ)+"_"+Date.now();LD_PEND[id]=res;parent.postMessage({...m,id},"*");setTimeout(()=>{if(LD_PEND[id]){delete LD_PEND[id];res({ok:false,r:{ok:false,erro:"O site não respondeu. Tente de novo."}})}},to||60000)})}
@@ -74,7 +74,7 @@ function ldMeus(){return qual().filter(l=>l.destino&&(LD.todos?(!LD.fdupla||l.de
 function ldPend(){return LD.todos&&C().modo=="supervisor"?qual().filter(l=>!l.destino):[]}
 function ldRedesenha(){try{if(typeof ABA!="undefined"&&ABA=="leads")render()}catch(_){}}
 function ldLista(){const M=ldMeus();return ldFiltra(LD.todos&&LD.soRet?M.filter(l=>l.status||(l.obs&&l.obs.trim())):M)}
-function ldFiltra(M){const q=ldNn(LD.filtro);return M.filter(l=>!q||ldNn(l.razao).includes(q)||ldNn(l.cid).includes(q)).sort((a,b)=>(a.status?1:0)-(b.status?1:0)||String(b.qualEm||"").localeCompare(String(a.qualEm||"")))}
+function ldFiltra(M){const q=ldNn(LD.filtro),fe=LD.fetapa;return M.filter(l=>(!q||ldNn(l.razao).includes(q)||ldNn(l.cid).includes(q))&&(!fe||(l.etapa||"Sem etapa")==fe)).sort((a,b)=>(a.etapa=="Qualificado"?0:1)-(b.etapa=="Qualificado"?0:1)||(a.status?1:0)-(b.status?1:0)||String(b.qualEm||"").localeCompare(String(a.qualEm||"")))}
 const selDest=(id,v)=>`<select id="${id}" style="padding:6px;border:1px solid #dde3ee;border-radius:8px"><option value="">Escolha…</option>${C().destinos.map(d=>`<option ${d==v?"selected":""}>${ldEsc(d)}</option>`).join("")}</select>`;
 const btn=(t,f,cor)=>`<button onclick="${f}" style="background:${cor||"#f26b1d"};color:#fff;border:0;border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:700;white-space:nowrap">${t}</button>`;
 
@@ -106,10 +106,11 @@ window.vLeadsD=function(){
   <div class="box"><h2>${LD.todos?"Retornos dos vendedores":"Relação de leads"}</h2><div class="sub">${LD.todos?(LD.soRet?"Só os leads em que o vendedor já registrou status ou observação.":"Todos os leads direcionados"+(sup?". Para trocar o vendedor, escolha outro e clique em Direcionar.":".")):"Atualize o Status e escreva a Observação de cada cliente. Clique em Salvar na linha."}</div>
    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><input id="ldBusca" placeholder="Buscar empresa ou cidade" value="${ldEsc(LD.filtro)}" style="padding:8px 10px;border:1px solid #dde3ee;border-radius:8px;min-width:240px">
    ${LD.todos?`<select id="ldDupla" style="padding:8px 10px;border:1px solid #dde3ee;border-radius:8px"><option value="">Todos</option>${C().destinos.map(d=>`<option ${d==LD.fdupla?"selected":""}>${ldEsc(d)}</option>`).join("")}</select>`:""}
+   ${LD.todos?(()=>{const es=[...new Set(ldMeus().map(l=>l.etapa||"Sem etapa"))].sort((a,b)=>(a=="Qualificado"?-1:b=="Qualificado"?1:a.localeCompare(b)));return `<select id="ldEtapa" style="padding:8px 10px;border:1px solid #dde3ee;border-radius:8px"><option value="">Todas as etapas</option>${es.map(e=>`<option ${e==LD.fetapa?"selected":""}>${ldEsc(e)}</option>`).join("")}</select>`})():""}
    ${LD.todos?`<select id="ldRet" style="padding:8px 10px;border:1px solid #dde3ee;border-radius:8px"><option value="1" ${LD.soRet?"selected":""}>Só com retorno do vendedor</option><option value="0" ${LD.soRet?"":"selected"}>Todos os direcionados</option></select>`:""}
    ${btn("Atualizar","LD_recarregar()","#0b2a55")}</div>
    <div class="rol"><table class="ldt"><colgroup><col style="width:19%"><col style="width:8%"><col style="width:10%"><col style="width:10%"><col style="width:17%">${LD.todos?'<col style="width:11%">':""}<col style="width:10%"><col style="width:${LD.todos?15:22}%"><col style="width:${LD.todos?0:6}%"></colgroup><thead><tr><th>Empresa</th><th>Cidade</th><th>Contato</th><th>Telefone</th><th>Relato da Contactei</th>${LD.todos?"<th>Vendedor / dupla</th>":""}<th>Status</th><th>Observação</th><th></th></tr></thead><tbody>
-   ${F.map((l,i)=>`<tr><td><b>${ldEsc(l.razao)}</b><br><small style="color:#66758a">${ldEsc(l.cnpj||"")}${l.qualEm?" · qualificado em "+ldData(l.qualEm):""}</small>${l.comprou>0?`<br><span class="tag" style="background:#dcf5e5;color:#13703c">comprou ${ldF1(l.comprou)} t desde ${C().mesIni}${l.vendeu?" · "+ldEsc(l.vendeu):""}</span>`:""}${l.auto?`<br><span class="tag" style="background:#e3f4f7;color:#0f6b7a">direcionado automático (venda)</span>`:""}</td>
+   ${F.map((l,i)=>`<tr><td><b>${ldEsc(l.razao)}</b><br><small style="color:#66758a">${ldEsc(l.cnpj||"")}${l.etapa?` · <b style="color:${l.etapa=="Qualificado"?"#13703c":"#66758a"}">${ldEsc(l.etapa)}</b>`:""}${l.qualEm?" · qualificado em "+ldData(l.qualEm):""}</small>${l.comprou>0?`<br><span class="tag" style="background:#dcf5e5;color:#13703c">comprou ${ldF1(l.comprou)} t desde ${C().mesIni}${l.vendeu?" · "+ldEsc(l.vendeu):""}</span>`:""}${l.auto?`<br><span class="tag" style="background:#e3f4f7;color:#0f6b7a">direcionado automático (venda)</span>`:""}</td>
     <td>${ldEsc(l.cid)}</td><td>${ldEsc(l.comprador||"–")}</td><td>${ldWa(l.tel)}</td><td><div class="rel" title="${ldEsc(l.relatoC)}">${ldEsc(l.relatoC)||"–"}</div></td>
     ${LD.todos?`<td>${sup&&LD.sup?selDest("ldD"+i,l.destino)+"<div style='margin-top:4px'>"+btn("Direcionar","LD_atribuir('D',"+i+")","#0b4a9a")+"</div>":"<b>"+ldEsc(l.destino)+"</b>"}</td>`:""}
     <td>${LD.todos?`<b style="color:${LD_COR[l.status]||"#7a47aa"}">${ldEsc(l.status||"Novo")}</b>`:`<select id="ldS${i}" style="padding:6px;border:1px solid #dde3ee;border-radius:8px;font-weight:700;color:${LD_COR[l.status]||"#7a47aa"}"><option value="">Novo (sem status)</option>${LD.status.map(s=>`<option ${s==l.status?"selected":""}>${ldEsc(s)}</option>`).join("")}</select>`}</td>
@@ -146,5 +147,5 @@ window.LD_atribuir=async(qual_,i)=>{
   LD.acoes.push({tipo:"atrib",chave:l.chave,destino:v,data:r.data||new Date().toISOString()});ldAplica();ldRedesenha();
 };
 document.addEventListener("input",e=>{if(e.target&&e.target.id=="ldBusca"){clearTimeout(window.__ldT);window.__ldT=setTimeout(()=>{LD.filtro=e.target.value;const p=e.target.selectionStart;ldRedesenha();const n=document.getElementById("ldBusca");if(n){n.focus();n.setSelectionRange(p,p)}},400)}});
-document.addEventListener("change",e=>{if(e.target&&e.target.id=="ldDupla"){LD.fdupla=e.target.value;ldRedesenha()}if(e.target&&e.target.id=="ldRet"){LD.soRet=e.target.value=="1";ldRedesenha()}});
+document.addEventListener("change",e=>{if(e.target&&e.target.id=="ldDupla"){LD.fdupla=e.target.value;ldRedesenha()}if(e.target&&e.target.id=="ldEtapa"){LD.fetapa=e.target.value;ldRedesenha()}if(e.target&&e.target.id=="ldRet"){LD.soRet=e.target.value=="1";ldRedesenha()}});
 })();
