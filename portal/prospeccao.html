@@ -20,7 +20,7 @@ header .sp{flex:1}
 .abas button{background:none;border:0;border-bottom:3px solid transparent;padding:13px 14px;cursor:pointer;font-weight:600;color:var(--sub);white-space:nowrap}
 .abas button.on{color:var(--marinho);border-color:var(--laranja)}
 main{max-width:1500px;margin:0 auto;padding:18px}
-.g{display:grid;gap:14px}.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}
+.g{display:grid;gap:14px}.g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}
 @media(max-width:900px){.g4,.g3,.g2{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.g4,.g3,.g2{grid-template-columns:1fr}}
 .box{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:16px;margin-bottom:14px}
@@ -220,9 +220,10 @@ const tit=(s,h)=>`<div class="tit"><div class="sup">${s}</div><h1>${h}</h1></div
 function vDash(){
   const tot=LEADS.length,trab=LEADS.filter(l=>l.trab),q=LEADS.filter(l=>l.etapa=="Qualificado"),sq=LEADS.filter(l=>/Sem qualif/.test(l.etapa));
   const dir=LEADS.filter(l=>l.destino),hj=hojeISO();
+  const ban=LEADS.filter(l=>l.hist.some(a=>a.etapa=="Div. banner")),banHoje=ACOES.filter(a=>a.etapa=="Div. banner"&&new Date(a.data).toDateString()==new Date().toDateString()).length;
   const acHoje=ACOES.filter(a=>String(a.data).slice(0,10)==hj||new Date(a.data).toDateString()==new Date().toDateString());
   const leadsHoje=new Set(acHoje.map(a=>a.chave)).size;
-  const porEt=ETAPAS.map(e=>[e,LEADS.filter(l=>l.etapa==e).length]).filter(x=>x[1]);porEt.unshift(["Não iniciado",tot-trab.length]);
+  const porEt=ETAPAS.map(e=>[e=="Div. banner"?"Divulgação de Banner":e,LEADS.filter(l=>l.etapa==e).length]).filter(x=>x[1]);porEt.unshift(["Não iniciado",tot-trab.length]);
   const rotas={};LEADS.forEach(l=>{const o=rotas[l.rota]=rotas[l.rota]||{t:0,w:0,q:0};o.t++;if(l.trab)o.w++;if(l.etapa=="Qualificado")o.q++});
   const rt=Object.entries(rotas).sort((a,b)=>b[1].t-a[1].t);
   const dest={};q.forEach(l=>{const k=l.destino||"⚠ Sem dupla definida";dest[k]=(dest[k]||0)+1});
@@ -232,7 +233,8 @@ function vDash(){
   `<div class="g g4">${kpi("Total de leads",f0(tot),"lista de prospecção da unidade")}
   ${kpi("Leads trabalhados",f0(trab.length),f1(pc(trab.length,tot))+"% da lista iniciada","var(--laranja)")}
   ${kpi("Qualificados",f0(q.length),f1(pc(q.length,trab.length))+"% dos trabalhados · "+f0(dir.length)+" direcionados","var(--ok)")}
-  ${kpi("Sem qualificação",f0(sq.length),"após 3 tentativas","var(--bad)")}</div>
+  ${kpi("Sem qualificação",f0(sq.length),"após 3 tentativas","var(--bad)")}
+  ${kpi("Divulgação de Banner",f0(ban.length),"clientes que receberam o banner · "+banHoje+" hoje","#0f6b7a")}</div>
   <div class="g g2" style="margin-top:14px">
    <div class="box"><h2>Meta do dia</h2><div class="sub">Leads trabalhados hoje no site · meta de ${META_DIA} por dia</div>
     <div style="font-size:30px;font-weight:800;color:var(--marinho)">${leadsHoje} <span style="font-size:14px;color:var(--sub);font-weight:600">de ${META_DIA}</span></div>
