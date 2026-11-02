@@ -16,7 +16,7 @@ const CFG={
     destinos:["Alcir","Francitonio","Raphael","Cibelle","Renato","Jennifer","Alvaro","Fabio / Marcelle","Alessandra / Jessica"]}
 };
 const LD_COR={"Em contato":"#1f57a3","Em cotação":"#b07600","Vendido":"#13703c","Sem interesse":"#b3261e","Não atende":"#66758a","Novo":"#7a47aa"};
-let LD={st:"",uni:"",leads:null,acoes:null,dupla:null,todos:false,sup:false,status:[],filtro:"",fdupla:"",erro:""};
+let LD={st:"",uni:"",leads:null,acoes:null,dupla:null,todos:false,sup:false,status:[],filtro:"",fdupla:"",erro:"",soRet:true};
 let LD_SEQ=0;const LD_PEND={};
 addEventListener("message",e=>{const d=e.data||{};if((d.tipo=="pldr"||d.tipo=="fxr")&&d.id&&LD_PEND[d.id]){LD_PEND[d.id](d);delete LD_PEND[d.id]}});
 function ldPede(m,to){return new Promise(res=>{const id="ld"+(++LD_SEQ)+"_"+Date.now();LD_PEND[id]=res;parent.postMessage({...m,id},"*");setTimeout(()=>{if(LD_PEND[id]){delete LD_PEND[id];res({ok:false,r:{ok:false,erro:"O site não respondeu. Tente de novo."}})}},to||60000)})}
@@ -69,6 +69,7 @@ const qual=()=>(LD.leads||[]).filter(l=>l.etapa=="Qualificado"||(C().modo=="supe
 function ldMeus(){return qual().filter(l=>l.destino&&(LD.todos?(!LD.fdupla||l.destino==LD.fdupla):l.destino==LD.dupla))}
 function ldPend(){return LD.todos&&C().modo=="supervisor"?qual().filter(l=>!l.destino):[]}
 function ldRedesenha(){try{if(typeof ABA!="undefined"&&ABA=="leads")render()}catch(_){}}
+function ldLista(){const M=ldMeus();return ldFiltra(LD.todos&&LD.soRet?M.filter(l=>l.status||(l.obs&&l.obs.trim())):M)}
 function ldFiltra(M){const q=ldNn(LD.filtro);return M.filter(l=>!q||ldNn(l.razao).includes(q)||ldNn(l.cid).includes(q)).sort((a,b)=>(a.status?1:0)-(b.status?1:0)||String(b.qualEm||"").localeCompare(String(a.qualEm||"")))}
 const selDest=(id,v)=>`<select id="${id}" style="padding:6px;border:1px solid #dde3ee;border-radius:8px"><option value="">Escolha…</option>${C().destinos.map(d=>`<option ${d==v?"selected":""}>${ldEsc(d)}</option>`).join("")}</select>`;
 const btn=(t,f,cor)=>`<button onclick="${f}" style="background:${cor||"#f26b1d"};color:#fff;border:0;border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:700;white-space:nowrap">${t}</button>`;
@@ -82,7 +83,7 @@ window.vLeadsD=function(){
   if(LD.st=="erro")return cab+`<div class="box vazio">${ldEsc(LD.erro)} ${btn("Tentar de novo","LD_recarregar()","#0b2a55")}</div>`;
   const M=ldMeus(),P=ldPend();const cont=s=>M.filter(l=>(l.status||"Novo")==s).length;
   const k=(l,v,c,sub)=>`<div class="box" style="margin:0;border-left:4px solid ${c};padding:12px 14px"><div style="font-size:11px;font-weight:700;color:#66758a;text-transform:uppercase">${l}</div><div style="font-size:26px;font-weight:800;color:#0b2a55">${v}</div><div style="font-size:12px;color:#66758a">${sub||""}</div></div>`;
-  const F=ldFiltra(M);const vend=M.filter(l=>l.comprou>0);const sup=C().modo=="supervisor";
+  const F=ldFiltra(LD.todos&&LD.soRet?M.filter(l=>l.status||(l.obs&&l.obs.trim())):M);const vend=M.filter(l=>l.comprou>0);const sup=C().modo=="supervisor";
   const porDupla=LD.todos?C().destinos.map(d=>[d,qual().filter(l=>l.destino==d)]).filter(x=>x[1].length):[];
   return cab+
   `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px">
@@ -96,9 +97,10 @@ window.vLeadsD=function(){
     <td>${selDest("ldP"+i,"")}</td><td>${btn("Direcionar","LD_atribuir('P',"+i+")")}</td></tr>`).join("")||'<tr><td colspan="7" class="vazio">Nenhum lead aguardando. Tudo direcionado ✔</td></tr>'}
    </tbody></table></div></div>`:""}
   ${LD.todos?`<div class="box"><h2>Por ${sup?"vendedor":"dupla"}</h2><div class="rol"><table><thead><tr><th>${sup?"Vendedor / dupla":"Dupla"}</th><th class="n">Recebidos</th><th class="n">Sem status</th><th class="n">Em cotação</th><th class="n">Vendido</th><th class="n">Sem interesse</th></tr></thead><tbody>${porDupla.map(([d,a])=>`<tr class="cl" onclick="LD_dupla('${ldEsc(d)}')"><td><b>${ldEsc(d)}</b></td><td class="n">${a.length}</td><td class="n">${a.filter(l=>!l.status).length}</td><td class="n">${a.filter(l=>l.status=="Em cotação").length}</td><td class="n">${a.filter(l=>l.status=="Vendido").length}</td><td class="n">${a.filter(l=>l.status=="Sem interesse").length}</td></tr>`).join("")||'<tr><td colspan="6" class="vazio">Nenhum lead direcionado ainda</td></tr>'}</tbody></table></div></div>`:""}
-  <div class="box"><h2>Relação de leads</h2><div class="sub">${LD.todos?"Acompanhe o retorno de cada vendedor"+(sup?". Para trocar o vendedor, escolha outro e clique em Direcionar.":"."):"Atualize o Status e escreva a Observação de cada cliente. Clique em Salvar na linha."}</div>
+  <div class="box"><h2>${LD.todos?"Retornos dos vendedores":"Relação de leads"}</h2><div class="sub">${LD.todos?(LD.soRet?"Só os leads em que o vendedor já registrou status ou observação.":"Todos os leads direcionados"+(sup?". Para trocar o vendedor, escolha outro e clique em Direcionar.":".")):"Atualize o Status e escreva a Observação de cada cliente. Clique em Salvar na linha."}</div>
    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><input id="ldBusca" placeholder="Buscar empresa ou cidade" value="${ldEsc(LD.filtro)}" style="padding:8px 10px;border:1px solid #dde3ee;border-radius:8px;min-width:240px">
    ${LD.todos?`<select id="ldDupla" style="padding:8px 10px;border:1px solid #dde3ee;border-radius:8px"><option value="">Todos</option>${C().destinos.map(d=>`<option ${d==LD.fdupla?"selected":""}>${ldEsc(d)}</option>`).join("")}</select>`:""}
+   ${LD.todos?`<select id="ldRet" style="padding:8px 10px;border:1px solid #dde3ee;border-radius:8px"><option value="1" ${LD.soRet?"selected":""}>Só com retorno do vendedor</option><option value="0" ${LD.soRet?"":"selected"}>Todos os direcionados</option></select>`:""}
    ${btn("Atualizar","LD_recarregar()","#0b2a55")}</div>
    <div class="rol"><table><thead><tr><th>Empresa</th><th>Cidade</th><th>Contato</th><th>Telefone</th><th>Relato da Contactei</th>${LD.todos?"<th>Vendedor / dupla</th>":""}<th style="min-width:150px">Status</th><th style="min-width:240px">Observação</th><th></th></tr></thead><tbody>
    ${F.map((l,i)=>`<tr><td><b>${ldEsc(l.razao)}</b><br><small style="color:#66758a">${ldEsc(l.cnpj||"")}${l.qualEm?" · qualificado em "+ldData(l.qualEm):""}</small>${l.comprou>0?`<br><span class="tag" style="background:#dcf5e5;color:#13703c">comprou ${ldF1(l.comprou)} t desde ${C().mesIni}${l.vendeu?" · "+ldEsc(l.vendeu):""}</span>`:""}${l.auto?`<br><span class="tag" style="background:#e3f4f7;color:#0f6b7a">direcionado automático (venda)</span>`:""}</td>
@@ -106,7 +108,7 @@ window.vLeadsD=function(){
     ${LD.todos?`<td>${sup&&LD.sup?selDest("ldD"+i,l.destino)+"<div style='margin-top:4px'>"+btn("Direcionar","LD_atribuir('D',"+i+")","#0b4a9a")+"</div>":"<b>"+ldEsc(l.destino)+"</b>"}</td>`:""}
     <td>${LD.todos?`<b style="color:${LD_COR[l.status]||"#7a47aa"}">${ldEsc(l.status||"Novo")}</b>`:`<select id="ldS${i}" style="padding:6px;border:1px solid #dde3ee;border-radius:8px;font-weight:700;color:${LD_COR[l.status]||"#7a47aa"}"><option value="">Novo (sem status)</option>${LD.status.map(s=>`<option ${s==l.status?"selected":""}>${ldEsc(s)}</option>`).join("")}</select>`}</td>
     <td>${LD.todos?`<small>${ldEsc(l.obs||"–")}</small>`:`<textarea id="ldO${i}" rows="2" style="width:100%;padding:6px;border:1px solid #dde3ee;border-radius:8px;font:inherit;font-size:12px" placeholder="Ex.: cotação enviada, aguardando retorno">${ldEsc(l.obs||"")}</textarea>`}${l.atualizado?`<br><small style="color:#66758a">atualizado em ${ldData(l.atualizado)}</small>`:""}</td>
-    <td>${LD.todos?"":btn("Salvar","LD_salvar("+i+")")}</td></tr>`).join("")||`<tr><td colspan="9" class="vazio">Nenhum lead ${LD.todos?"direcionado nesta seleção":"para você"} ainda.</td></tr>`}
+    <td>${LD.todos?"":btn("Salvar","LD_salvar("+i+")")}</td></tr>`).join("")||`<tr><td colspan="9" class="vazio">${LD.todos&&LD.soRet?"Nenhum vendedor registrou retorno ainda. Assim que registrarem, aparece aqui.":"Nenhum lead "+(LD.todos?"direcionado nesta seleção":"para você")+" ainda."}</td></tr>`}
    </tbody></table></div></div>`;
 };
 function f0auto(M){const a=M.filter(l=>l.auto).length;return a?a+" automático(s) por venda":"com vendedor definido"}
@@ -120,12 +122,12 @@ window.LD_salvar=async i=>{
   LD.acoes.push({tipo:"dupla",chave:l.chave,statusDupla:s,obs:o,data:r.data||new Date().toISOString()});ldAplica();ldRedesenha();
 };
 window.LD_atribuir=async(qual_,i)=>{
-  const l=(qual_=="P"?ldPend():ldFiltra(ldMeus()))[i];if(!l)return;const v=document.getElementById("ld"+qual_+i).value;if(!v)return;const b=event&&event.target;
+  const l=(qual_=="P"?ldPend():ldLista())[i];if(!l)return;const v=document.getElementById("ld"+qual_+i).value;if(!v)return;const b=event&&event.target;
   if(b){b.disabled=true;b.textContent="Direcionando…"}
   const r=(await ldPede({tipo:"pld",op:"atribuir",a:{chave:l.chave,razao:l.razao,destino:v,unidade:LD.uni}})).r||{};
   if(!r.ok){if(b){b.disabled=false;b.textContent="Erro: tentar de novo";b.title=r.erro||""}return}
   LD.acoes.push({tipo:"atrib",chave:l.chave,destino:v,data:r.data||new Date().toISOString()});ldAplica();ldRedesenha();
 };
 document.addEventListener("input",e=>{if(e.target&&e.target.id=="ldBusca"){clearTimeout(window.__ldT);window.__ldT=setTimeout(()=>{LD.filtro=e.target.value;const p=e.target.selectionStart;ldRedesenha();const n=document.getElementById("ldBusca");if(n){n.focus();n.setSelectionRange(p,p)}},400)}});
-document.addEventListener("change",e=>{if(e.target&&e.target.id=="ldDupla"){LD.fdupla=e.target.value;ldRedesenha()}});
+document.addEventListener("change",e=>{if(e.target&&e.target.id=="ldDupla"){LD.fdupla=e.target.value;ldRedesenha()}if(e.target&&e.target.id=="ldRet"){LD.soRet=e.target.value=="1";ldRedesenha()}});
 })();
