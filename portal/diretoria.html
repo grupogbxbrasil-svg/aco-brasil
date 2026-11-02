@@ -570,7 +570,7 @@ function render(){setTimeout(semDuplasTxt,0);
   if(!D.length)return;
   [...abas.children].forEach(b=>b.classList.toggle("on",b.dataset.k==ABA));
   const X=ctx(); X_=X;
-  const V={base:vBase,resumo:vResumo,ranking:vRanking,ficha:vFicha,clientes:vClientes,mix:vMix,margem:vMargem}[ABA]||vResumo;
+  const V={resumo:vResumo,ranking:vRanking,ficha:vFicha,clientes:vClientes,mix:vMix,margem:vMargem,base:vBase}[ABA]||vResumo;
   const av=X.bi&&ABA!="resumo"&&ABA!="margem"&&ABA!="base"?`<div class="al a" style="margin-bottom:14px"><span class="al-i">•</span><div><b>Como ler ${MES[X.M-1]} nesta aba</b>Os números são das notas sem BGL até ${ULT?ULT.toLocaleDateString("pt-BR"):"–"}. O total da filial pelo Power BI (${f1(X.bi.t)} t, com BGL) está no Resumo.</div></div>`:"";
   try{app.innerHTML=av+V(X)}catch(e){app.innerHTML=`<div class="box vazio">Erro ao montar esta aba: ${esc(e.message)}</div>`;console.error(e)}
 }
@@ -608,6 +608,18 @@ const BC_SIT={TB:{t:"Transferir → DBA Belém",tg:"tg-r",g:"transf"},TM:{t:"Tra
   DI:{t:"Distribuir → dupla da rota",tg:"tg-a",g:"distr"},O51:{t:"Oportunidade 051",tg:"tg-v",g:"op51"},LB:{t:"Livre Belém (6+ meses)",tg:"tg-c",g:"livre"},
   ZC:{t:"Zona compartilhada",tg:"tg-c",g:"info"},FO:{t:"Fora das áreas",tg:"tg-c",g:"info"},OK:{t:"Na carteira certa",tg:"tg-c",g:"ok"}};
 let BC={C:[],st:"",erro:"",lido:null,F:{sit:"acao",dest:"",esc:"",q:"",emissor:true,ativos:true},pag:0};
+/* Quem está vendo (igual às Leads): no painel da dupla/vendedor o código da página do Wix define __SIG/__BEL/__NOME;
+   no Painel da Diretoria (KPIs) é diretoria ou supervisão e a visão segue o botão Marabá/Belém. */
+const BC_SIG_DUPLA={is:"Israel / Stefanny",jr:"Jadson / Rebeca",rm:"Rafael / Martinho",js:"Jessica / Matheus",mt:"Jessica / Matheus"};
+function bcQuem(){try{if(typeof __SIG!="undefined"&&__SIG){if(typeof __BEL!="undefined"&&__BEL)return{modo:"vend",uni:"belem",nome:String((typeof __NOME!="undefined"&&__NOME)||__SIG.replace(/^bel-/,"")),rot:String((typeof __NOME!="undefined"&&__NOME)||__SIG)};
+  const d=BC_SIG_DUPLA[String(__SIG).toLowerCase()];if(d)return{modo:"dupla",uni:"maraba",dup:d,rot:d}}}catch(_){}
+  const u=(typeof UNI!="undefined"&&UNI)||"maraba";return{modo:"todos",uni:u,rot:u=="belem"?"DBA Belém":"DBA Marabá"}}
+const bcPn=s=>bcN(s).split(/[\s\/&]+/).filter(Boolean);
+function bcEscopo(c,Q){
+  if(Q.modo=="todos")return Q.uni=="belem"?(c.escU=="BEL"||c.s=="TB"):(c.escU=="MAB"||c.s=="O51"||c.s=="TM");
+  if(Q.modo=="dupla")return c.dest==Q.dup||(c.s=="O51"&&c.dest=="Todos (Marabá)")||(c.escU=="MAB"&&c.papel==Q.dup);
+  const nm=bcPn(Q.nome);return (c.escU=="BEL"&&bcPn(c.dono).some(x=>nm.includes(x)))||c.s=="LB";
+}
 const bcN=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/^CENTRO\s*-\s*/i,"").replace(/\s+/g," ").trim().toUpperCase();
 /* No site (página KPIs) a leitura passa pelo Wix, como as outras abas; fora dele, lê direto */
 function bcFt(u){u=u+"&t="+Date.now();if(parent===window)return fetch(u,{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text()});
@@ -646,7 +658,7 @@ async function bcCarregar(){
   }catch(e){BC.st="erro";BC.erro=e.message}
   if(ABA=="base")render();
 }
-function bcUniv(){const F=BC.F;return BC.C.filter(c=>(!F.emissor||/emissor/i.test(c.tipo))&&(!F.ativos||!/cancelad/i.test(c.st)&&!/arquivad/i.test(c.rel)))}
+function bcUniv(){const F=BC.F,Q=bcQuem();return BC.C.filter(c=>bcEscopo(c,Q)&&(!F.emissor||/emissor/i.test(c.tipo))&&(!F.ativos||!/cancelad/i.test(c.st)&&!/arquivad/i.test(c.rel)))}
 function bcLista(){const F=BC.F,q=bcN(F.q);return bcUniv().filter(c=>{const g=BC_SIT[c.s].g;
   if(F.sit=="acao"&&!["transf","distr","op51","livre"].includes(g))return false;
   if(F.sit!="acao"&&F.sit!="todos"&&c.s!=F.sit&&g!=F.sit)return false;
@@ -666,7 +678,7 @@ function vBase(){
   const dests=[...new Set(U.filter(c=>c.dest).map(c=>c.dest))].sort();
   const ck=(k,lbl,v,sub,cor)=>`<div onclick="bcSet('sit','${k}')" style="cursor:pointer${F.sit==k?";outline:2px solid "+cor+";border-radius:12px":""}">${kpi(lbl,f0(v),sub,cor)}</div>`;
   const sel=(k,ops)=>`<select onchange="bcSet('${k}',this.value)" style="font:inherit;font-size:.82rem;padding:6px 10px;border:1px solid var(--borda);border-radius:8px">${ops.map(([v,t])=>`<option value="${esc(v)}"${F[k]==v?" selected":""}>${esc(t)}</option>`).join("")}</select>`;
-  return tit("Carteira · EON (051 + 130 + 159)","Base de Clientes",`${f0(U.length)} contas · Marabá ${f0(nE("MAB"))} · Belém ${f0(nE("BEL"))} · Regional NO (051) ${f0(nE("051"))} · base do EON atualizada todo sábado às 7h${BC.lido?" · lido às "+BC.lido.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}`)+
+  const Q=bcQuem();return tit("Carteira · EON (051 + 130 + 159) · visão: "+esc(Q.rot),Q.modo=="todos"?"Base de Clientes":"Minha base de clientes",`${f0(U.length)} contas · Marabá ${f0(nE("MAB"))} · Belém ${f0(nE("BEL"))} · Regional NO (051) ${f0(nE("051"))} · base do EON atualizada todo sábado às 7h${BC.lido?" · lido às "+BC.lido.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}`)+
   `<div class="g g4">${ck("transf","A transferir",cnt("transf"),`${f0(cs("TB"))} p/ Belém · ${f0(cs("TM"))} p/ Marabá · ${f0(cs("TR"))} entre duplas`,"#e2483d")}${ck("distr","A distribuir",cnt("distr"),"contas da gerência/sistema em rota com dono","#c8930d")}${ck("op51","Oportunidades 051",cnt("op51"),"base direta na área de Marabá","#1f9d55")}${ck("livre","Livres em Belém",cnt("livre"),"mais de 6 meses sem compra","#7a47aa")}</div>
   <div class="g g2"><div class="box"><h2>Quem transfere para quem</h2><div class="sub">Transferências e distribuições · A/B = clientes classe A ou B</div><div class="rol"><table><thead><tr><th>Hoje com</th><th>Vai para</th><th class="n">Clientes</th><th class="n">A/B</th></tr></thead><tbody>
    ${mt.map(m=>`<tr style="cursor:pointer" onclick="BC.F.sit='${m.s=="DI"?"distr":m.s}';BC.F.dest='${esc(m.para)}';BC.pag=0;render()"><td>${esc(m.de)}</td><td><b>${esc(m.para)}</b></td><td class="n"><b>${f0(m.n)}</b></td><td class="n">${m.ab?f0(m.ab):"–"}</td></tr>`).join("")||'<tr><td colspan="4" class="vazio">Nada a transferir</td></tr>'}</tbody></table></div></div>
@@ -690,6 +702,9 @@ function vBase(){
    ${pg>1?`<div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:10px;font-size:.8rem;color:var(--cinza)">Página ${BC.pag+1} de ${pg} <button class="btn" style="color:var(--marinho);border-color:var(--borda)" onclick="BC.pag=Math.max(0,BC.pag-1);render()">‹</button><button class="btn" style="color:var(--marinho);border-color:var(--borda)" onclick="BC.pag=Math.min(${pg-1},BC.pag+1);render()">›</button></div>`:""}
   </div>`;
 }
+/* Garante a aba na lista mesmo quando a página do Wix monta outra lista de abas (painel da dupla) */
+(function(){function poe(){try{if(!ABAS.some(a=>a[0]=="base")){const Q=bcQuem();ABAS.push(["base",Q.modo=="todos"?"Base Clientes":"Minha base"]);abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("");[...abas.children].forEach(b=>b.classList.toggle("on",b.dataset.k==ABA))}}catch(_){}}
+  poe();addEventListener("load",poe);setTimeout(poe,1500);setTimeout(poe,5000)})();
 /* Excel: carrega a biblioteca só quando pedir o download */
 function bcXlsx(){return window.XLSX?Promise.resolve():new Promise((ok,er)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=ok;s.onerror=()=>er(new Error("biblioteca do Excel"));document.head.appendChild(s)})}
 function bcLinha(c){return{"Situação":BC_SIT[c.s].t,"Vai para":c.dest,"Motivo":c.mot,"Cliente":c.nome,"Código SAP":c.sap,"CNPJ":c.cnpj,"Cidade":c.cid,"UF":c.uf,"Rota":c.rota,"Escritório":c.esc,"Proprietário":c.dono,"Status da conta":c.st,"Relacionamento":c.rel,"Última compra":c.ult,"Dias sem compra":c.dias??"","Classe ABC":c.abc,"Segmento":c.seg,"Tipo de conta":c.tipo,"Telefone":c.tel}}
