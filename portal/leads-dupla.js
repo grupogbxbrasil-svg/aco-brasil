@@ -99,6 +99,7 @@ window.vLeadsD=function(){
    ${P.map((l,i)=>`<tr><td><b>${ldEsc(l.razao)}</b><br><small style="color:#66758a">${ldEsc(l.cnpj||"")}${l.qualEm?" · qualificado em "+ldData(l.qualEm):""}</small></td><td>${ldEsc(l.cid)}</td><td>${ldEsc(l.comprador||"–")}</td><td>${ldWa(l.tel)}</td><td><div class="rel" title="${ldEsc(l.relatoC)}">${ldEsc(l.relatoC)||"–"}</div></td>
     <td>${selDest("ldP"+i,"")}</td><td>${btn("Direcionar","LD_atribuir('P',"+i+")")}</td></tr>`).join("")||'<tr><td colspan="7" class="vazio">Nenhum lead aguardando. Tudo direcionado ✔</td></tr>'}
    </tbody></table></div></div>`:""}
+  ${LD.todos?ldCompraram():""}
   ${LD.todos?`<div class="box"><h2>Por ${sup?"vendedor":"dupla"}</h2><div class="rol"><table><thead><tr><th>${sup?"Vendedor / dupla":"Dupla"}</th><th class="n">Recebidos</th><th class="n">Sem status</th><th class="n">Em cotação</th><th class="n">Vendido</th><th class="n">Sem interesse</th></tr></thead><tbody>${porDupla.map(([d,a])=>`<tr class="cl" onclick="LD_dupla('${ldEsc(d)}')"><td><b>${ldEsc(d)}</b></td><td class="n">${a.length}</td><td class="n">${a.filter(l=>!l.status).length}</td><td class="n">${a.filter(l=>l.status=="Em cotação").length}</td><td class="n">${a.filter(l=>l.status=="Vendido").length}</td><td class="n">${a.filter(l=>l.status=="Sem interesse").length}</td></tr>`).join("")||'<tr><td colspan="6" class="vazio">Nenhum lead direcionado ainda</td></tr>'}</tbody></table></div></div>`:""}
   <div class="box"><h2>${LD.todos?"Retornos dos vendedores":"Relação de leads"}</h2><div class="sub">${LD.todos?(LD.soRet?"Só os leads em que o vendedor já registrou status ou observação.":"Todos os leads direcionados"+(sup?". Para trocar o vendedor, escolha outro e clique em Direcionar.":".")):"Atualize o Status e escreva a Observação de cada cliente. Clique em Salvar na linha."}</div>
    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><input id="ldBusca" placeholder="Buscar empresa ou cidade" value="${ldEsc(LD.filtro)}" style="padding:8px 10px;border:1px solid #dde3ee;border-radius:8px;min-width:240px">
@@ -115,6 +116,17 @@ window.vLeadsD=function(){
    </tbody></table></div></div>`;
 };
 function f0auto(M){const a=M.filter(l=>l.auto).length;return a?a+" automático(s) por venda":"com vendedor definido"}
+/* Diretoria/Supervisão: todos os leads da prospecção (qualificados ou não) que compraram desde o início do trabalho — igual à visão "Vendas" da página Prospecção */
+function ldCompraram(){
+  const ini=C().inicio,R=(LD.leads||[]).filter(l=>l.comprou>0).map(l=>{const nv=ldVendas(l);let ant=[];try{const k=ldNn(l.razao);ant=(typeof D!="undefined"?D:[]).filter(n=>n.m<ini&&((l.sap&&ldZ(n.cli)==l.sap)||ldNn(n.nome)==k))}catch(_){}
+    const prim=nv.reduce((a,n)=>n.dt&&(!a||n.dt<a)?n.dt:a,null);return{l,t:l.comprou,nf:nv.length,prim,novo:!ant.length}}).sort((a,b)=>b.t-a.t);
+  if(!R.length)return `<div class="box"><h2>Leads que compraram</h2><div class="sub">Nenhum lead da prospecção com nota desde ${C().mesIni}/2026.</div></div>`;
+  const tot=R.reduce((s,x)=>s+x.t,0),q=R.filter(x=>x.l.etapa=="Qualificado").length,nv=R.filter(x=>x.novo).length;
+  const pv={};R.forEach(x=>{const v=x.l.vendeu||"Outros";pv[v]=(pv[v]||0)+x.t});
+  return `<div class="box" style="border:2px solid #bfe7cd"><h2>Leads que compraram</h2><div class="sub">Todos os leads da prospecção (qualificados ou não) com nota faturada desde ${C().mesIni}/2026 · ${R.length} clientes · ${ldF1(tot)} t · ${q} qualificados · ${nv} novos (não compravam em 2026 antes) · quem vendeu: ${Object.entries(pv).sort((a,b)=>b[1]-a[1]).map(([v,t])=>ldEsc(v)+" "+ldF1(t)+" t").join(" · ")}</div>
+   <div class="rol"><table><thead><tr><th>Empresa</th><th>Cidade</th><th>Etapa na prospecção</th><th>Dupla da prospecção</th><th>Quem vendeu</th><th>Cliente</th><th class="n">Toneladas</th><th class="n">Notas</th><th class="n">1ª compra</th></tr></thead><tbody>
+   ${R.map(x=>`<tr><td><b>${ldEsc(x.l.razao)}</b></td><td>${ldEsc(x.l.cid)}</td><td>${ldEsc(x.l.etapa||"–")}</td><td>${ldEsc(x.l.destino||"–")}</td><td><b>${ldEsc(x.l.vendeu||"–")}</b></td><td>${x.novo?'<span class="tag" style="background:#dcf5e5;color:#13703c">Novo</span>':'<span class="tag" style="background:#eef2f8;color:#0b2a55">Reativado</span>'}</td><td class="n"><b>${ldF1(x.t)}</b></td><td class="n">${x.nf}</td><td class="n">${x.prim?x.prim.toLocaleDateString("pt-BR"):"–"}</td></tr>`).join("")}</tbody></table></div></div>`;
+}
 window.LD_recarregar=()=>{LD.st="";ldRedesenha()};
 window.LD_dupla=d=>{LD.fdupla=d;ldRedesenha()};
 window.LD_salvar=async i=>{
