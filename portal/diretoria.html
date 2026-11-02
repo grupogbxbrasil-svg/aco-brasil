@@ -274,6 +274,8 @@ function montarFiltros(){
 
 /* ---------- cálculos ---------- */
 function diasUteis(y,m,ate){let n=0;const fim=new Date(y,m,0).getDate();for(let d=1;d<=fim;d++){const dt=new Date(y,m-1,d);if(ate&&dt>ate)break;const w=dt.getDay();if(w&&w<6)n++}return n}
+/* Total da dupla/vendedor no mês pelo Power BI (aba Base Vendedores); null se o BI não tem o mês */
+function bvDu(DU,m){const v=BV.filter(x=>x.m==m&&(x.dupla==DU||x.vend==DU)&&!/total/i.test(x.setor||""));return v.length?sum(v,x=>x.t):null}
 function ctx(){
   const M=+fMes.value, DU=fDupla.value, base=DU?D.filter(x=>x.dupla==DU):D;
   const porM=m=>base.filter(x=>x.m==m);
@@ -282,8 +284,10 @@ function ctx(){
   const duT=diasUteis(2026,M), duD=parcial?Math.max(1,diasUteis(2026,M,ULT)):duT;
   let bi=null,duD2=duD;const hoje=new Date();
   let biM=DU?(()=>{const v=BV.filter(x=>x.m==M&&(x.dupla==DU||x.vend==DU)&&!/total/i.test(x.setor||""));if(!v.length)return null;const o={t:0,set:[]};v.forEach(x=>{o.t+=x.t;o.set.push([titulo(x.setor),x.t])});o.set.sort((a,b)=>b[1]-a[1]);return o})():BIm[M];
-  if(biM&&biM.t>sum(cur,x=>x.t)*1.05){bi=biM;if(hoje.getFullYear()==2026&&hoje.getMonth()+1==M){const ont=new Date(hoje);ont.setDate(hoje.getDate()-1);duD2=Math.max(1,diasUteis(2026,M,ont))}}
-  return {M,DU,base,porM,cur,ant,parcial,duT,duD,bi,duDbi:duD2,parcialBi:duD2<duT};
+  /* Dupla/vendedor: o Power BI é a referência sempre que tiver o mês (antes só entrava quando passava as notas em 5%) */
+  if(biM&&(DU?biM.t>0:biM.t>sum(cur,x=>x.t)*1.05)){bi=biM;if(hoje.getFullYear()==2026&&hoje.getMonth()+1==M){const ont=new Date(hoje);ont.setDate(hoje.getDate()-1);duD2=Math.max(1,diasUteis(2026,M,ont))}}
+  const tm=m=>{if(DU){const t=bvDu(DU,m);if(t!=null)return t}return sum(base.filter(x=>x.m==m),x=>x.t)};
+  return {M,DU,base,porM,cur,ant,parcial,duT,duD,bi,duDbi:duD2,parcialBi:duD2<duT,tm};
 }
 function serie(a,ate){const o=[];for(let m=1;m<=ate;m++)o.push(sum(a.filter(x=>x.m==m),x=>x.t));return o}
 function clientes(a){const o={};a.forEach(x=>{const c=o[x.cli]=o[x.cli]||{cli:x.cli,nome:x.nome,cid:x.cid,dupla:x.dupla,rota:x.rota,t:0,ms:{},ult:null};c.t+=x.t;c.ms[x.m]=(c.ms[x.m]||0)+x.t;if(x.dt&&(!c.ult||x.dt>c.ult))c.ult=x.dt});return Object.values(o)}
@@ -310,12 +314,12 @@ const tit=(sup,h,p)=>`<div class="tit"><div class="sup">${sup}</div><h1>${h}</h1
 /* ---------- ABA: RESUMO ---------- */
 function vResumo(X){
   const {M,cur,ant,base,duT}=X, parcial=X.bi?X.parcialBi:X.parcial, duD=X.bi?X.duDbi:X.duD;
-  const fatNF=sum(cur,x=>x.t), fat=X.bi?X.bi.t:fatNF, fatA=sum(ant,x=>x.t), proj=fat/duD*duT;
+  const fatNF=sum(cur,x=>x.t), fat=X.bi?X.bi.t:fatNF, fatA=X.DU?X.tm(M-1):sum(ant,x=>x.t), proj=fat/duD*duT;
   const fatAmesmoP=ant.length&&parcial?sum(ant.filter(x=>x.dt&&x.dt.getDate()<=(X.bi?new Date().getDate()-1:ULT.getDate())),x=>x.t):fatA;
-  const m3=[M-1,M-2,M-3].filter(m=>m>0).map(m=>sum(base.filter(x=>x.m==m),x=>x.t)), med3=m3.length?sum(m3,x=>x)/m3.length:0;
+  const m3=[M-1,M-2,M-3].filter(m=>m>0).map(m=>X.DU?X.tm(m):sum(base.filter(x=>x.m==m),x=>x.t)), med3=m3.length?sum(m3,x=>x)/m3.length:0;
   const bglNF=sum(cur.filter(x=>x.bgl),x=>x.t), bgl=X.bi?bglNF+Math.max(0,fat-fatNF):bglNF, dataNF=ULT?ULT.toLocaleDateString("pt-BR"):"–";
   const cliC=new Set(cur.map(x=>x.cli)), cliA=new Set(ant.map(x=>x.cli));
-  const ytd=sum(base.filter(x=>x.m<=M),x=>x.t)+(fat-fatNF), nCli=cliC.size;
+  const ytd=X.DU?sum([...Array(M-1).keys()].map(i=>X.tm(i+1)),x=>x)+fat:sum(base.filter(x=>x.m<=M),x=>x.t)+(fat-fatNF), nCli=cliC.size;
   const antes=new Set(base.filter(x=>x.m<M).map(x=>x.cli)), novos=[...cliC].filter(c=>!antes.has(c)).length;
   const ms=[...Array(M).keys()].map(i=>i+1);
   const org=ms.map(m=>sum(base.filter(x=>x.m==m&&!x.bgl),x=>x.t)), bg=ms.map(m=>sum(base.filter(x=>x.m==m&&x.bgl),x=>x.t)+(m==M?Math.max(0,fat-fatNF):0));
@@ -334,7 +338,7 @@ function vResumo(X){
   if(!al.length)al.push(["v","Sem alertas relevantes neste filtro","Volume, clientes e setores dentro do esperado."]);
 
   const serM=f=>ms.map(m=>f(base.filter(x=>x.m==m),m));
-  const sFat=serM(a=>sum(a,x=>x.t)); if(parcial)sFat[sFat.length-1]=proj;
+  const sFat=serM((a,m)=>X.DU?(m==M?fat:X.tm(m)):sum(a,x=>x.t)); if(parcial)sFat[sFat.length-1]=proj;
   const sCli=serM(a=>new Set(a.map(x=>x.cli)).size), sTk=serM(a=>{const n=new Set(a.map(x=>x.cli)).size;return n?sum(a,x=>x.t)/n:0});
   const sOrg=serM(a=>{const t=sum(a,x=>x.t);return t?sum(a.filter(x=>!x.bgl),x=>x.t)/t*100:0}), sRit=serM((a,m)=>m==M?fat/duD:sum(a,x=>x.t)/diasUteis(2026,m));
   let ac=0; const sYtd=sFat.map(v=>ac+=v);
@@ -497,6 +501,7 @@ function vMix(X){
   const bglNF=m=>sum(base.filter(x=>x.m==m&&x.bgl),x=>x.t);
   const bglOf=m=>!X.DU&&REPm[m]&&ORGm[m]?Math.max(0,REPm[m]-ORGm[m]):bglNF(m);
   const ofSet=m=>{const rep=REPm[m],bi=BIm[m];let rows;
+    if(X.DU&&!MXV&&MXB!="com"){const v=BV.filter(x=>x.m==m&&(x.dupla==X.DU||x.vend==X.DU)&&!/total/i.test(x.setor||""));if(v.length)return Object.entries(grp(v,"setor")).map(([s_,a])=>({s:U(s_),t:sum(a,x=>x.t)}))}
     if(MXV||X.DU)return Object.entries(grp(b0.filter(x=>x.m==m),"setor")).map(([s_,a])=>({s:U(s_),t:sum(a,x=>x.t)}));
     if(bi&&bi.sd&&bi.t&&(!rep||Math.abs(bi.t-rep)/rep<0.03))rows=bi.sd.map(x=>({s:U(x.s),t:x.t}));
     else{const nt=base.filter(x=>x.m==m);const tn=sum(nt,x=>x.t);const k=rep&&tn?rep/tn:1;rows=Object.entries(grp(nt,"setor")).map(([s_,a])=>({s:U(s_),t:sum(a,x=>x.t)*k}))}
@@ -511,7 +516,7 @@ function vMix(X){
   /* Rotas: notas fiscais; a diferença para o total oficial entra numa linha de ajuste, para fechar com o BI */
   const rotas=Object.entries(grp(bs,"rota")).map(([r,a])=>{const v=porMes(a);return{r,v,t:sum(v,x=>x),cl:new Set(a.map(x=>x.cli)).size}}).sort((x,y)=>y.t-x.t);
   const nfV=porMes(bs), adj=ms.map((m,i)=>totV[i]-nfV[i]);
-  if(!MXV&&!X.DU&&adj.some(x=>Math.abs(x)>0.5))rotas.push({r:"Ajuste ao BI (não detalhado nas notas)",v:adj,t:sum(adj,x=>x),cl:0,aj:1});
+  if(!MXV&&adj.some(x=>Math.abs(x)>0.5))rotas.push({r:"Ajuste ao BI (não detalhado nas notas)",v:adj,t:sum(adj,x=>x),cl:0,aj:1});
   const fam=Object.entries(grp(bs,"fam")).map(([f,a])=>[f||"(sem família)",sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const cid=Object.entries(grp(bs,"cid")).map(([f,a])=>[f,sum(a,x=>x.t)]).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const fora=sum(bs.filter(x=>/fora/i.test(x.rota)),x=>x.t), totNF=sum(bs,x=>x.t);
@@ -526,7 +531,7 @@ function vMix(X){
   const tag=(c,p)=>{c=c*pf;return `<span class="tag ${!isFinite(pct(c,p))?"tg-c":pct(c,p)>=0?"tg-v":"tg-r"}">${fp(pct(c,p))}</span>`};
   return tit(`Setores & rotas · Jan–${MES[M-1]}/26`,"Onde está o volume no ano"+(MXV?" · "+MXV:"")+(MXS?" · "+titulo(MXS):"")+rotB,"")+filtros+
   `<div class="g g4">${kpi("Volume no ano",f0(totAno)+" t",`média de ${f1(totAno/Math.max(1,M))} t/mês`,"var(--laranja)")}${kpi(MXS?"Setor":"Setor líder no ano",titulo(MXS||DISP[tabS[0]?.s]||tabS[0]?.s||"–"),f0(tabS[0]?.t||0)+" t no ano")}${kpi("Rotas prioritárias",f1(totNF?(totNF-fora)/totNF*100:0)+"%",`Rota Fora DBA: ${f0(fora)} t no ano`,"#2e7d57")}${kpi("Cidades atendidas",new Set(bs.map(x=>x.cid)).size,"no ano","#7a47aa")}</div>
-  <div class="box" style="margin-bottom:14px"><h2>Setores — ano inteiro</h2><div class="sub">Volume (t) por mês · ${MXV?"notas fiscais de "+esc(MXV):X.DU?"notas fiscais da dupla":"total oficial do BI"}${MXB!="todos"?" · BGL = Galvolume faturado pela VEGA":""}</div><div class="rol"><table><thead><tr><th>Setor</th>${mesTh}<th class="n">Ano</th><th class="n">% ano</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
+  <div class="box" style="margin-bottom:14px"><h2>Setores — ano inteiro</h2><div class="sub">Volume (t) por mês · ${MXV?"notas fiscais de "+esc(MXV):X.DU?"Power BI da dupla":"total oficial do BI"}${MXB!="todos"?" · BGL = Galvolume faturado pela VEGA":""}</div><div class="rol"><table><thead><tr><th>Setor</th>${mesTh}<th class="n">Ano</th><th class="n">% ano</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
    ${tabS.map(r=>`<tr><td><b>${esc(titulo(DISP[r.s]||r.s))}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${f1(totAno?r.t/totAno*100:0)}%</td><td class="n">${tag(r.v[M-1],r.v[M-2])}</td><td>${spark(r.v)}</td></tr>`).join("")||`<tr><td colspan="${M+5}" class="vazio">Sem volume com esses filtros</td></tr>`}
    <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(totAno)}</td><td class="n">100%</td><td class="n">${tag(totV[M-1],totV[M-2])}</td><td></td></tr></tbody></table></div>${X.parcial?`<div class="nota">${MES[M-1]} ainda parcial (${X.duD} de ${X.duT} dias úteis).</div>`:""}</div>
   <div class="box" style="margin-bottom:14px"><h2>Rotas — ano inteiro</h2><div class="sub">Volume (t) por mês pelas notas fiscais, clientes no ano e tendência · o total fecha com o BI</div><div class="rol"><table><thead><tr><th>Rota</th>${mesTh}<th class="n">Ano</th><th class="n">Clientes</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
