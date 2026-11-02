@@ -31,7 +31,7 @@ const ldTit=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase(
 const ldData=iso=>{const d=new Date(iso);return isNaN(d)?"–":d.toLocaleDateString("pt-BR")};
 const ldF1=v=>(+v||0).toLocaleString("pt-BR",{maximumFractionDigits:1});
 const C=()=>CFG[LD.uni]||CFG.maraba;
-function ldDestEmail(e){const k=String(e||"").toLowerCase().split("@")[0].replace(/le+ads$/,"");return C().email[k]||""}
+function ldDestEmail(e){const k=String(e||"").toLowerCase().split("@")[0].replace(/le+a?ds$/,"") /* aceita "leads" e "leeds" (e-mail da Jadson/Rebeca) */;return C().email[k]||""}
 function ldDest(v){const s=ldNn(v);if(!s)return"";const ds=C().destinos;return ds.find(x=>ldNn(x)==s)||ds.find(x=>x.includes("/")&&x.split("/").every(p=>s.includes(ldNn(p).slice(0,5))))||""}
 /* nome do vendedor da nota -> vendedor/dupla da lista (pelo primeiro nome) */
 function ldVendDest(nome){const w=ldW(nome);if(!w)return"";return C().destinos.find(d=>d.split("/").some(p=>ldW(p)==w))||""}
