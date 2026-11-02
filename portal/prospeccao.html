@@ -298,7 +298,7 @@ function abrir(chave){
     <b>Última compra</b><span>${esc(l.ult||"–")}</span><b>Vendedor atual</b><span>${esc(l.vend||"–")}</span><b>Dupla destino</b><span>${esc(l.destino||"–")}</span>${l.stDupla||l.obsDupla?`<b>Retorno da dupla</b><span><b>${esc(l.stDupla||"–")}</b>${l.obsDupla?" · "+esc(l.obsDupla):""}</span>`:""}</div>
    ${l.relato?`<div class="box" style="padding:10px;margin-bottom:12px;background:#f8fafd"><b style="font-size:12px;color:var(--sub)">RELATO ATUAL</b><div>${esc(l.relato)}</div></div>`:""}
    <div class="fm">
-    <label>O que foi feito agora</label><div class="chips" id="chE">${ETAPAS.map(e=>`<button class="chip ${e=="Qualificado"?"q":/Sem qualif/.test(e)?"x":""}" data-e="${esc(e)}">${esc(e)}</button>`).join("")}</div>
+    <label>O que foi feito agora</label><div class="chips" id="chE">${ETAPAS.filter(e=>e!="Transferido").map(e=>`<button class="chip ${e=="Qualificado"?"q":/Sem qualif/.test(e)?"x":""}" data-e="${esc(e)}">${esc(e)}</button>`).join("")}</div>
     <label>Contato confirmado?</label><div class="chips" id="chC"><button class="chip" data-v="Sim">Sim</button><button class="chip" data-v="Não">Não</button></div>
     <div id="boxSup" style="display:none"><div class="dest">Em Belém, o vendedor é definido pela <b>Supervisão (Alessandra)</b>. Se o cliente já comprou, ele vai sozinho para o vendedor que vendeu.</div></div>
     <div id="boxDest" style="display:none"><label>Direcionar para (obrigatório no Qualificado)</label>
