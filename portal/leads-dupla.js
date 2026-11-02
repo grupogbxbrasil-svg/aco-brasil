@@ -7,7 +7,7 @@
 const LD_PUBM="https://docs.google.com/spreadsheets/d/e/2PACX-1vSWkUwIA-PcekRj-_pjqx5QaorNtpov6LEijjKBumZacl1zn4qzelC9Ck3ikI0s0d-6WnAC9VKuwIIB/pub?single=true&output=csv&gid=";
 const LD_PUBB="https://docs.google.com/spreadsheets/d/e/2PACX-1vS7Cz40wQ3c1egLW4eIM7PtA1IDEo0mGxM_Zee3b-Og1fIkx-HZZut8kuhuVHZ9ZHMafJ1eZB80Feh-/pub?single=true&output=csv&gid=";
 const CFG={
-  maraba:{nome:"Marabá",leads:LD_PUBM+"191255704",modo:"contactei",inicio:8,mesIni:"ago",
+  maraba:{nome:"Marabá",leads:LD_PUBM+"191255704",modo:"contactei",inicio:8,mesIni:"ago",base:LD_PUBM+"1766895491",
     abas:[LD_PUBM+"301912048",LD_PUBM+"428476033",LD_PUBM+"597943590",
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOHMlqaOkAL4MWtLtYNbTMF3zv9hQWEhanys7dSxnXWJV2d3WuejDnPG5LYdqRLgiodaGF6TncUo8n/pub?single=true&output=csv&gid=1765537608" /* cópia preenchida por Martinho e Rafael */,
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQSyPxMYQ79oc9eFsGyRnOSSj_L01bTsKigqdmTdQZk5ktedLg4ebCr6dNrhen-KnqWA0hL02Ug4ZAQ/pub?output=csv" /* preenchida por Israel e Stefanny */,
@@ -43,10 +43,12 @@ async function ldCarrega(){
   const rb=await ldPede({tipo:"pld",op:"listar",uni:uniAtual()||"maraba"});const r=rb.r||{};
   if(!r.ok){LD.st="erro";LD.erro=r.erro||"Não consegui ler os leads.";ldRedesenha();return}
   LD.uni=CFG[r.unidade]?r.unidade:"maraba";LD.dupla=r.dupla;LD.todos=!!r.todos;LD.sup=!!r.sup;LD.status=r.status||[];LD.acoes=r.itens||[];
-  const [fx,...abas]=await Promise.all([ldPede({tipo:"fx",url:C().leads+"&t="+Date.now()},90000)].concat(C().abas.map(u=>ldPede({tipo:"fx",url:u+"&t="+Date.now()},90000))));
+  const [fx,fb,...abas]=await Promise.all([ldPede({tipo:"fx",url:C().leads+"&t="+Date.now()},90000),C().base?ldPede({tipo:"fx",url:C().base+"&t="+Date.now()},90000):Promise.resolve({text:""})].concat(C().abas.map(u=>ldPede({tipo:"fx",url:u+"&t="+Date.now()},90000))));
+  /* base de clientes: CNPJ -> código SAP (igual à página da Contactei) */
+  const c2s={};try{const B=ldCsv(fb.text||"");const hb=B.findIndex(r=>r.some(c=>/C.digo\s+SAP/i.test(c||"")));if(hb>=0){const iS=B[hb].findIndex(c=>/C.digo\s+SAP/i.test(c||"")),iC=B[hb].findIndex(c=>/^CNPJ$/i.test((c||"").trim()));B.slice(hb+1).forEach(r=>{if(r[iC]&&r[iS])c2s[ldDig(r[iC])]=ldZ(r[iS])})}}catch(_){}
   LD.plan={};abas.forEach(a=>{ldCsv(a.text||"").forEach(x=>{const c=ldDig(x[1]);if(c.length>=11&&(x[5]||x[6]))LD.plan["c"+c]={status:(x[5]||"").trim(),obs:(x[6]||"").trim()}})});
   const L=ldCsv(fx.text||"");const h=L.findIndex(x=>x[1]&&/raz/i.test(x[1]));const out=[];
-  L.slice(h+1).forEach(x=>{if(!x[1]||!x[1].trim())return;const cnpj=ldDig(x[6]),sap=ldZ(x[17]);
+  L.slice(h+1).forEach(x=>{if(!x[1]||!x[1].trim())return;const cnpj=ldDig(x[6]),sap=ldZ(x[17])||c2s[cnpj]||"";
     out.push({chave:cnpj?("c"+cnpj):sap?("s"+sap):("n"+ldNn(x[1]).slice(0,40)),razao:x[1].trim(),etapaPl:(x[2]||"").trim(),cnpj,sap,cid:ldTit(x[7]),rota:ldTit((x[9]||"").replace(/^rota\s+/i,"")),
       email:x[18],vend:x[10],comprador:x[12],tel1:x[13],tel2:x[14],relatoPl:x[16]})});
   LD.leads=out;LD.st="ok";ldAplica();ldRedesenha();
@@ -93,7 +95,7 @@ window.vLeadsD=function(){
    ${LD.todos&&sup?k("Aguardando definição",P.length,"#e2483d","qualificados sem vendedor"):""}
    ${k(LD.todos?"Direcionados":"Leads recebidos",M.length,"#0b4a9a",sup?f0auto(M):"qualificados pela Contactei")}${k("Novos",cont("Novo"),LD_COR.Novo,"ainda sem status")}
    ${k("Em contato",cont("Em contato"),LD_COR["Em contato"])}${k("Em cotação",cont("Em cotação"),LD_COR["Em cotação"])}
-   ${k("Vendido",cont("Vendido"),LD_COR.Vendido,vend.length?`${vend.length} já com nota desde ${C().mesIni}`:"")}${k("Sem interesse",cont("Sem interesse"),LD_COR["Sem interesse"])}</div>
+   ${(()=>{const VV=LD.todos?LD.leads.filter(l=>l.comprou>0):vend;return k("Vendido (com nota)",VV.length,LD_COR.Vendido,`notas desde ${C().mesIni}/2026 · ${cont("Vendido")} marcados como Vendido`)})()}${k("Sem interesse",cont("Sem interesse"),LD_COR["Sem interesse"])}</div>
   ${LD.todos&&sup?`<div class="box" style="border:2px solid #f3c2bd"><h2>Aguardando definição do vendedor</h2><div class="sub">Leads que a Contactei qualificou. Escolha o vendedor ou a dupla e clique em Direcionar. Quem comprou desde ${C().mesIni} já vai sozinho para o vendedor que vendeu.</div>
    <div class="rol"><table class="ldt"><colgroup><col style="width:22%"><col style="width:10%"><col style="width:12%"><col style="width:12%"><col style="width:22%"><col style="width:14%"><col style="width:8%"></colgroup><thead><tr><th>Empresa</th><th>Cidade</th><th>Contato</th><th>Telefone</th><th>Relato da Contactei</th><th>Vendedor / dupla</th><th></th></tr></thead><tbody>
    ${P.map((l,i)=>`<tr><td><b>${ldEsc(l.razao)}</b><br><small style="color:#66758a">${ldEsc(l.cnpj||"")}${l.qualEm?" · qualificado em "+ldData(l.qualEm):""}</small></td><td>${ldEsc(l.cid)}</td><td>${ldEsc(l.comprador||"–")}</td><td>${ldWa(l.tel)}</td><td><div class="rel" title="${ldEsc(l.relatoC)}">${ldEsc(l.relatoC)||"–"}</div></td>
