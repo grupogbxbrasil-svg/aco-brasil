@@ -190,11 +190,11 @@ function destEmail(e){const k=String(e||"").toLowerCase().split("@")[0].replace(
 function destPlanilha(v){const s=nn(v);if(!s)return"";const ds=UNI[U].destinos;
   const d=ds.find(x=>nn(x)==s)||ds.find(x=>x.includes("/")&&x.split("/").every(p=>s.includes(nn(p).slice(0,5))));return d||""}
 function aplicaAcoes(){
-  const ult={},hist={},hd={};ACOES.forEach(a=>{const o=a.tipo=="dupla"?hd:hist;(o[a.chave]=o[a.chave]||[]).push(a)});
+  const ult={},hist={},hd={},ha={};ACOES.forEach(a=>{const o=a.tipo=="dupla"?hd:a.tipo=="atrib"?ha:hist;(o[a.chave]=o[a.chave]||[]).push(a)});
   Object.values(hist).forEach(h=>h.sort((a,b)=>new Date(a.data)-new Date(b.data)));
   LEADS.forEach(l=>{const h=hist[l.chave]||[];l.hist=h;const a=h[h.length-1];
     l.etapa=a&&a.etapa?a.etapa:l.etapaPl;l.destino=destEmail(l.email)||destPlanilha(l.vend);for(let i=h.length-1;i>=0;i--)if(h[i].destino){l.destino=h[i].destino;break}
-    l.proximo=a?a.proximo:"";l.relato=a&&a.relato?a.relato:l.relatoPl;l.ultAcao=a?a.data:null;l.trab=!!l.etapa;const d=hd[l.chave]||[];const ud=d[d.length-1];l.stDupla=ud?ud.statusDupla:"";l.obsDupla=ud?ud.obs:""})
+    l.proximo=a?a.proximo:"";l.relato=a&&a.relato?a.relato:l.relatoPl;l.ultAcao=a?a.data:null;l.trab=!!l.etapa;const at=ha[l.chave]||[];if(at.length)l.destino=at[at.length-1].destino;else if(U=="belem")l.destino="";const d=hd[l.chave]||[];const ud=d[d.length-1];l.stDupla=ud?ud.statusDupla:"";l.obsDupla=ud?ud.obs:""})
 }
 
 /* ===================== RENDER ===================== */
@@ -226,7 +226,7 @@ function vDash(){
   const porEt=ETAPAS.map(e=>[e=="Div. banner"?"Divulgação de Banner":e,LEADS.filter(l=>l.etapa==e).length]).filter(x=>x[1]);porEt.unshift(["Não iniciado",tot-trab.length]);
   const rotas={};LEADS.forEach(l=>{const o=rotas[l.rota]=rotas[l.rota]||{t:0,w:0,q:0};o.t++;if(l.trab)o.w++;if(l.etapa=="Qualificado")o.q++});
   const rt=Object.entries(rotas).sort((a,b)=>b[1].t-a[1].t);
-  const dest={};q.forEach(l=>{const k=l.destino||"⚠ Sem dupla definida";dest[k]=(dest[k]||0)+1});
+  const dest={};q.forEach(l=>{const k=l.destino||(U=="belem"?"⏳ Aguardando Supervisão":"⚠ Sem dupla definida");dest[k]=(dest[k]||0)+1});
   const dias=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toDateString();dias.push([d.getDate()+"/"+(d.getMonth()+1),new Set(ACOES.filter(a=>new Date(a.data).toDateString()==k).map(a=>a.chave)).size])}
   const mxD=Math.max(1,...dias.map(x=>x[1]));
   return tit("Dashboard · "+UNI[U].nome,"Como está a prospecção")+
@@ -300,6 +300,7 @@ function abrir(chave){
    <div class="fm">
     <label>O que foi feito agora</label><div class="chips" id="chE">${ETAPAS.map(e=>`<button class="chip ${e=="Qualificado"?"q":/Sem qualif/.test(e)?"x":""}" data-e="${esc(e)}">${esc(e)}</button>`).join("")}</div>
     <label>Contato confirmado?</label><div class="chips" id="chC"><button class="chip" data-v="Sim">Sim</button><button class="chip" data-v="Não">Não</button></div>
+    <div id="boxSup" style="display:none"><div class="dest">Em Belém, o vendedor é definido pela <b>Supervisão (Alessandra)</b>. Se o cliente já comprou, ele vai sozinho para o vendedor que vendeu.</div></div>
     <div id="boxDest" style="display:none"><label>Direcionar para (obrigatório no Qualificado)</label>
      <div class="dest"><select id="fDest"><option value="">Escolha a dupla ou o vendedor…</option>${UNI[U].destinos.map(d=>`<option ${d==l.destino?"selected":""}>${esc(d)}</option>`).join("")}</select></div></div>
     <label>Nome do comprador</label><input id="fComp" value="${esc(ult.comprador||l.comprador||"")}">
@@ -311,7 +312,7 @@ function abrir(chave){
    <div class="hist">${l.hist.length?l.hist.slice().reverse().map(a=>`<div>${tagE(a.etapa)} ${a.destino?"→ <b>"+esc(a.destino)+"</b>":""}<br>${esc(a.relato||"")}<br><small>${dataHoraBR(a.data)} · ${esc(a.usuario||"")}${a.confirmado?" · confirmado: "+esc(a.confirmado):""}</small></div>`).join(""):`<div><small>Sem ações no site ainda.${l.etapaPl?" Pela planilha: "+esc(l.etapaPl):""}</small></div>`}</div>
   </div>`;
   ov.classList.add("on");pn.classList.add("on");pn.scrollTop=0;
-  const valida=()=>{const q=ATUAL.etapa=="Qualificado";document.getElementById("boxDest").style.display=q?"block":"none";
+  const valida=()=>{const q=ATUAL.etapa=="Qualificado"&&U!="belem";document.getElementById("boxDest").style.display=q?"block":"none";document.getElementById("boxSup").style.display=ATUAL.etapa=="Qualificado"&&U=="belem"?"block":"none";
     btSalvar.disabled=!ATUAL.etapa||(q&&!fDest.value)};
   chE.onclick=e=>{const b=e.target.closest("[data-e]");if(!b)return;ATUAL.etapa=b.dataset.e;chE.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c==b));valida()};
   chC.onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;ATUAL.conf=b.dataset.v;chC.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c==b))};
@@ -320,13 +321,13 @@ function abrir(chave){
 function fechar(){ov.classList.remove("on");pn.classList.remove("on");ATUAL=null}
 ov.onclick=fechar;
 async function salvar(){
-  const l=ATUAL.l,q=ATUAL.etapa=="Qualificado";if(q&&!fDest.value){toast("Escolha a dupla ou o vendedor");return}
+  const l=ATUAL.l,q=ATUAL.etapa=="Qualificado"&&U!="belem";if(q&&!fDest.value){toast("Escolha a dupla ou o vendedor");return}
   btSalvar.disabled=true;btSalvar.textContent="Salvando…";
   const a={unidade:U,chave:l.chave,razao:l.razao,etapa:ATUAL.etapa,confirmado:ATUAL.conf,destino:q?fDest.value:"",comprador:fComp.value.trim(),telefone:fTel.value.trim(),relato:fRel.value.trim()};
   const r=await back("reg",{tk:SESS.token,a});
   if(!r.ok){btSalvar.disabled=false;btSalvar.textContent="Salvar";toast(r.erro||"Não salvou. Tente de novo.");if(/Sess/.test(r.erro||"")){SESS=null;fechar();telaLogin(r.erro)}return}
   ACOES.push({...a,usuario:SESS.nome,data:r.data||new Date().toISOString()});aplicaAcoes();fechar();render();
-  toast(q?`Qualificado e direcionado para ${a.destino} ✔`:"Registrado ✔");
+  toast(q?`Qualificado e direcionado para ${a.destino} ✔`:(a.etapa=="Qualificado"&&U=="belem"?"Qualificado ✔ · vai para a Supervisão Belém definir o vendedor":"Registrado ✔"));
 }
 
 /* ---------- HISTÓRICO ---------- */
