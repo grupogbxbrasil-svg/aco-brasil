@@ -126,7 +126,6 @@ try{if(sessionStorage.getItem("dir_ok")==="1")gate.remove()}catch(_){}
     <select id="fMes" aria-label="Mês"></select>
     <select id="fDupla" aria-label="Dupla"></select>
     <button class="btn ap" id="btAp" onclick="apresentar()">▶ Apresentar</button>
-    <a class="btn" href="base-clientes.html">👥 Base Clientes</a>
     <button class="btn" onclick="carregar(true)">Atualizar</button>
     <a class="btn" href="javascript:history.back()">← Voltar</a>
   </div>
@@ -198,7 +197,7 @@ const titulo=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase
 
 /* ---------- estado ---------- */
 let D=[], BV=[], BIm={}, REPm={}, ORGm={}, FONTE_NF="", ULT_BGL=null, ABA="resumo", ULT=null;
-const ABAS=[["resumo","Resumo"],["mix","Setores & rotas"],["ranking","Ranking"],["ficha","Ficha da dupla"],["clientes","Clientes & churn"],["margem","Margem & preço"]];
+const ABAS=[["resumo","Resumo"],["mix","Setores & rotas"],["ranking","Ranking"],["ficha","Ficha da dupla"],["clientes","Clientes & churn"],["margem","Margem & preço"],["base","Base Clientes"]];
 abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("");
 abas.onclick=e=>{const b=e.target.closest("button");if(!b)return;ABA=b.dataset.k;try{localStorage.setItem("dir_aba",ABA)}catch(_){}render()};
 try{ABA=localStorage.getItem("dir_aba")||ABA}catch(_){}
@@ -564,15 +563,15 @@ function vMargem(X){
 }
 
 /* ---------- render ---------- */
-function semDuplasTxt(){if(!UNIDADES[UNI].semDuplas)return;
+function semDuplasTxt(){if(!UNIDADES[UNI].semDuplas||ABA=="base")return;
   const tr=t=>t.replace(/Ficha da dupla/g,"Ficha do vendedor").replace(/Todas as duplas/g,"Todos os vendedores").replace(/Duplas e individuais/g,"Vendedores").replace(/\bDuplas\b/g,"Vendedores").replace(/\bduplas\b/g,"vendedores").replace(/\bDupla\b/g,"Vendedor").replace(/\bdupla\b/g,"vendedor");
   const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){const v=tr(n.nodeValue);if(v!=n.nodeValue)n.nodeValue=v}}
 function render(){setTimeout(semDuplasTxt,0);
   if(!D.length)return;
   [...abas.children].forEach(b=>b.classList.toggle("on",b.dataset.k==ABA));
   const X=ctx(); X_=X;
-  const V={resumo:vResumo,ranking:vRanking,ficha:vFicha,clientes:vClientes,mix:vMix,margem:vMargem}[ABA]||vResumo;
-  const av=X.bi&&ABA!="resumo"&&ABA!="margem"?`<div class="al a" style="margin-bottom:14px"><span class="al-i">•</span><div><b>Como ler ${MES[X.M-1]} nesta aba</b>Os números são das notas sem BGL até ${ULT?ULT.toLocaleDateString("pt-BR"):"–"}. O total da filial pelo Power BI (${f1(X.bi.t)} t, com BGL) está no Resumo.</div></div>`:"";
+  const V={base:vBase,resumo:vResumo,ranking:vRanking,ficha:vFicha,clientes:vClientes,mix:vMix,margem:vMargem}[ABA]||vResumo;
+  const av=X.bi&&ABA!="resumo"&&ABA!="margem"&&ABA!="base"?`<div class="al a" style="margin-bottom:14px"><span class="al-i">•</span><div><b>Como ler ${MES[X.M-1]} nesta aba</b>Os números são das notas sem BGL até ${ULT?ULT.toLocaleDateString("pt-BR"):"–"}. O total da filial pelo Power BI (${f1(X.bi.t)} t, com BGL) está no Resumo.</div></div>`:"";
   try{app.innerHTML=av+V(X)}catch(e){app.innerHTML=`<div class="box vazio">Erro ao montar esta aba: ${esc(e.message)}</div>`;console.error(e)}
 }
 /* ---------- modo apresentação (tela cheia, sem tempo: quem apresenta troca de aba e decide quando parar) ---------- */
@@ -590,6 +589,122 @@ function apresentar(){
 function pararAp(){AP=null;document.body.classList.remove("apres");btAp.textContent="▶ Apresentar";const n=document.getElementById("apNav");if(n)n.style.display="none";try{document.fullscreenElement&&document.exitFullscreen()}catch(_){}render()}
 document.addEventListener("keydown",e=>{if(!AP)return;if(e.key=="ArrowRight"||e.key=="PageDown"){e.preventDefault();apIr(1)}else if(e.key=="ArrowLeft"||e.key=="PageUp"){e.preventDefault();apIr(-1)}});
 setUni(UNI);carregar(); setInterval(carregar, ATUALIZA_MIN*60*1000);
+</script>
+<script>
+/* ---------- ABA: BASE CLIENTES (base do EON 051+130+159 · regras de carteira) ----------
+   Fonte: aba "base atualizada" do Painel Comercial DBA Marabá (atualizada todo sábado 7h pelo script da planilha).
+   Regras:
+   1) 130 com cliente em cidade de Belém, ou 159 com cliente em cidade de Marabá → transferir de escritório
+   2) dentro de Marabá, cliente numa rota de outra dupla → transferir para a dupla dona da rota
+   3) base 051: em Marabá e Parauapebas a oportunidade é de todos; nas outras cidades, da dupla da rota
+   4) Belém: mais de 6 meses sem compra = livre para qualquer vendedor */
+const BC_SRC={BASE:PUB_MAB+"1157486947",ROTAS:PUB_MAB+"1510073297",CONTR:PUB_MAB+"1073423174",DEPARA:PUB_BEL+"1146232883"};
+const BC_ROTA_DUPLA={"ROTA MARABA":"Todos","ROTA PARAUAPEBAS":"Todos","ROTA SÃO LUÍS":"Todos",
+  "ROTA SÃO GERALDO":"Rafael / Martinho","ROTA CONCEIÇÃO":"Rafael / Martinho","ROTA CANAA":"Rafael / Martinho","ROTA SÃO FÉLIX DO XINGU":"Rafael / Martinho",
+  "ROTA ANAPU":"Jadson / Rebeca","ROTA PARAGOMINAS":"Jadson / Rebeca","ROTA JACUNDA":"Jadson / Rebeca","ROTA IMPERATRIZ":"Israel / Stefanny"};
+const BC_VEND=[[/stefanny|israel/,"Israel / Stefanny"],[/rebeca|jadson/,"Jadson / Rebeca"],[/martinho|rafael (henrique|almeida)/,"Rafael / Martinho"],[/jessica bacelar|matheus/,"Jessica / Matheus"]];
+const BC_LIVRE=180;
+const BC_SIT={TB:{t:"Transferir → DBA Belém",tg:"tg-r",g:"transf"},TM:{t:"Transferir → DBA Marabá",tg:"tg-r",g:"transf"},TR:{t:"Transferir → dupla da rota",tg:"tg-r",g:"transf"},
+  DI:{t:"Distribuir → dupla da rota",tg:"tg-a",g:"distr"},O51:{t:"Oportunidade 051",tg:"tg-v",g:"op51"},LB:{t:"Livre Belém (6+ meses)",tg:"tg-c",g:"livre"},
+  ZC:{t:"Zona compartilhada",tg:"tg-c",g:"info"},FO:{t:"Fora das áreas",tg:"tg-c",g:"info"},OK:{t:"Na carteira certa",tg:"tg-c",g:"ok"}};
+let BC={C:[],st:"",erro:"",lido:null,F:{sit:"acao",dest:"",esc:"",q:"",emissor:true,ativos:true},pag:0};
+const bcN=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/^CENTRO\s*-\s*/i,"").replace(/\s+/g," ").trim().toUpperCase();
+/* No site (página KPIs) a leitura passa pelo Wix, como as outras abas; fora dele, lê direto */
+function bcFt(u){u=u+"&t="+Date.now();if(parent===window)return fetch(u,{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.text()});
+  return new Promise((res,rej)=>{const id="bc"+String(Math.random()).slice(2);const h=e=>{const d=e.data||{};if(d.tipo==="fxr"&&d.id===id){removeEventListener("message",h);clearTimeout(to);d.ok?res(d.text||""):rej(new Error("HTTP "+d.status))}};
+    addEventListener("message",h);parent.postMessage({tipo:"fx",id,url:u},"*");const to=setTimeout(()=>{removeEventListener("message",h);rej(new Error("tempo esgotado"))},60000)})}
+async function bcCarregar(){
+  BC.st="lendo";BC.erro="";
+  try{
+    const [tb,tr,tc,td]=await Promise.all([bcFt(BC_SRC.BASE),bcFt(BC_SRC.ROTAS),bcFt(BC_SRC.CONTR),bcFt(BC_SRC.DEPARA).catch(()=>"")]);
+    const ROTA={},MAB=new Set(),BEL=new Set(),RB={};
+    csv(tr).slice(2).forEach(r=>{const c=bcN(r[0]);if(!c||!r[1])return;const ro=r[1].trim().toUpperCase();ROTA[c]={rota:titulo(ro.replace(/^ROTA\s+/,"")),dupla:BC_ROTA_DUPLA[ro]||r[2]||"Todos"};MAB.add(c)});
+    csv(tc).forEach(r=>{if(/^\d+$/.test(r[1]||"")&&/^(MARAB|MARANH|TOCANTINS)/.test(bcN(r[2]))&&r[3])MAB.add(bcN(r[3]))});
+    if(td)csv(td).slice(2).forEach(r=>{const c=bcN(r[0]);if(c&&r[1]&&!/fora/i.test(r[1])){BEL.add(c);RB[c]=r[1].replace(/^Rota\s+/i,"")}});
+    const L=csv(tb),hi=L.findIndex(r=>r.some(c=>/^Nome$/i.test(c))),H=L[hi].map(bcN),ix=k=>H.indexOf(bcN(k));
+    const I={esc:ix("Escritório de Vendas"),dono:ix("Proprietário da conta"),st:ix("Status da Conta"),rel:ix("Status de Relacionamento da Conta"),nome:ix("Nome"),cid:ix("Cidade"),uf:ix("UF"),cnpj:ix("CNPJ"),sap:ix("Código (SAP)"),ult:ix("Data da última compra"),abc:ix("Classe ABC"),seg:ix("Segmento"),tipo:ix("Tipo de Conta"),tel:ix("Telefone")};
+    const hoje=new Date(),C=[];
+    for(const r of L.slice(hi+1)){
+      if(!r[I.nome]&&!r[I.sap])continue;
+      const e=String(r[I.esc]||""),dono=String(r[I.dono]||"").trim(),cid=bcN(r[I.cid]);
+      const escU=/051/.test(e)?"051":/130|Marab/i.test(e)?"MAB":/159|Bel/i.test(e)?"BEL":"?";
+      const inM=MAB.has(cid),inB=BEL.has(cid),reg=inM&&inB?"AMBAS":inM?"MAB":inB?"BEL":"FORA";
+      const dn=bcN(dono).toLowerCase();let dDup="";if(escU!="BEL")for(const [re,d] of BC_VEND)if(re.test(dn)){dDup=d;break}
+      const papel=dDup||(/gilvan/.test(dn)?"Gerência (Gilvan)":/integracao|^$/.test(dn)?"Sistema (sem vendedor)":"Outros");
+      const ro=ROTA[cid]||null,rd=ro?ro.dupla:(inM?"Todos":"");
+      const p=String(r[I.ult]||"").split("/"),ult=p.length==3?new Date(+p[2],+p[1]-1,+p[0]):null,dias=ult?Math.floor((hoje-ult)/864e5):null;
+      let s="OK",dest="",mot="";
+      if(escU=="MAB"&&reg=="BEL"){s="TB";dest="DBA Belém";mot="Cidade da área de Belém ("+(RB[cid]||"")+") em escritório de Marabá"}
+      else if(escU=="BEL"&&reg=="MAB"){s="TM";dest="DBA Marabá";mot="Cidade da área de Marabá"+(ro?" (Rota "+ro.rota+")":"")+" em escritório de Belém"}
+      else if(escU=="MAB"&&(reg=="MAB"||reg=="AMBAS")&&rd&&rd!="Todos"){if(dDup&&dDup!=rd){s="TR";dest=rd;mot="Rota "+ro.rota+" é de "+rd+", hoje com "+dDup}else if(!dDup){s="DI";dest=rd;mot="Rota "+ro.rota+" · conta com "+papel}}
+      else if(escU=="051"&&(reg=="MAB"||reg=="AMBAS")){s="O51";const tod=rd=="Todos"||!rd;dest=tod?"Todos (Marabá)":rd;mot=tod?(ro?"Rota "+ro.rota+": aberta para todos":"Cidade do contrato sem rota definida: aberta para todos"):"Rota "+ro.rota+" é de "+rd}
+      else if(escU=="BEL"&&reg=="BEL"&&dias!==null&&dias>BC_LIVRE){s="LB";dest="Qualquer vendedor (Belém)";mot=dias+" dias sem compra"}
+      else if((escU=="MAB"||escU=="BEL")&&reg=="AMBAS"){s="ZC";mot="Cidade nas rotas de Marabá e de Belém"}
+      else if(reg=="FORA"){s="FO";mot="Cidade fora das áreas de Marabá e Belém"}
+      C.push({escU,esc:e,dono:titulo(dono),papel:escU=="BEL"?titulo(dono):papel,st:r[I.st]||"",rel:r[I.rel]||"",nome:r[I.nome]||"",cid:titulo(r[I.cid]),uf:r[I.uf]||"",cnpj:r[I.cnpj]||"",sap:r[I.sap]||"",ult:r[I.ult]||"",dias,abc:r[I.abc]||"",seg:r[I.seg]||"",tipo:r[I.tipo]||"",tel:r[I.tel]||"",rota:ro?ro.rota:(RB[cid]||""),s,dest,mot})}
+    BC.C=C;BC.st="ok";BC.lido=new Date();
+  }catch(e){BC.st="erro";BC.erro=e.message}
+  if(ABA=="base")render();
+}
+function bcUniv(){const F=BC.F;return BC.C.filter(c=>(!F.emissor||/emissor/i.test(c.tipo))&&(!F.ativos||!/cancelad/i.test(c.st)&&!/arquivad/i.test(c.rel)))}
+function bcLista(){const F=BC.F,q=bcN(F.q);return bcUniv().filter(c=>{const g=BC_SIT[c.s].g;
+  if(F.sit=="acao"&&!["transf","distr","op51","livre"].includes(g))return false;
+  if(F.sit!="acao"&&F.sit!="todos"&&c.s!=F.sit&&g!=F.sit)return false;
+  if(F.dest&&c.dest!=F.dest)return false;if(F.esc&&c.escU!=F.esc)return false;
+  if(q&&!bcN(c.nome+" "+c.cid+" "+c.sap+" "+c.cnpj+" "+c.dono).includes(q))return false;return true})}
+function bcSet(k,v){BC.F[k]=v;if(k=="sit")BC.F.dest="";BC.pag=0;render()}
+function vBase(){
+  if(BC.st==""){bcCarregar();BC.st="lendo"}
+  if(BC.st=="lendo")return tit("Carteira · EON (051 + 130 + 159)","Base de Clientes","")+'<div class="carga"><div class="spin"></div>Lendo a base de clientes do EON…</div>';
+  if(BC.st=="erro")return tit("Carteira · EON (051 + 130 + 159)","Base de Clientes","")+`<div class="box vazio">Não foi possível ler a base (${esc(BC.erro)}). <a href="#" onclick="BC.st='';render();return false">Tentar de novo</a></div>`;
+  const F=BC.F,U=bcUniv(),cnt=g=>U.filter(c=>BC_SIT[c.s].g==g).length,cs=s=>U.filter(c=>c.s==s).length;
+  const nE=k=>U.filter(c=>c.escU==k).length;
+  const mat={};U.filter(c=>["transf","distr"].includes(BC_SIT[c.s].g)).forEach(c=>{const de=c.escU=="BEL"?"DBA Belém · "+c.dono:c.papel,k=de+"→"+c.dest;(mat[k]=mat[k]||{de,para:c.dest,s:c.s,n:0,ab:0}).n++;if(/^[AB]$/.test(c.abc))mat[k].ab++});
+  const mt=Object.values(mat).sort((a,b)=>b.n-a.n).slice(0,15);
+  const op={};U.filter(c=>c.s=="O51").forEach(c=>op[c.dest]=(op[c.dest]||0)+1);const opL=Object.entries(op).sort((a,b)=>b[1]-a[1]),opM=Math.max(1,...opL.map(x=>x[1]));
+  const L=bcLista(),PP=200,pg=Math.max(1,Math.ceil(L.length/PP));if(BC.pag>=pg)BC.pag=0;const vis=L.slice(BC.pag*PP,(BC.pag+1)*PP);
+  const dests=[...new Set(U.filter(c=>c.dest).map(c=>c.dest))].sort();
+  const ck=(k,lbl,v,sub,cor)=>`<div onclick="bcSet('sit','${k}')" style="cursor:pointer${F.sit==k?";outline:2px solid "+cor+";border-radius:12px":""}">${kpi(lbl,f0(v),sub,cor)}</div>`;
+  const sel=(k,ops)=>`<select onchange="bcSet('${k}',this.value)" style="font:inherit;font-size:.82rem;padding:6px 10px;border:1px solid var(--borda);border-radius:8px">${ops.map(([v,t])=>`<option value="${esc(v)}"${F[k]==v?" selected":""}>${esc(t)}</option>`).join("")}</select>`;
+  return tit("Carteira · EON (051 + 130 + 159)","Base de Clientes",`${f0(U.length)} contas · Marabá ${f0(nE("MAB"))} · Belém ${f0(nE("BEL"))} · Regional NO (051) ${f0(nE("051"))} · base do EON atualizada todo sábado às 7h${BC.lido?" · lido às "+BC.lido.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}`)+
+  `<div class="g g4">${ck("transf","A transferir",cnt("transf"),`${f0(cs("TB"))} p/ Belém · ${f0(cs("TM"))} p/ Marabá · ${f0(cs("TR"))} entre duplas`,"#e2483d")}${ck("distr","A distribuir",cnt("distr"),"contas da gerência/sistema em rota com dono","#c8930d")}${ck("op51","Oportunidades 051",cnt("op51"),"base direta na área de Marabá","#1f9d55")}${ck("livre","Livres em Belém",cnt("livre"),"mais de 6 meses sem compra","#7a47aa")}</div>
+  <div class="g g2"><div class="box"><h2>Quem transfere para quem</h2><div class="sub">Transferências e distribuições · A/B = clientes classe A ou B</div><div class="rol"><table><thead><tr><th>Hoje com</th><th>Vai para</th><th class="n">Clientes</th><th class="n">A/B</th></tr></thead><tbody>
+   ${mt.map(m=>`<tr style="cursor:pointer" onclick="BC.F.sit='${m.s=="DI"?"distr":m.s}';BC.F.dest='${esc(m.para)}';BC.pag=0;render()"><td>${esc(m.de)}</td><td><b>${esc(m.para)}</b></td><td class="n"><b>${f0(m.n)}</b></td><td class="n">${m.ab?f0(m.ab):"–"}</td></tr>`).join("")||'<tr><td colspan="4" class="vazio">Nada a transferir</td></tr>'}</tbody></table></div></div>
+  <div class="box"><h2>Oportunidades da base 051 por dupla</h2><div class="sub">Marabá e Parauapebas: abertas a todos · demais cidades: dupla dona da rota</div>
+   ${opL.map(([d,n])=>`<div class="hb" style="cursor:pointer" onclick="BC.F.sit='O51';BC.F.dest='${esc(d)}';BC.pag=0;render()"><span>${esc(d)}</span><div class="barra"><i style="width:${n/opM*100}%;background:var(--ok)"></i></div><b>${f0(n)}</b></div>`).join("")||'<div class="vazio">Nenhuma oportunidade 051</div>'}
+   <div class="nota">Rotas: São Geraldo, Conceição, Canaã e São Félix → Rafael/Martinho · Anapu, Paragominas e Jacundá → Jadson/Rebeca · Imperatriz → Israel/Stefanny · Marabá e Parauapebas → todos.</div></div></div>
+  <div class="box"><h2>Lista de clientes</h2><div class="sub">${f0(L.length)} clientes com esses filtros</div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    ${sel("sit",[["acao","Só o que pede ação"],["transf","A transferir (todos)"],["TB","→ DBA Belém"],["TM","→ DBA Marabá"],["TR","→ dupla da rota"],["distr","A distribuir"],["op51","Oportunidades 051"],["livre","Livres em Belém"],["ZC","Zona compartilhada"],["FO","Fora das áreas"],["ok","Na carteira certa"],["todos","Todas as contas"]])}
+    ${sel("dest",[["","Qualquer destino"],...dests.map(d=>[d,d])])}
+    ${sel("esc",[["","Todos os escritórios"],["MAB","DBA Marabá (130)"],["BEL","DBA Belém (159)"],["051","Regional NO (051)"]])}
+    <input type="search" placeholder="Buscar cliente, cidade, SAP, CNPJ ou vendedor" value="${esc(F.q)}" onchange="bcSet('q',this.value)" style="font:inherit;font-size:.82rem;padding:6px 10px;border:1px solid var(--borda);border-radius:8px;flex:1;min-width:200px">
+    <label style="font-size:.78rem;color:var(--cinza)"><input type="checkbox" ${F.emissor?"checked":""} onchange="bcSet('emissor',this.checked)"> só emissores</label>
+    <label style="font-size:.78rem;color:var(--cinza)"><input type="checkbox" ${F.ativos?"checked":""} onchange="bcSet('ativos',this.checked)"> sem cancelados/arquivados</label>
+    <button class="btn" style="background:var(--marinho);color:#fff;border-color:var(--marinho)" onclick="bcBaixar('filtro')">⬇ Baixar Excel</button>
+    <button class="btn" style="background:var(--laranja);color:#fff;border-color:var(--laranja)" onclick="bcBaixar('tudo')">⬇ Excel completo</button>
+   </div>
+   <div class="rol"><table><thead><tr><th>Situação</th><th>Cliente</th><th>Cidade</th><th>Escritório</th><th>Proprietário</th><th>Vai para</th><th>Motivo</th><th class="n">Última compra</th><th>ABC</th><th>Relacionamento</th><th>SAP</th></tr></thead><tbody>
+    ${vis.map(c=>`<tr><td><span class="tag ${BC_SIT[c.s].tg}">${esc(BC_SIT[c.s].t)}</span></td><td style="white-space:normal;min-width:200px"><b>${esc(c.nome)}</b></td><td>${esc(c.cid)}/${esc(c.uf)}</td><td>${esc(c.esc)}</td><td>${esc(c.dono)}</td><td><b>${esc(c.dest)}</b></td><td style="white-space:normal;min-width:200px">${esc(c.mot)}</td><td class="n">${esc(c.ult)||"–"}</td><td>${esc(c.abc)}</td><td>${esc(c.rel)}</td><td>${esc(c.sap)}</td></tr>`).join("")||'<tr><td colspan="11" class="vazio">Nenhum cliente com esses filtros</td></tr>'}
+   </tbody></table></div>
+   ${pg>1?`<div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:10px;font-size:.8rem;color:var(--cinza)">Página ${BC.pag+1} de ${pg} <button class="btn" style="color:var(--marinho);border-color:var(--borda)" onclick="BC.pag=Math.max(0,BC.pag-1);render()">‹</button><button class="btn" style="color:var(--marinho);border-color:var(--borda)" onclick="BC.pag=Math.min(${pg-1},BC.pag+1);render()">›</button></div>`:""}
+  </div>`;
+}
+/* Excel: carrega a biblioteca só quando pedir o download */
+function bcXlsx(){return window.XLSX?Promise.resolve():new Promise((ok,er)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=ok;s.onerror=()=>er(new Error("biblioteca do Excel"));document.head.appendChild(s)})}
+function bcLinha(c){return{"Situação":BC_SIT[c.s].t,"Vai para":c.dest,"Motivo":c.mot,"Cliente":c.nome,"Código SAP":c.sap,"CNPJ":c.cnpj,"Cidade":c.cid,"UF":c.uf,"Rota":c.rota,"Escritório":c.esc,"Proprietário":c.dono,"Status da conta":c.st,"Relacionamento":c.rel,"Última compra":c.ult,"Dias sem compra":c.dias??"","Classe ABC":c.abc,"Segmento":c.seg,"Tipo de conta":c.tipo,"Telefone":c.tel}}
+async function bcBaixar(modo){
+  try{await bcXlsx()}catch(e){alert("Não foi possível carregar o Excel. Tente de novo.");return}
+  const wb=XLSX.utils.book_new(),U=bcUniv(),d=new Date().toISOString().slice(0,10);
+  const aba=(n,a)=>{const ws=XLSX.utils.json_to_sheet(a.map(bcLinha));ws["!cols"]=[22,24,48,40,12,16,22,5,18,22,26,12,24,12,10,8,22,20,16].map(w=>({wch:w}));if(ws["!ref"])ws["!autofilter"]={ref:ws["!ref"]};XLSX.utils.book_append_sheet(wb,ws,n)};
+  let nome;
+  if(modo=="filtro"){aba("Clientes",bcLista());nome=`Base Clientes - filtro - ${d}.xlsx`}
+  else{const ws=XLSX.utils.json_to_sheet(Object.entries(BC_SIT).map(([k,v])=>({"Situação":v.t,"Clientes":U.filter(c=>c.s==k).length})));XLSX.utils.book_append_sheet(wb,ws,"Resumo");
+    aba("A transferir",U.filter(c=>BC_SIT[c.s].g=="transf"));aba("A distribuir",U.filter(c=>c.s=="DI"));aba("Oportunidades 051",U.filter(c=>c.s=="O51"));aba("Livres Belém",U.filter(c=>c.s=="LB"));aba("Todas as contas",BC.C);
+    nome=`Base Clientes - Diretoria - ${d}.xlsx`}
+  const blob=new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
 </script>
 </body>
 </html>
