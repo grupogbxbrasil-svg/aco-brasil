@@ -13,7 +13,7 @@ const CFG={
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQSyPxMYQ79oc9eFsGyRnOSSj_L01bTsKigqdmTdQZk5ktedLg4ebCr6dNrhen-KnqWA0hL02Ug4ZAQ/pub?output=csv" /* preenchida por Israel e Stefanny */,
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vTBrcxvYmbR_eV_8JQlBQhb76SMI3tcJUrqkROLLz2nP1FXEcqtHb6rGhvqVvnUyncedRY1iyZbE5pi/pub?output=csv" /* preenchida por Rebeca e Jadson */],
     email:{"rafaelmartinho":"Rafael / Martinho","israelstefanny":"Israel / Stefanny","jadsonrebeca":"Jadson / Rebeca"},
-    destinos:["Israel / Stefanny","Jadson / Rebeca","Rafael / Martinho","Jessica","Matheus"]},
+    destinos:["Israel / Stefanny","Jadson / Rebeca","Rafael / Martinho"]} /* Jessica e Matheus fora das leads (pedido Gilvan 02/11) */,
   belem:{nome:"Belém",leads:LD_PUBB+"191255704",modo:"supervisor",inicio:9,mesIni:"set",abas:[],email:{},
     destinos:["Alcir","Francitonio","Raphael","Cibelle","Renato","Jennifer","Alvaro","Fabio / Marcelle","Alessandra / Jessica"]}
 };
