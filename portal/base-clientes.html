@@ -254,6 +254,9 @@ function baixar(modo){
   aba(wb,"Todas as contas",C);
   XLSX.writeFile(wb,`Base Clientes - Diretoria - ${d}.xlsx`);
 }
+/* Dentro do Wix (página Base Clientes): avisa a altura para o quadro crescer junto */
+function avisaAltura(){try{if(parent!==window)parent.postMessage({tipo:"alt",h:document.documentElement.scrollHeight+20},"*")}catch(_){}}
+new ResizeObserver(avisaAltura).observe(document.body);
 carregar();
 </script>
 </body>
