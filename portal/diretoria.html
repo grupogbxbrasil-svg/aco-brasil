@@ -287,7 +287,8 @@ function ctx(){
   let bi=null,duD2=duD;const hoje=new Date();
   let biM=DU?(()=>{const v=BV.filter(x=>x.m==M&&(x.dupla==DU||x.vend==DU)&&!/total/i.test(x.setor||""));if(!v.length)return null;const o={t:0,set:[]};v.forEach(x=>{o.t+=x.t;o.set.push([titulo(x.setor),x.t])});o.set.sort((a,b)=>b[1]-a[1]);return o})():BIm[M];
   /* Dupla/vendedor: o Power BI é a referência sempre que tiver o mês (antes só entrava quando passava as notas em 5%) */
-  if(biM&&(DU?biM.t>0:biM.t>sum(cur,x=>x.t)*1.05)){bi=biM;if(hoje.getFullYear()==2026&&hoje.getMonth()+1==M){const ont=new Date(hoje);ont.setDate(hoje.getDate()-1);duD2=Math.max(1,diasUteis(2026,M,ont))}}
+  /* Filial e dupla: o Power BI 47 (INFORMAÇÃO BI) é sempre a referência do faturado quando tiver o mês */
+  if(biM&&biM.t>0){bi=biM;if(hoje.getFullYear()==2026&&hoje.getMonth()+1==M){const ont=new Date(hoje);ont.setDate(hoje.getDate()-1);duD2=Math.max(1,diasUteis(2026,M,ont))}}
   const tm=m=>{if(DU){const t=bvDu(DU,m);if(t!=null)return t}return sum(base.filter(x=>x.m==m),x=>x.t)};
   return {M,DU,base,porM,cur,ant,parcial,duT,duD,bi,duDbi:duD2,parcialBi:duD2<duT,tm};
 }
