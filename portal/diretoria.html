@@ -879,3 +879,157 @@ async function offLoad(u,M){const k=u+":"+M;if(OFF[k]||OFF_ING[k])return;OFF_ING
 (function(){const _r3=render;render=function(){_r3.apply(this,arguments);try{if(D.length&&X_)for(let m=X_.M;m>=1;m--)offLoad(UNI,m)}catch(e){console.error(e)}};
  try{if(D.length)render()}catch(_){}})();
 </script>
+
+<!-- ===== Aba LOGÍSTICA da Diretoria (resumo de carteira, transferência, pré-rota e faturamento) ===== -->
+<style>
+.lg-uni{display:inline-flex;gap:6px;margin-bottom:14px}.lg-uni button{border:1px solid var(--borda);background:#fff;border-radius:999px;padding:7px 16px;font-weight:700;cursor:pointer;color:var(--marinho)}
+.lg-uni button.on{background:var(--laranja);border-color:var(--laranja);color:#fff}
+.lg-big{background:linear-gradient(135deg,#0b2a55,#0b4a9a);color:#fff;border-radius:14px;padding:20px 22px;margin-bottom:14px}
+.lg-big h2{color:#fff;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-bottom:12px}
+.lg-sec{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.lg-c{background:#ffffff12;border:1px solid #ffffff22;border-radius:12px;padding:14px}
+.lg-c small{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;opacity:.8}
+.lg-c b{display:block;font-size:1.65rem;margin-top:4px;font-variant-numeric:tabular-nums}
+.lg-c span{font-size:.75rem;opacity:.8}
+.lg-c.dest{background:#f47a1f;border-color:#f47a1f}
+.lg-grp{margin-top:16px}.lg-grp h3{font-size:.86rem;margin:0 0 8px;color:#cfe0ff}
+.lg-fil{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:12px}
+.lg-fil label{display:flex;flex-direction:column;font-size:.72rem;font-weight:700;color:var(--cinza);gap:4px;text-transform:uppercase}
+.lg-fil select{padding:7px 10px;border:1px solid var(--borda);border-radius:8px;font:inherit;min-width:140px;background:#fff}
+.lg-bar svg{width:100%;height:auto;display:block}
+.lg-st{font-size:.78rem;color:var(--cinza);margin:-6px 0 12px}
+.lg-tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:700}
+.lg-ok{background:#e3f6ea;color:#1f7a45}.lg-no{background:#fdeaea;color:#b0322a}
+@media(max-width:1100px){.lg-sec{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.lg-sec{grid-template-columns:1fr 1fr}.lg-c b{font-size:1.25rem}}
+</style>
+<script>
+/* Fontes: planilhas da Logística publicadas na Web (mesmas abas e gid nas duas unidades) */
+const LG_PUB={maraba:"2PACX-1vQQpQAcFObAnl_Wh_ENV-Pst8e_K1NNprlyzZp1b1DUVdjVp0O5xa6YJDgjmlj78iIP84lZM3XqPlcc",belem:"2PACX-1vSRpnOtygr_rGoMoMjcz5L8wymuYKQ4j-9wkmgMPVtT4OeYbRQ3SJ1O_n3JY0MihEHswx9C6NaAGgWM"};
+const LG_GID={cart:"897735840",outros:"777000666",transf:"911839959",acomp:"2104069826",prerota:"596629070",fat:"1980269840",atual:"777001004"};
+const LG_CENTRO={maraba:"9633",belem:"9684"};
+const LG_C={};let LG_U=null,LG_F={mes:"",linha:"",centro:"",vend:""};
+const lgUrl=(u,g)=>"https://docs.google.com/spreadsheets/d/e/"+LG_PUB[u]+"/pub?output=csv&single=true&gid="+g;
+async function lgGet(u,k){const ch=u+":"+k;if(LG_C[ch]&&Date.now()-LG_C[ch].ts<600000)return LG_C[ch].r;
+ const r=csv(await qrdGet(lgUrl(u,LG_GID[k])+"&t="+Date.now()));LG_C[ch]={ts:Date.now(),r};return r}
+const lgT=v=>num(v);                       /* número no formato BR */
+const lgKg=v=>num(v)/1000;                 /* kg -> t */
+const lgFt=v=>f1(v)+" t";
+const lgDt=s=>{s=String(s||"").trim();let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(+m[3],+m[1]-1,+m[2]);m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return new Date(+m[1],+m[2]-1,+m[3]);return null};
+const lgDia=d=>d?d.toLocaleDateString("pt-BR"):"–";
+const lgMk=(t,v,s,dest)=>`<div class="lg-c${dest?" dest":""}"><small>${t}</small><b>${v}</b><span>${s||""}</span></div>`;
+const lgIdx=(h,re)=>h.findIndex(x=>re.test(String(x||"").normalize("NFD").replace(/[̀-ͯ]/g,"")));
+
+/* ---- leitura das bases ---- */
+function lgCarteira(R){const r=R[4]||[];return{fat:lgT(r[0]),trav:lgT(r[2]),bloq:lgT(r[4]),tot:lgT(r[6])}}
+function lgOutros(R){const r=R[4]||[];const o={ordens:lgT(r[0]),tot:lgT(r[3]),conf:lgT(r[6]),forn:lgT(r[9]),carga:lgT(r[12]),saldo:lgT(r[14])};
+ /* "OK" na coluna Faturamento = centro com acesso para faturar no mês */
+ const hi=R.findIndex(x=>String(x[0]).trim()=="Centro");if(hi>=0){const h=R[hi],cF=lgIdx(h,/^Faturamento$/i),cC=lgIdx(h,/^Confirmado/i);let ok=0;
+  R.slice(hi+1).forEach(x=>{if(!x[0]||!/^\d{4}$/.test(String(x[0]).trim()))return;if(cF>=0&&/^OK$/i.test(String(x[cF]).trim()))ok+=lgKg(x[cC])});o.apto=ok}
+ return o}
+function lgAcomp(R){const r=R[0]||[];return{ag:lgT(r[4]),forn:lgT(r[6]),carga:lgT(r[7]),trans:lgT(r[8])}}
+function lgTransf(R,u){const h=R[0]||[],I=n=>h.indexOf(n);const cO=I("Orig"),cD=I("Dest"),cCr=I("Criação"),cPd=I("Pedido"),cQ=I("Qtde Pedido"),cUM=I("U.M."),cDF=I("Dt Fornec."),cQF=I("Qtde Fornec."),cUV=I("U.V."),cDT=I("Dt Transp."),cRec=I("Dt Recep");
+ const L=R.slice(1).filter(x=>String(x[cD]).trim()==LG_CENTRO[u]);
+ let ult=null;L.forEach(x=>[x[cCr],x[cDF],x[cDT]].forEach(s=>{const d=lgDt(s);if(d&&d<=new Date()&&(!ult||d>ult))ult=d}));
+ const mesmo=s=>{const d=lgDt(s);return d&&ult&&d.toDateString()==ult.toDateString()};
+ const kg=(q,um)=>/^KG$/i.test(String(um).trim())?lgKg(q):0;
+ const cr=L.filter(x=>mesmo(x[cCr])),fo=L.filter(x=>mesmo(x[cDF])),tr=L.filter(x=>mesmo(x[cDT]));
+ const transito=L.filter(x=>lgDt(x[cDT])&&!lgDt(x[cRec]));
+ return{dia:ult,pedidos:new Set(cr.map(x=>x[cPd])).size,itens:cr.length,tCr:cr.reduce((a,x)=>a+kg(x[cQ],x[cUM]),0),
+  tFo:fo.reduce((a,x)=>a+kg(x[cQF],x[cUV]),0),nFo:fo.length,tTr:tr.reduce((a,x)=>a+kg(x[cQF],x[cUV]),0),nTr:tr.length,
+  tTransito:transito.reduce((a,x)=>a+kg(x[cQF],x[cUV]),0),nTransito:new Set(transito.map(x=>x[cPd])).size}}
+function lgPre(R){const i=R.findIndex(x=>String(x[0]).trim()=="Rota"),j=R.findIndex((x,k)=>k>i&&String(x[0]).trim()=="Rota");
+ const rot=[];if(i>=0)for(let k=i+1;k<R.length&&R[k][0];k++)rot.push({rota:R[k][0],itens:lgT(R[k][1]),peso:lgKg(R[k][2]),ordens:lgT(R[k][4]),fat:lgKg(R[k][5]),bloq:lgKg(R[k][7])});
+ if(j>=0)for(let k=j+1;k<R.length&&R[k][0];k++){const o=rot.find(r=>r.rota==R[k][0]);if(o)Object.assign(o,{veic:R[k][2],ocup:R[k][5],falta:lgKg(R[k][6]),st:R[k][7]})}
+ const c=R[4]||[];return{ordens:lgT(c[0]),peso:lgT(c[2]),fat:lgT(c[4]),fecham:lgT(c[6]),rot}}
+function lgFat(R){const h=R[0]||[],I=re=>lgIdx(h,re);const cD=I(/^DT\/ Fatu|^Data/i),cC=I(/^Centro$/i),cQ=I(/^Quant/i),cV=I(/^Vendedor$/i),cL=I(/^Linha$/i),cCl=I(/^Cliente$/i);
+ return R.slice(1).map(x=>{const d=lgDt(x[cD]);return d?{d,c:String(x[cC]||"").trim(),t:lgKg(x[cQ]),v:String(x[cV]||"").trim()||"Outros",l:titulo(String(x[cL]||"").trim()||"Sem linha"),cl:x[cCl]}:null}).filter(Boolean)}
+
+/* ---- gráficos simples (SVG) ---- */
+function lgBarras(lab,val,{dest=-1,cor="#0b4a9a",h=190,fmt=f1}={}){if(!val.length)return '<div class="vazio">Sem faturamento no filtro</div>';
+ const w=Math.max(560,lab.length*26),mx=Math.max(...val,1),bw=(w-40)/val.length;
+ return `<div class="lg-bar"><svg viewBox="0 0 ${w} ${h+34}" role="img">`+val.map((v,i)=>{const bh=v/mx*(h-18),x=30+i*bw,y=h-bh;
+  return `<rect x="${(x+bw*.12).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*.76).toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="${i==dest?"#f47a1f":cor}"><title>${esc(lab[i])}: ${fmt(v)} t</title></rect>`+
+  (v>0&&bw>22?`<text x="${(x+bw/2).toFixed(1)}" y="${(y-4).toFixed(1)}" font-size="9.5" text-anchor="middle" fill="#334">${fmt(v)}</text>`:"")+
+  `<text x="${(x+bw/2).toFixed(1)}" y="${h+14}" font-size="10" text-anchor="middle" fill="#667">${esc(lab[i])}</text>`}).join("")+
+  `<line x1="28" y1="${h}" x2="${w-6}" y2="${h}" stroke="#d6dde6"/></svg></div>`}
+
+/* ---- tela ---- */
+function vLogistica(){const u=UNI,nm=UNIDADES[u].nome;
+ setTimeout(()=>lgFill(u),0);
+ return tit("Logística · DBA "+nm,"Carteira, transferências e faturamento","Resumo para a diretoria · dados das planilhas da Logística ("+nm+")")+
+ `<div class="lg-uni" role="group" aria-label="Unidade">${["maraba","belem"].map(k=>`<button data-lgu="${k}" class="${k==u?"on":""}">${UNIDADES[k].nome}</button>`).join("")}</div>
+ <div id="lgTopo"><div class="box"><div class="carga"><div class="spin"></div>Lendo as bases da Logística de ${esc(nm)}…</div></div></div>
+ <div id="lgFat" style="margin-top:14px"></div>`}
+async function lgFill(u){const top=document.getElementById("lgTopo");if(!top)return;
+ const pega=k=>lgGet(u,k).catch(e=>{console.error("logistica",k,e);return null});
+ const [Rc,Ro,Ra,Rt,Rp,Rat]=await Promise.all(["cart","outros","acomp","transf","prerota","atual"].map(pega));
+ if(UNI!=u||ABA!="logistica")return;
+ const c=Rc?lgCarteira(Rc):null,o=Ro?lgOutros(Ro):null,a=Ra?lgAcomp(Ra):null,t=Rt?lgTransf(Rt,u):null,p=Rp?lgPre(Rp):null;
+ const atu=(Rat||[]).filter(x=>/carteira|zv74|transfer|faturamento/i.test(x[0]||"")).map(x=>`${esc(x[0])}: ${esc(x[3]||"–")}`).join(" · ");
+ const sem='<span class="lg-tag lg-no">base indisponível</span>';
+ const aptoTot=(c?c.fat:0)+(o?(o.apto!=null?o.apto:o.conf):0);
+ top.innerHTML=`<div class="lg-big"><h2>Carteira · DBA ${esc(UNIDADES[u].nome)}</h2>
+  <div class="lg-sec">
+   ${lgMk("Total em carteira",c&&o?lgFt(c.tot+o.saldo):"–","DBA + centros externos")}
+   ${lgMk("Apto para faturar",lgFt(aptoTot),"DBA faturável agora + externos possíveis no mês",1)}
+   ${lgMk("Em trânsito para a unidade",a?lgFt(a.trans):"–",t?`${t.nTransito} pedido(s) em transporte`:"transferências")}
+   ${lgMk("Pré-rota CIF",p?lgFt(p.peso):"–",p?`${p.ordens} ordens · ${f1(p.fat)} t faturável`:"")}
+  </div>
+  <div class="lg-grp"><h3>Carteira do DBA (centro ${LG_CENTRO[u]})</h3><div class="lg-sec">
+   ${c?lgMk("Faturável agora",lgFt(c.fat),"todos os itens liberados",1)+lgMk("Travada por item",lgFt(c.trav),"falta estoque de algum item")+lgMk("Bloqueada",lgFt(c.bloq),"bloqueio comercial/crédito")+lgMk("Total em aberto",lgFt(c.tot),""):sem}
+  </div></div>
+  <div class="lg-grp"><h3>Centros externos (ordens faturadas por outros centros)</h3><div class="lg-sec">
+   ${o?lgMk("Possível faturar no mês",lgFt(o.apto!=null?o.apto:o.conf),"confirmado, em centros com acesso",1)+lgMk("Fornecido",lgFt(o.forn),"")+lgMk("Em transporte",lgFt(o.carga),"em formação de carga")+lgMk("Saldo em aberto",lgFt(o.saldo),o.ordens+" ordens"):sem}
+  </div></div>
+  <div class="lg-grp"><h3>Transferências · movimento de ${t?lgDia(t.dia):"–"}</h3><div class="lg-sec">
+   ${t?lgMk("Pedidos criados",String(t.pedidos),`${t.itens} item(ns) · ${f1(t.tCr)} t`)+lgMk("Fornecido no dia",lgFt(t.tFo),t.nFo+" item(ns)")+lgMk("Entrou em transporte",lgFt(t.tTr),t.nTr+" item(ns)",1)+lgMk("Total em trânsito",a?lgFt(a.trans):lgFt(t.tTransito),a?`aguardando fornecer ${f1(a.ag)} t · formação ${f1(a.carga)} t`:""):sem}
+  </div></div>
+ </div>
+ <div class="box"><h2>Pré-rota · resumo por romaneio</h2><div class="sub">Ordens CIF montadas por rota · a carga sai com 70% da capacidade útil do veículo</div>
+  ${p&&p.rot.length?`<div class="rol"><table><thead><tr><th>Rota</th><th class="n">Ordens</th><th class="n">Peso (t)</th><th class="n">Faturável (t)</th><th class="n">Bloqueado (t)</th><th>Veículo</th><th class="n">Ocupação</th><th class="n">Falta p/ sair (t)</th><th>Status</th></tr></thead><tbody>${p.rot.map(r=>`<tr><td><b>${esc(titulo(r.rota))}</b></td><td class="n">${r.ordens}</td><td class="n">${f1(r.peso)}</td><td class="n">${f1(r.fat)}</td><td class="n">${f1(r.bloq)}</td><td>${esc(r.veic||"–")}</td><td class="n">${esc(r.ocup||"–")}</td><td class="n">${r.falta!=null?f1(r.falta):"–"}</td><td><span class="lg-tag ${/FECHA|OK|SAI/i.test(r.st||"")&&!/ABAIXO/i.test(r.st||"")?"lg-ok":"lg-no"}">${esc(r.st||"–")}</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="vazio">Sem ordens CIF em pré-rota</div>'}
+ </div>${atu?`<div class="lg-st" style="margin-top:10px">Última atualização das bases · ${atu}</div>`:""}`;
+ const fb=document.getElementById("lgFat");if(fb)fb.innerHTML='<div class="box"><div class="carga"><div class="spin"></div>Lendo o faturamento…</div></div>';
+ const Rf=await pega("fat");if(UNI!=u||ABA!="logistica")return;
+ LG_U=u;lgFatDados=Rf?lgFat(Rf):[];lgFatRender()}
+let lgFatDados=[];
+function lgFatRender(){const fb=document.getElementById("lgFat");if(!fb)return;const A=lgFatDados;
+ if(!A.length){fb.innerHTML='<div class="box vazio">Não foi possível ler a aba Faturado da Logística.</div>';return}
+ const mk=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+ const meses=[...new Set(A.map(x=>mk(x.d)))].sort();if(!LG_F.mes||!meses.includes(LG_F.mes))LG_F.mes=meses[meses.length-1];
+ const opt=(v,lab,sel)=>`<option value="${esc(v)}"${v==sel?" selected":""}>${esc(lab)}</option>`;
+ const uniq=f=>[...new Set(A.map(f))].filter(Boolean).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+ const fil=x=>(!LG_F.linha||x.l==LG_F.linha)&&(!LG_F.centro||x.c==LG_F.centro)&&(!LG_F.vend||x.v==LG_F.vend);
+ const B=A.filter(fil),[yy,mm]=LG_F.mes.split("-").map(Number),ndias=new Date(yy,mm,0).getDate();
+ const doMes=B.filter(x=>x.d.getFullYear()==yy&&x.d.getMonth()+1==mm);
+ const dia=Array(ndias).fill(0);doMes.forEach(x=>dia[x.d.getDate()-1]+=x.t);
+ const tot=dia.reduce((a,b)=>a+b,0),cDias=dia.filter(v=>v>0).length,mx=Math.max(...dia);
+ const ult13=meses.slice(-13),mens=ult13.map(k=>B.filter(x=>mk(x.d)==k).reduce((a,x)=>a+x.t,0));
+ const iMes=ult13.indexOf(LG_F.mes),ant=iMes>0?mens[iMes-1]:0,cli=new Set(doMes.map(x=>x.cl)).size;
+ const vend=Object.entries(doMes.reduce((o,x)=>{o[x.v]=(o[x.v]||0)+x.t;return o},{})).sort((a,b)=>b[1]-a[1]).slice(0,10);
+ const lab=m=>{const [y,n]=m.split("-");return MES[+n-1]+"/"+y.slice(2)};
+ fb.innerHTML=`<div class="box"><h2>Acompanhamento de faturamento · DBA ${esc(UNIDADES[LG_U].nome)}</h2><div class="sub">Base Faturado da Logística (Power BI) · toneladas</div>
+  <div class="lg-fil">
+   <label>Mês/ano<select data-lgf="mes">${meses.slice().reverse().map(m=>opt(m,lab(m),LG_F.mes)).join("")}</select></label>
+   <label>Linha<select data-lgf="linha">${opt("","Todas",LG_F.linha)}${uniq(x=>x.l).map(v=>opt(v,v,LG_F.linha)).join("")}</select></label>
+   <label>Centro / usina<select data-lgf="centro">${opt("","Todos",LG_F.centro)}${uniq(x=>x.c).map(v=>opt(v,v,LG_F.centro)).join("")}</select></label>
+   <label>Vendedor<select data-lgf="vend">${opt("","Todos",LG_F.vend)}${uniq(x=>x.v).map(v=>opt(v,titulo(v),LG_F.vend)).join("")}</select></label>
+  </div>
+  <div class="g g4">${kpi("Faturado no mês",f1(tot)+" t",ant?`${tot>=ant?"+":""}${f1((tot/ant-1)*100)}% vs ${lab(ult13[iMes-1])}`:"","#0b4a9a")}${kpi("Média por dia faturado",cDias?f1(tot/cDias)+" t":"–",cDias+" dia(s) com nota","#127c80")}${kpi("Maior dia",mx?f1(mx)+" t":"–",mx?"dia "+(dia.indexOf(mx)+1):"","#f47a1f")}${kpi("Clientes atendidos",String(cli),doMes.length+" itens","#6b4bb8")}</div>
+  <h2 style="margin-top:6px">Faturamento diário · ${lab(LG_F.mes)}</h2>${lgBarras(dia.map((_,i)=>String(i+1)),dia,{dest:dia.indexOf(mx)})}
+  <div class="g g21" style="margin-top:14px"><div><h2>Faturamento mensal</h2><div class="sub">Últimos ${ult13.length} meses · laranja = mês selecionado</div>${lgBarras(ult13.map(lab),mens,{dest:iMes,h:170})}</div>
+   <div><h2>Por vendedor</h2><div class="sub">${lab(LG_F.mes)} · top 10</div>${vend.length?hbars(vend.map(([v,t])=>[titulo(v),t])):'<div class="vazio">—</div>'}</div></div>
+ </div>`}
+/* eventos: botões de unidade e filtros do faturamento */
+document.addEventListener("click",e=>{const b=e.target.closest("[data-lgu]");if(b){setUni(b.dataset.lgu);return}
+ /* botão "Logística" do cabeçalho: abre esta aba em vez de sair para o portal da Logística */
+ const a=e.target.closest("a.btn");if(a&&/tipo:\s*(&quot;|")log/.test(a.getAttribute("onclick")||"")){e.preventDefault();e.stopPropagation();ABA="logistica";try{localStorage.setItem("dir_aba",ABA)}catch(_){}render();scrollTo({top:0})}},true);
+document.addEventListener("change",e=>{const s=e.target.closest("[data-lgf]");if(!s)return;LG_F[s.dataset.lgf]=s.value;lgFatRender()});
+/* registra a aba e desvia o render quando ela estiver aberta */
+(function(){function poe(){try{if(!ABAS.some(a=>a[0]=="logistica")){ABAS.push(["logistica","Logística"]);abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("")}
+  [...abas.children].forEach(b=>b.classList.toggle("on",b.dataset.k==ABA))}catch(_){}}
+ const _rL=render;render=function(){if(ABA=="logistica"){poe();const vis=v=>["fMes","fDupla"].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display=v});vis("none");
+   if(LG_U&&LG_U!=UNI)lgFatDados=[];app.innerHTML=vLogistica();return}
+  ["fMes","fDupla"].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display=""});return _rL.apply(this,arguments)};
+ poe();addEventListener("load",poe);setTimeout(poe,1500);setTimeout(poe,5000);try{if(ABA=="logistica")render()}catch(_){}})();
+</script>
