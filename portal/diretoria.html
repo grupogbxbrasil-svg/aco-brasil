@@ -897,6 +897,7 @@ async function offLoad(u,M){const k=u+":"+M;if(OFF[k]||OFF_ING[k])return;OFF_ING
 .lg-fil{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:12px}
 .lg-fil label{display:flex;flex-direction:column;font-size:.72rem;font-weight:700;color:var(--cinza);gap:4px;text-transform:uppercase}
 .lg-fil select{padding:7px 10px;border:1px solid var(--borda);border-radius:8px;font:inherit;min-width:140px;background:#fff}
+.lg-k5{grid-template-columns:repeat(5,1fr)}@media(max-width:1100px){.lg-k5{grid-template-columns:repeat(2,1fr)}}
 .lg-bar svg{width:100%;height:auto;display:block}
 .lg-st{font-size:.78rem;color:var(--cinza);margin:-6px 0 12px}
 .lg-tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:700}
@@ -945,8 +946,8 @@ function lgPre(R){const i=R.findIndex(x=>String(x[0]).trim()=="Rota"),j=R.findIn
  const rot=[];if(i>=0)for(let k=i+1;k<R.length&&R[k][0];k++)rot.push({rota:R[k][0],itens:lgT(R[k][1]),peso:lgKg(R[k][2]),ordens:lgT(R[k][4]),fat:lgKg(R[k][5]),bloq:lgKg(R[k][7])});
  if(j>=0)for(let k=j+1;k<R.length&&R[k][0];k++){const o=rot.find(r=>r.rota==R[k][0]);if(o)Object.assign(o,{veic:R[k][2],ocup:R[k][5],falta:lgKg(R[k][6]),st:R[k][7]})}
  const c=R[4]||[];return{ordens:lgT(c[0]),peso:lgT(c[2]),fat:lgT(c[4]),fecham:lgT(c[6]),rot}}
-function lgFat(R){const h=R[0]||[],I=re=>lgIdx(h,re);const cD=I(/^DT\/ Fatu|^Data/i),cC=I(/^Centro$/i),cQ=I(/^Quant/i),cV=I(/^Vendedor$/i),cL=I(/^Linha$/i),cCl=I(/^Cliente$/i);
- return R.slice(1).map(x=>{const d=lgDt(x[cD]);return d?{d,c:String(x[cC]||"").trim(),t:lgKg(x[cQ]),v:String(x[cV]||"").trim()||"Outros",l:titulo(String(x[cL]||"").trim()||"Sem linha"),cl:x[cCl]}:null}).filter(Boolean)}
+function lgFat(R){const h=R[0]||[],I=re=>lgIdx(h,re);const cD=I(/^DT\/ Fatu|^Data/i),cC=I(/^Centro$/i),cQ=I(/^Quant/i),cV=I(/^Vendedor$/i),cL=I(/^Linha$/i),cCl=I(/^Cliente$/i),cDs=I(/^Descr/i);
+ return R.slice(1).map(x=>{const d=lgDt(x[cD]);return d?{d,c:String(x[cC]||"").trim(),t:lgKg(x[cQ]),v:String(x[cV]||"").trim()||"Outros",l:/^#?N\/?A$/i.test(String(x[cL]||"").trim())||!String(x[cL]||"").trim()?"Sem cadastro":titulo(String(x[cL]).trim()),cl:x[cCl],bgl:/^BGL/i.test(String(cDs>=0?x[cDs]:"").trim())}:null}).filter(Boolean)}
 
 /* ---- gráficos simples (SVG) ---- */
 function lgBarras(lab,val,{dest=-1,cor="#a9c3e6",h=190,fmt=f1}={}){if(!val.length)return '<div class="vazio">Sem faturamento no filtro</div>';
@@ -1011,6 +1012,7 @@ function lgFatRender(){const fb=document.getElementById("lgFat");if(!fb)return;c
  const tot=dia.reduce((a,b)=>a+b,0),cDias=dia.filter(v=>v>0).length,mx=Math.max(...dia);
  const ult13=meses.slice(-13),mens=ult13.map(k=>B.filter(x=>mk(x.d)==k).reduce((a,x)=>a+x.t,0));
  const iMes=ult13.indexOf(LG_F.mes),ant=iMes>0?mens[iMes-1]:0,cli=new Set(doMes.map(x=>x.cl)).size;
+ const bglT=A.filter(x=>x.bgl&&x.c==LG_CENTRO[LG_U]&&x.d.getFullYear()==yy&&x.d.getMonth()+1==mm).reduce((a,x)=>a+x.t,0);
  const vend=Object.entries(doMes.reduce((o,x)=>{o[x.v]=(o[x.v]||0)+x.t;return o},{})).sort((a,b)=>b[1]-a[1]).slice(0,10);
  const lab=m=>{const [y,n]=m.split("-");return MES[+n-1]+"/"+y.slice(2)};
  fb.innerHTML=`<div class="box"><h2>Acompanhamento de faturamento · DBA ${esc(UNIDADES[LG_U].nome)}</h2><div class="sub">Base Faturado da Logística (Power BI) · toneladas</div>
@@ -1020,7 +1022,7 @@ function lgFatRender(){const fb=document.getElementById("lgFat");if(!fb)return;c
    <label>Centro / usina<select data-lgf="centro">${opt("","Todos",LG_F.centro)}${uniq(x=>x.c).map(v=>opt(v,v,LG_F.centro)).join("")}</select></label>
    <label>Vendedor<select data-lgf="vend">${opt("","Todos",LG_F.vend)}${uniq(x=>x.v).map(v=>opt(v,titulo(v),LG_F.vend)).join("")}</select></label>
   </div>
-  <div class="g g4">${kpi("Faturado no mês",f1(tot)+" t",ant?`${tot>=ant?"+":""}${f1((tot/ant-1)*100)}% vs ${lab(ult13[iMes-1])}`:"","#0b4a9a")}${kpi("Média por dia faturado",cDias?f1(tot/cDias)+" t":"–",cDias+" dia(s) com nota","#127c80")}${kpi("Maior dia",mx?f1(mx)+" t":"–",mx?"dia "+(dia.indexOf(mx)+1):"","#f47a1f")}${kpi("Clientes atendidos",String(cli),doMes.length+" itens","#6b4bb8")}</div>
+  <div class="g lg-k5">${kpi("Faturado no mês",f1(tot)+" t",ant?`${tot>=ant?"+":""}${f1((tot/ant-1)*100)}% vs ${lab(ult13[iMes-1])}`:"","#0b4a9a")}${kpi("Média por dia faturado",cDias?f1(tot/cDias)+" t":"–",cDias+" dia(s) com nota","#127c80")}${kpi("Maior dia",mx?f1(mx)+" t":"–",mx?"dia "+(dia.indexOf(mx)+1):"","#f47a1f")}${kpi("Clientes atendidos",String(cli),doMes.length+" itens","#6b4bb8")}${kpi("BGL faturado · centro "+LG_CENTRO[LG_U],f1(bglT)+" t","descontado do pagamento da movimentação · "+lab(LG_F.mes),"#8a6d3b")}</div>
   <h2 style="margin-top:6px">Faturamento diário · ${lab(LG_F.mes)}</h2>${lgBarras(dia.map((_,i)=>String(i+1)),dia,{dest:dia.indexOf(mx)})}
   <div class="g g21" style="margin-top:14px"><div><h2>Faturamento mensal</h2><div class="sub">Últimos ${ult13.length} meses · laranja = mês selecionado</div>${lgBarras(ult13.map(lab),mens,{dest:iMes,h:170})}</div>
    <div><h2>Por vendedor</h2><div class="sub">${lab(LG_F.mes)} · top 10</div>${vend.length?hbars(vend.map(([v,t])=>[titulo(v),t])):'<div class="vazio">—</div>'}</div></div>
