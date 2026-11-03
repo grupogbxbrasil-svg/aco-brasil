@@ -883,16 +883,17 @@ async function offLoad(u,M){const k=u+":"+M;if(OFF[k]||OFF_ING[k])return;OFF_ING
 <!-- ===== Aba LOGÍSTICA da Diretoria (resumo de carteira, transferência, pré-rota e faturamento) ===== -->
 <style>
 .lg-uni{display:inline-flex;gap:6px;margin-bottom:14px}.lg-uni button{border:1px solid var(--borda);background:#fff;border-radius:999px;padding:7px 16px;font-weight:700;cursor:pointer;color:var(--marinho)}
-.lg-uni button.on{background:var(--laranja);border-color:var(--laranja);color:#fff}
-.lg-big{background:linear-gradient(135deg,#0b2a55,#0b4a9a);color:#fff;border-radius:14px;padding:20px 22px;margin-bottom:14px}
-.lg-big h2{color:#fff;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-bottom:12px}
+.lg-uni button.on{background:#eef4fb;border-color:#9db7dc;color:var(--marinho)}
+.lg-big{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:20px 22px;margin-bottom:14px;box-shadow:0 1px 2px #0b2a550a}
+.lg-big h2{color:var(--marinho);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
 .lg-sec{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.lg-c{background:#ffffff12;border:1px solid #ffffff22;border-radius:12px;padding:14px}
-.lg-c small{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;opacity:.8}
-.lg-c b{display:block;font-size:1.65rem;margin-top:4px;font-variant-numeric:tabular-nums}
-.lg-c span{font-size:.75rem;opacity:.8}
-.lg-c.dest{background:#f47a1f;border-color:#f47a1f}
-.lg-grp{margin-top:16px}.lg-grp h3{font-size:.86rem;margin:0 0 8px;color:#cfe0ff}
+.lg-c{background:#f7f9fc;border:1px solid #e3e9f1;border-radius:12px;padding:14px}
+.lg-c small{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--cinza)}
+.lg-c b{display:block;font-size:1.5rem;margin-top:4px;font-variant-numeric:tabular-nums;color:var(--marinho)}
+.lg-c span{font-size:.75rem;color:var(--cinza)}
+.lg-c.dest{background:#fdf6ee;border-color:#f3dcc2}.lg-c.dest b{color:#b8641c}
+.lg-c.wait b{color:#c3ccd8}
+.lg-grp{margin-top:16px}.lg-grp h3{font-size:.86rem;margin:0 0 8px;color:var(--marinho)}
 .lg-fil{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:12px}
 .lg-fil label{display:flex;flex-direction:column;font-size:.72rem;font-weight:700;color:var(--cinza);gap:4px;text-transform:uppercase}
 .lg-fil select{padding:7px 10px;border:1px solid var(--borda);border-radius:8px;font:inherit;min-width:140px;background:#fff}
@@ -908,10 +909,12 @@ async function offLoad(u,M){const k=u+":"+M;if(OFF[k]||OFF_ING[k])return;OFF_ING
 const LG_PUB={maraba:"2PACX-1vQQpQAcFObAnl_Wh_ENV-Pst8e_K1NNprlyzZp1b1DUVdjVp0O5xa6YJDgjmlj78iIP84lZM3XqPlcc",belem:"2PACX-1vSRpnOtygr_rGoMoMjcz5L8wymuYKQ4j-9wkmgMPVtT4OeYbRQ3SJ1O_n3JY0MihEHswx9C6NaAGgWM"};
 const LG_GID={cart:"897735840",outros:"777000666",transf:"911839959",acomp:"2104069826",prerota:"596629070",fat:"1980269840",atual:"777001004"};
 const LG_CENTRO={maraba:"9633",belem:"9684"};
-const LG_C={};let LG_U=null,LG_F={mes:"",linha:"",centro:"",vend:""};
+const LG_C={};let LG_UNI=null,LG_U=null,LG_F={mes:"",linha:"",centro:"",vend:""};
 const lgUrl=(u,g)=>"https://docs.google.com/spreadsheets/d/e/"+LG_PUB[u]+"/pub?output=csv&single=true&gid="+g;
-async function lgGet(u,k){const ch=u+":"+k;if(LG_C[ch]&&Date.now()-LG_C[ch].ts<600000)return LG_C[ch].r;
- const r=csv(await qrdGet(lgUrl(u,LG_GID[k])+"&t="+Date.now()));LG_C[ch]={ts:Date.now(),r};return r}
+const LG_P={};
+function lgGet(u,k){const ch=u+":"+k;if(LG_C[ch]&&Date.now()-LG_C[ch].ts<600000)return Promise.resolve(LG_C[ch].r);if(LG_P[ch])return LG_P[ch];
+ const lim=new Promise((_,rej)=>setTimeout(()=>rej(new Error("tempo esgotado")),k=="fat"?150000:60000));
+ return LG_P[ch]=Promise.race([qrdGet(lgUrl(u,LG_GID[k])+"&t="+Date.now()),lim]).then(t=>{const r=csv(t);LG_C[ch]={ts:Date.now(),r};return r}).finally(()=>{delete LG_P[ch]})}
 const lgT=v=>num(v);                       /* número no formato BR */
 const lgKg=v=>num(v)/1000;                 /* kg -> t */
 const lgFt=v=>f1(v)+" t";
@@ -946,16 +949,16 @@ function lgFat(R){const h=R[0]||[],I=re=>lgIdx(h,re);const cD=I(/^DT\/ Fatu|^Dat
  return R.slice(1).map(x=>{const d=lgDt(x[cD]);return d?{d,c:String(x[cC]||"").trim(),t:lgKg(x[cQ]),v:String(x[cV]||"").trim()||"Outros",l:titulo(String(x[cL]||"").trim()||"Sem linha"),cl:x[cCl]}:null}).filter(Boolean)}
 
 /* ---- gráficos simples (SVG) ---- */
-function lgBarras(lab,val,{dest=-1,cor="#0b4a9a",h=190,fmt=f1}={}){if(!val.length)return '<div class="vazio">Sem faturamento no filtro</div>';
+function lgBarras(lab,val,{dest=-1,cor="#a9c3e6",h=190,fmt=f1}={}){if(!val.length)return '<div class="vazio">Sem faturamento no filtro</div>';
  const w=Math.max(560,lab.length*26),mx=Math.max(...val,1),bw=(w-40)/val.length;
  return `<div class="lg-bar"><svg viewBox="0 0 ${w} ${h+34}" role="img">`+val.map((v,i)=>{const bh=v/mx*(h-18),x=30+i*bw,y=h-bh;
-  return `<rect x="${(x+bw*.12).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*.76).toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="${i==dest?"#f47a1f":cor}"><title>${esc(lab[i])}: ${fmt(v)} t</title></rect>`+
+  return `<rect x="${(x+bw*.12).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*.76).toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="${i==dest?"#e9a36a":cor}"><title>${esc(lab[i])}: ${fmt(v)} t</title></rect>`+
   (v>0&&bw>22?`<text x="${(x+bw/2).toFixed(1)}" y="${(y-4).toFixed(1)}" font-size="9.5" text-anchor="middle" fill="#334">${fmt(v)}</text>`:"")+
   `<text x="${(x+bw/2).toFixed(1)}" y="${h+14}" font-size="10" text-anchor="middle" fill="#667">${esc(lab[i])}</text>`}).join("")+
   `<line x1="28" y1="${h}" x2="${w-6}" y2="${h}" stroke="#d6dde6"/></svg></div>`}
 
 /* ---- tela ---- */
-function vLogistica(){const u=UNI,nm=UNIDADES[u].nome;
+function vLogistica(){if(!LG_UNI)LG_UNI=UNI;const u=LG_UNI,nm=UNIDADES[u].nome;
  setTimeout(()=>lgFill(u),0);
  return tit("Logística · DBA "+nm,"Carteira, transferências e faturamento","Resumo para a diretoria · dados das planilhas da Logística ("+nm+")")+
  `<div class="lg-uni" role="group" aria-label="Unidade">${["maraba","belem"].map(k=>`<button data-lgu="${k}" class="${k==u?"on":""}">${UNIDADES[k].nome}</button>`).join("")}</div>
@@ -963,8 +966,9 @@ function vLogistica(){const u=UNI,nm=UNIDADES[u].nome;
  <div id="lgFat" style="margin-top:14px"></div>`}
 async function lgFill(u){const top=document.getElementById("lgTopo");if(!top)return;
  const pega=k=>lgGet(u,k).catch(e=>{console.error("logistica",k,e);return null});
+ const pFat=pega("fat");const fb0=document.getElementById("lgFat");if(fb0&&!lgFatDados.length)fb0.innerHTML='<div class="box"><div class="carga"><div class="spin"></div>Lendo o faturamento…</div></div>';
  const [Rc,Ro,Ra,Rt,Rp,Rat]=await Promise.all(["cart","outros","acomp","transf","prerota","atual"].map(pega));
- if(UNI!=u||ABA!="logistica")return;
+ if(LG_UNI!=u||ABA!="logistica")return;
  const c=Rc?lgCarteira(Rc):null,o=Ro?lgOutros(Ro):null,a=Ra?lgAcomp(Ra):null,t=Rt?lgTransf(Rt,u):null,p=Rp?lgPre(Rp):null;
  const atu=(Rat||[]).filter(x=>/carteira|zv74|transfer|faturamento/i.test(x[0]||"")).map(x=>`${esc(x[0])}: ${esc(x[3]||"–")}`).join(" · ");
  const sem='<span class="lg-tag lg-no">base indisponível</span>';
@@ -989,12 +993,13 @@ async function lgFill(u){const top=document.getElementById("lgTopo");if(!top)ret
  <div class="box"><h2>Pré-rota · resumo por romaneio</h2><div class="sub">Ordens CIF montadas por rota · a carga sai com 70% da capacidade útil do veículo</div>
   ${p&&p.rot.length?`<div class="rol"><table><thead><tr><th>Rota</th><th class="n">Ordens</th><th class="n">Peso (t)</th><th class="n">Faturável (t)</th><th class="n">Bloqueado (t)</th><th>Veículo</th><th class="n">Ocupação</th><th class="n">Falta p/ sair (t)</th><th>Status</th></tr></thead><tbody>${p.rot.map(r=>`<tr><td><b>${esc(titulo(r.rota))}</b></td><td class="n">${r.ordens}</td><td class="n">${f1(r.peso)}</td><td class="n">${f1(r.fat)}</td><td class="n">${f1(r.bloq)}</td><td>${esc(r.veic||"–")}</td><td class="n">${esc(r.ocup||"–")}</td><td class="n">${r.falta!=null?f1(r.falta):"–"}</td><td><span class="lg-tag ${/FECHA|OK|SAI/i.test(r.st||"")&&!/ABAIXO/i.test(r.st||"")?"lg-ok":"lg-no"}">${esc(r.st||"–")}</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="vazio">Sem ordens CIF em pré-rota</div>'}
  </div>${atu?`<div class="lg-st" style="margin-top:10px">Última atualização das bases · ${atu}</div>`:""}`;
- const fb=document.getElementById("lgFat");if(fb)fb.innerHTML='<div class="box"><div class="carga"><div class="spin"></div>Lendo o faturamento…</div></div>';
- const Rf=await pega("fat");if(UNI!=u||ABA!="logistica")return;
- LG_U=u;lgFatDados=Rf?lgFat(Rf):[];lgFatRender()}
-let lgFatDados=[];
+ const Rf=await pFat;if(LG_UNI!=u||ABA!="logistica")return;
+ LG_U=u;lgFatDados=Rf?lgFat(Rf):[];lgFatRender();
+ /* deixa a outra unidade pronta em segundo plano, para a troca ser rápida */
+ const o2=u=="maraba"?"belem":"maraba";setTimeout(()=>["cart","outros","acomp","transf","prerota","atual","fat"].forEach(k=>lgGet(o2,k).catch(()=>{})),1500)}
+let lgFatDados=[],LG_HDR=null;
 function lgFatRender(){const fb=document.getElementById("lgFat");if(!fb)return;const A=lgFatDados;
- if(!A.length){fb.innerHTML='<div class="box vazio">Não foi possível ler a aba Faturado da Logística.</div>';return}
+ if(!A.length){fb.innerHTML='<div class="box vazio">Não foi possível ler a aba Faturado da Logística agora. Clique em Atualizar no topo para tentar de novo.</div>';return}
  const mk=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
  const meses=[...new Set(A.map(x=>mk(x.d)))].sort();if(!LG_F.mes||!meses.includes(LG_F.mes))LG_F.mes=meses[meses.length-1];
  const opt=(v,lab,sel)=>`<option value="${esc(v)}"${v==sel?" selected":""}>${esc(lab)}</option>`;
@@ -1021,15 +1026,15 @@ function lgFatRender(){const fb=document.getElementById("lgFat");if(!fb)return;c
    <div><h2>Por vendedor</h2><div class="sub">${lab(LG_F.mes)} · top 10</div>${vend.length?hbars(vend.map(([v,t])=>[titulo(v),t])):'<div class="vazio">—</div>'}</div></div>
  </div>`}
 /* eventos: botões de unidade e filtros do faturamento */
-document.addEventListener("click",e=>{const b=e.target.closest("[data-lgu]");if(b){setUni(b.dataset.lgu);return}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-lgu]");if(b){if(b.dataset.lgu!=LG_UNI){LG_UNI=b.dataset.lgu;render()}return}
  /* botão "Logística" do cabeçalho: abre esta aba em vez de sair para o portal da Logística */
  const a=e.target.closest("a.btn");if(a&&/tipo:\s*(&quot;|")log/.test(a.getAttribute("onclick")||"")){e.preventDefault();e.stopPropagation();ABA="logistica";try{localStorage.setItem("dir_aba",ABA)}catch(_){}render();scrollTo({top:0})}},true);
 document.addEventListener("change",e=>{const s=e.target.closest("[data-lgf]");if(!s)return;LG_F[s.dataset.lgf]=s.value;lgFatRender()});
 /* registra a aba e desvia o render quando ela estiver aberta */
 (function(){function poe(){try{if(!ABAS.some(a=>a[0]=="logistica")){ABAS.push(["logistica","Logística"]);abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("")}
   [...abas.children].forEach(b=>b.classList.toggle("on",b.dataset.k==ABA))}catch(_){}}
- const _rL=render;render=function(){if(ABA=="logistica"){poe();const vis=v=>["fMes","fDupla"].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display=v});vis("none");
-   if(LG_U&&LG_U!=UNI)lgFatDados=[];app.innerHTML=vLogistica();return}
+ const _rL=render;render=function(){if(ABA=="logistica"){if(LG_UNI&&LG_HDR!=UNI){LG_UNI=UNI}LG_HDR=UNI;poe();const vis=v=>["fMes","fDupla"].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display=v});vis("none");
+   if(LG_U&&LG_U!=LG_UNI)lgFatDados=[];app.innerHTML=vLogistica();return}
   ["fMes","fDupla"].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display=""});return _rL.apply(this,arguments)};
  poe();addEventListener("load",poe);setTimeout(poe,1500);setTimeout(poe,5000);try{if(ABA=="logistica")render()}catch(_){}})();
 </script>
