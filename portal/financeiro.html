@@ -170,9 +170,9 @@ nav.abas{display:block;margin-left:0}.abas-in{justify-content:flex-start!importa
 /* Créditos dos clientes — ALPE, AMCARD e Seguro Arcelor, uma base por unidade (Marabá e Belém têm planilhas separadas).
    O Financeiro (Filipe) envia as planilhas; vendedores e duplas veem só a própria carteira. Dados: backend/creditos.web.js no Wix. */
 const TIPOS=[{k:"alpe",n:"ALPE",c:"#0b4a9a"},{k:"amcard",n:"AMCARD",c:"#1f9d55"},{k:"seguro",n:"Seguro Arcelor",c:"#f26b1d"},{k:"dba",n:"Crédito DBA (risco)",c:"#7a47aa",off:1}];
-const ABAS=[["resumo","Resumo"],["alpe","ALPE"],["amcard","AMCARD"],["seguro","Seguro Arcelor"],["dba","Crédito DBA (risco)"]];
+const ABAS=[["resumo","Resumo"],["ranking","Ranking"],["alpe","ALPE"],["amcard","AMCARD"],["seguro","Seguro Arcelor"],["dba","Crédito DBA (risco)"]];
 const UNOME={mab:"Marabá",bel:"Belém",out:"Outras praças"};const UNIS=["mab","bel","out"];let PR=null;
-let ABA="resumo",UNI="mab",CTX={modo:"vendedor",nome:""},DADOS={metas:{},bases:{}},ENV={},FIL="",Q="",ROWS=[];
+let DONOS={},ABA="resumo",UNI="mab",CTX={modo:"vendedor",nome:""},DADOS={metas:{},bases:{}},ENV={},FIL="",Q="",ROWS=[];
 const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const so=s=>String(s??"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim();
 const dig=s=>String(s??"").replace(/\D/g,"");
@@ -278,9 +278,29 @@ function tabela(){
   const el=document.getElementById("tb");if(!el)return;
   el.innerHTML=`<div class="rol"><table><thead><tr>${th}</tr></thead><tbody>${V.map(tr).join("")||`<tr><td colspan="12" class="vazio">${juntar().length?"Nenhum cliente com esse filtro.":"Nenhum crédito publicado para "+UNOME[UNI]+" ainda."}</td></tr>`}</tbody></table></div>
   <div class="nota">${ROWS.length>MAX?`Mostrando ${MAX} de ${ROWS.length.toLocaleString("pt-BR")} clientes — refine a busca (a planilha baixada traz todos).`:ROWS.length.toLocaleString("pt-BR")+" clientes."}</div>`;altura()}
+function vRanking(){
+  const C=juntar(),G={};
+  C.forEach(c=>{const v=DONOS[c.cnpj]||"Sem vendedor (fora da Base de Clientes)";const g=G[v]=G[v]||{v,n:0,al:0,ad:0,ml:0,md:0,sl:0,se:0,atr:0,na:0};
+    g.n++;g.al+=c.alim;g.ad+=c.adisp;if(c.am){g.ml+=c.am.lim||0;g.md+=c.am.disp||0}if(c.seg){g.sl+=c.seg.lim||0;g.se+=c.seg.exp||0;if((c.seg.atr||0)>0){g.atr+=c.seg.atr;g.na++}}});
+  const RK=Object.values(G).map(g=>Object.assign(g,{lim:g.al+g.ml+g.sl,uso:(g.al-g.ad)+(g.ml-g.md)+g.se})).sort((a,b)=>(a.v.startsWith("Sem")-b.v.startsWith("Sem"))||b.lim-a.lim);
+  const T=RK.reduce((t,g)=>{["n","al","ad","ml","md","sl","se","atr","na","lim","uso"].forEach(k=>t[k]+=g[k]);return t},{n:0,al:0,ad:0,ml:0,md:0,sl:0,se:0,atr:0,na:0,lim:0,uso:0});
+  const pu=(u,l)=>l?P(u/l*100):"–",mx=Math.max(1,...RK.map(g=>g.lim));
+  const sA=base("alpe"),sM=base("amcard"),sS=base("seguro");
+  const SG=[["ALPE",sum(sA,x=>x.lim),sum(sA,x=>x.lim)-sum(sA,x=>x.disp),sA.length,"#0b4a9a","limite atribuído − disponível"],["AMCARD",sum(sM,x=>x.lim),sum(sM,x=>x.tom),sM.length,"#1f9d55","tomado"],["Seguro Arcelor",sum(sS,x=>x.lim),sum(sS,x=>x.exp),sS.length,"#f26b1d","exposição"]].sort((a,b)=>b[1]-a[1]);
+  const mS=Math.max(1,...SG.map(x=>x[1]));
+  let h=`<div class="box" style="margin-bottom:14px"><h2>Ranking por seguradora · ${UNOME[UNI]}</h2><div class="sub">Limite total concedido, quanto já está em uso e clientes com crédito em cada uma</div><div class="rol"><table><thead><tr><th>#</th><th>Seguradora</th><th class="n">Clientes</th><th class="n">Limite</th><th class="n">Em uso</th><th class="n">Disponível</th><th class="n">% uso</th><th style="width:30%"></th></tr></thead><tbody>
+   ${SG.map((x,i)=>`<tr><td>${i+1}</td><td><b>${x[0]}</b><span class="s">em uso = ${x[5]}</span></td><td class="n">${x[3].toLocaleString("pt-BR")}</td><td class="n"><b>${R(x[1])}</b></td><td class="n">${R(x[2])}</td><td class="n">${R(x[1]-x[2])}</td><td class="n">${pu(x[2],x[1])}</td><td><div class="barra"><i style="width:${x[1]/mS*100}%;background:${x[4]}"></i></div></td></tr>`).join("")}</tbody></table></div></div>`;
+  h+=`<div class="box"><h2>Ranking de créditos por vendedor · ${UNOME[UNI]}</h2><div class="sub">Clientes da carteira de cada vendedor/dupla (Proprietário da conta na Base de Clientes) · ordenado pelo limite total</div><div class="rol"><table><thead>
+   <tr><th rowspan="2">#</th><th rowspan="2">Vendedor / dupla</th><th rowspan="2" class="n">Clientes</th><th class="gh" colspan="2">ALPE</th><th class="gh" colspan="2">AMCARD</th><th class="gh" colspan="2">Seguro Arcelor</th><th class="gh" colspan="3">Total</th><th class="gh" colspan="2">Em atraso</th></tr>
+   <tr><th class="n">Limite</th><th class="n">Disponível</th><th class="n">Limite</th><th class="n">Disponível</th><th class="n">Limite</th><th class="n">Exposição</th><th class="n">Limite</th><th class="n">% uso</th><th style="min-width:90px"></th><th class="n">Valor</th><th class="n">Clientes</th></tr></thead><tbody>
+   ${RK.map((g,i)=>`<tr ${g.v.startsWith("Sem")?'style="color:#667"':""}><td>${g.v.startsWith("Sem")?"":i+1}</td><td><b>${esc(g.v)}</b></td><td class="n">${g.n.toLocaleString("pt-BR")}</td><td class="n l">${R(g.al)}</td><td class="n">${R(g.ad)}</td><td class="n l">${R(g.ml)}</td><td class="n">${R(g.md)}</td><td class="n l">${R(g.sl)}</td><td class="n">${R(g.se)}</td><td class="n l"><b>${R(g.lim)}</b></td><td class="n">${pu(g.uso,g.lim)}</td><td><div class="barra"><i style="width:${g.lim/mx*100}%"></i></div></td><td class="n l">${g.atr?`<b style="color:var(--bad)">${R(g.atr)}</b>`:"–"}</td><td class="n">${g.na||"–"}</td></tr>`).join("")||`<tr><td colspan="14" class="vazio">Nenhum crédito publicado para ${UNOME[UNI]} ainda.</td></tr>`}
+   <tr class="tot"><td></td><td>Total</td><td class="n">${T.n.toLocaleString("pt-BR")}</td><td class="n">${R(T.al)}</td><td class="n">${R(T.ad)}</td><td class="n">${R(T.ml)}</td><td class="n">${R(T.md)}</td><td class="n">${R(T.sl)}</td><td class="n">${R(T.se)}</td><td class="n">${R(T.lim)}</td><td class="n">${pu(T.uso,T.lim)}</td><td></td><td class="n">${R(T.atr)}</td><td class="n">${T.na||"–"}</td></tr></tbody></table></div>
+   <div class="nota">% uso = (ALPE usado + AMCARD tomado + exposição do Seguro) ÷ limite total.</div></div>`;
+  return h}
 function render(){
   document.querySelectorAll("#abas button").forEach(b=>b.classList.toggle("on",b.dataset.k==ABA));
   const ed=CTX.modo=="editor";
+  if(ABA=="ranking"){app.innerHTML=tit("Financeiro Comercial · "+UNOME[UNI],"Ranking de créditos","Por seguradora e por vendedor/dupla")+vRanking();altura();return}
   if(ABA=="dba"){app.innerHTML=tit("Financeiro Comercial · DBA "+UNOME[UNI],"Crédito DBA (risco)","")+'<div class="box vazio">Em breve: o crédito de risco DBA entra aqui quando a planilha estiver definida.</div>';altura();return}
   const sA=base("alpe"),sM=base("amcard"),sS=base("seguro"),natr=sS.filter(x=>(x.atr||0)>0);
   const nome=ABA=="resumo"?"Créditos dos Clientes":TIPOS.find(t=>t.k==ABA).n;
@@ -296,7 +316,7 @@ function baixar(){const H=["Cliente","CNPJ/CPF","Cidade","UF","ALPE limite","ALP
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([H,...L]),"Créditos");XLSX.writeFile(wb,"creditos-"+UNI+".xlsx")}
 async function carregar(){
   stEl.innerHTML='<span class="dot"></span>atualizando…';
-  try{const r=await rpc("lerCreditos");if(!r.ok)throw new Error(r.erro);CTX.modo=r.modo;DADOS={metas:r.metas||{},bases:r.bases||{}};
+  try{const r=await rpc("lerCreditos");if(!r.ok)throw new Error(r.erro);CTX.modo=r.modo;DONOS=r.donos||{};DADOS={metas:r.metas||{},bases:r.bases||{}};
     if(r.uni){UNI=r.uni;setUni(UNI);document.querySelector(".uni").style.display="none"}
     LIDO=new Date();status();render()}
   catch(e){stEl.textContent="erro ao ler os créditos";app.innerHTML=`<div class="box vazio">${esc(e.message)}</div>`;altura()}}
