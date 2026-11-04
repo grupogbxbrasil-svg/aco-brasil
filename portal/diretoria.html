@@ -245,7 +245,7 @@ async function carregar(manual){
     D=DN.length?DN.concat(D26.filter(x=>x.bgl&&!mBglNovo.has(x.m))):D26;
     /* Totais oficiais por mês (Executive Review — Reported e Organic) */
     const totLinha=t=>{const o={};if(!t)return o;const L=csv(t);const h=L.find(r=>r.some(c=>/^jan\.?-26$/i.test((c||"").trim())));const ti=L.find(r=>/^TOTAL GERAL/i.test((r[0]||"").trim()));if(!h||!ti)return o;h.forEach((c,i)=>{const k=MES.indexOf((c||"").trim().slice(0,3).toLowerCase());if(k>=0&&/26$/.test((c||"").trim())){const v=num(ti[i]);if(v)o[k+1]=v}});return o};
-    REPm=totLinha(t6);ORGm=totLinha(t7);
+    REPm=totLinha(t6);ORGm=totLinha(t7);REPtxt=t6||"";ORGtxt=t7||"";
     /* Unidade sem duplas (Belém): cada vendedor vira a sua própria "dupla" */
     if(UNIDADES[UNI].semDuplas)D.forEach(x=>x.dupla=x.vend||"Outros");
     /* Belém: a coluna Dupla (aux) traz o vendedor; junta as duplas CLT (Fabio & Marcelle, Alessandra & Jessica) */
@@ -495,7 +495,9 @@ function vMix(X){
   if(!temBGL)MXB="todos";
   const vends=Object.entries(grp(base.filter(x=>x.m<=M&&x.vend),"vend")).map(([v,a])=>[v,sum(a,x=>x.t)]).filter(x=>x[1]>=1).sort((a,b)=>a[0].localeCompare(b[0])).map(x=>x[0]);
   if(MXV&&!vends.includes(MXV))MXV="";
-  const b0=base.filter(x=>x.m<=M&&(!MXV||x.vend==MXV)&&(MXB=="todos"||(MXB=="com"?x.bgl:!x.bgl)));
+  if(MXD&&!base.some(x=>x.dupla==MXD))MXD="";
+  const dups=Object.entries(grp(base.filter(x=>x.m<=M),"dupla")).map(([d,a])=>[d,sum(a,x=>x.t)]).filter(x=>x[1]>=1&&x[0]!="Outros").sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+  const b0=base.filter(x=>x.m<=M&&(!MXD||x.dupla==MXD)&&(!MXV||x.vend==MXV)&&(MXB=="todos"||(MXB=="com"?x.bgl:!x.bgl)));
   const sets=[...new Set(b0.map(x=>x.setor).concat(Object.values(BIm).flatMap(o=>(o.sd||[]).map(x=>x.s))).map(x=>String(x||"").toUpperCase().trim()))].filter(Boolean).sort();
   if(MXS&&!sets.includes(MXS))MXS="";
   const bs=MXS?b0.filter(x=>String(x.setor||"").toUpperCase().trim()==MXS):b0;
@@ -527,23 +529,121 @@ function vMix(X){
   const st='style="font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--borda);margin-right:8px"';
   const filtros=`<div class="box" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center"><b>Filtros</b>
    <label>Setor <select ${st} onchange="MXS=this.value;render()"><option value="">Todos os setores</option>${sets.map(s=>`<option value="${esc(s)}" ${s==MXS?"selected":""}>${esc(titulo(s))}</option>`).join("")}</select></label>
+   ${X.DU?"":`<label>${UNI=="belem"?"Dupla / vendedor":"Dupla"} <select ${st} onchange="MXD=this.value;MXV='';render()"><option value="">Filial inteira</option>${dups.map(d=>`<option value="${esc(d)}" ${d==MXD?"selected":""}>${esc(nomeD(d))}</option>`).join("")}</select></label>`}
    <label>Vendedor <select ${st} onchange="MXV=this.value;render()"><option value="">Todos os vendedores</option>${vends.map(v=>`<option value="${esc(v)}" ${v==MXV?"selected":""}>${esc(v)}</option>`).join("")}</select></label>
    ${temBGL?`<label>BGL <select ${st} onchange="MXB=this.value;render()"><option value="todos" ${MXB=="todos"?"selected":""}>Com e sem BGL</option><option value="sem" ${MXB=="sem"?"selected":""}>Sem BGL</option><option value="com" ${MXB=="com"?"selected":""}>Só BGL (Galvolume)</option></select></label>`:""}</div>`;
   const rotB=MXB=="sem"?" · sem BGL":MXB=="com"?" · só BGL":"";
   const mesTh=ms.map(m=>`<th class="n">${MES[m-1]}</th>`).join("");
   const pf=typeof __PF=="function"?__PF():1;
   const tag=(c,p)=>{c=c*pf;return `<span class="tag ${!isFinite(pct(c,p))?"tg-c":pct(c,p)>=0?"tg-v":"tg-r"}">${fp(pct(c,p))}</span>`};
-  return tit(`Setores & rotas · Jan–${MES[M-1]}/26`,"Onde está o volume no ano"+(MXV?" · "+MXV:"")+(MXS?" · "+titulo(MXS):"")+rotB,"")+filtros+
-  `<div class="g g4">${kpi("Volume no ano",f0(totAno)+" t",`média de ${f1(totAno/Math.max(1,M))} t/mês`,"var(--laranja)")}${kpi(MXS?"Setor":"Setor líder no ano",titulo(MXS||DISP[tabS[0]?.s]||tabS[0]?.s||"–"),f0(tabS[0]?.t||0)+" t no ano")}${kpi("Rotas prioritárias",f1(totNF?(totNF-fora)/totNF*100:0)+"%",`Rota Fora DBA: ${f0(fora)} t no ano`,"#2e7d57")}${kpi("Cidades atendidas",new Set(bs.map(x=>x.cid)).size,"no ano","#7a47aa")}</div>
-  <div class="box" style="margin-bottom:14px"><h2>Setores — ano inteiro</h2><div class="sub">Volume (t) por mês · ${MXV?"notas fiscais de "+esc(MXV):X.DU?"Power BI da dupla":"total oficial do BI"}${MXB!="todos"?" · BGL = Galvolume faturado pela VEGA":""}</div><div class="rol"><table><thead><tr><th>Setor</th>${mesTh}<th class="n">Ano</th><th class="n">% ano</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
+  return tit(`Setores & rotas · Jan–${MES[M-1]}/26`,"Análise comercial: duplas, clientes, rotas e setores"+(MXV?" · "+MXV:"")+(MXS?" · "+titulo(MXS):"")+rotB,"")+filtros+
+  anaComercial(bs,X,ms)+
+  `<div class="box" style="margin-bottom:14px"><h2>Setores — ano inteiro</h2><div class="sub">Volume (t) por mês · ${MXV?"notas fiscais de "+esc(MXV):X.DU?"Power BI da dupla":"total oficial do BI"}${MXB!="todos"?" · BGL = Galvolume faturado pela VEGA":""}</div><div class="rol"><table><thead><tr><th>Setor</th>${mesTh}<th class="n">Ano</th><th class="n">% ano</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
    ${tabS.map(r=>`<tr><td><b>${esc(titulo(DISP[r.s]||r.s))}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${f1(totAno?r.t/totAno*100:0)}%</td><td class="n">${tag(r.v[M-1],r.v[M-2])}</td><td>${spark(r.v)}</td></tr>`).join("")||`<tr><td colspan="${M+5}" class="vazio">Sem volume com esses filtros</td></tr>`}
    <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(totAno)}</td><td class="n">100%</td><td class="n">${tag(totV[M-1],totV[M-2])}</td><td></td></tr></tbody></table></div>${X.parcial?`<div class="nota">${MES[M-1]} ainda parcial (${X.duD} de ${X.duT} dias úteis).</div>`:""}</div>
-  <div class="box" style="margin-bottom:14px"><h2>Rotas — ano inteiro</h2><div class="sub">Volume (t) por mês pelas notas fiscais, clientes no ano e tendência · o total fecha com o BI</div><div class="rol"><table><thead><tr><th>Rota</th>${mesTh}<th class="n">Ano</th><th class="n">Clientes</th><th class="n">${pf!=1?"Var. (proj.)":"Var. mês"}</th><th>Tendência</th></tr></thead><tbody>
-   ${rotas.map(r=>`<tr ${r.aj?'style="color:#667;font-style:italic"':""}><td><b>${esc(r.r)}</b></td>${r.v.map((x,i)=>`<td class="n" ${i==r.v.length-1?'style="font-weight:800;color:var(--marinho)"':""}>${f1(x)}</td>`).join("")}<td class="n"><b>${f0(r.t)}</b></td><td class="n">${r.aj?"–":r.cl}</td><td class="n">${r.aj?"":tag(r.v[M-1],r.v[M-2])}</td><td>${r.aj?"":spark(r.v)}</td></tr>`).join("")}
-   <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(totAno)}</td><td class="n">${new Set(bs.map(x=>x.cli)).size}</td><td></td><td></td></tr></tbody></table></div></div>
   <div class="box" style="margin-bottom:14px"><h2>Maiores clientes ${MXS?"· "+esc(titulo(MXS)):"por setor"}</h2><div class="sub">Volume no ano (t)${MXS?" · top 15 do setor":" · top 5 de cada setor (use o filtro de setor para ver mais)"}</div>
    ${MXS?topCli(bs,15):tabS.map(r=>`<h3 style="margin:14px 0 6px;color:var(--marinho)">${esc(titulo(DISP[r.s]||r.s))} <span style="font-weight:400;color:#667">· ${f0(r.t)} t</span></h3>${topCli(bs.filter(x=>U(x.setor)==r.s),5)}`).join("")}</div>
   <div class="g g2"><div class="box"><h2>Top famílias de produto</h2><div class="sub">t no ano</div>${hbars(fam)}</div><div class="box"><h2>Top cidades</h2><div class="sub">t no ano</div>${hbars(cid)}</div></div>`;
+}
+
+/* ---------- ANÁLISE COMERCIAL (Executive Review) — Marabá e Belém, calculada das notas ---------- */
+/* Comparativo 2025: lido das abas Executive Review (Reported = com BGL, Organic = sem BGL), quadro de rotas "Total 25" */
+let REPtxt="",ORGtxt="",MXD="";
+const ROT_INI=5; /* roteirização começou em maio/2026 */
+const rkey=s=>String(s||"").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/^ROTA\s+/,"").replace(/\s+/g," ").trim();
+const ehFora=r=>/FORA/.test(rkey(r));
+function ano25(txt){
+  if(!txt)return null;const L=csv(txt);const hi=L.findIndex(r=>/^rota$/i.test((r[0]||"").trim())&&r.some(c=>/total 25/i.test(c||"")));if(hi<0)return null;
+  const H=L[hi],mc={};H.forEach((c,i)=>{const s=(c||"").trim().toLowerCase();const k=MES.indexOf(s.slice(0,3));if(k>=0&&!/26/.test(s))mc[i]=k+1});
+  const rot={},tot={};for(let i=hi+1;i<L.length;i++){const r=L[i],n=(r[0]||"").trim();if(!n)break;const v={};Object.entries(mc).forEach(([ci,m])=>{v[m]=num(r[ci])});
+    if(/^TOTAL GERAL/i.test(n)){Object.assign(tot,v);break}rot[rkey(n)]=v}
+  return {rot,tot,meses:Object.values(mc)}}
+function anaComercial(bs,X,ms){
+  const {M}=X;const BEL=UNI=="belem";const porMes=a=>ms.map(m=>sum(a.filter(x=>x.m==m),x=>x.t));
+  const totV=porMes(bs),tot=sum(totV,x=>x);if(!tot)return "";
+  const mTh=ms.map(m=>`<th class="n">${MES[m-1]}</th>`).join("");
+  const td=(v,i,last)=>`<td class="n" ${last?'style="font-weight:800;color:var(--marinho)"':""}>${v>0.05||v<-0.05?f1(v):"–"}</td>`;
+  const linha=(n,v,extra,cls)=>`<tr ${cls||""}><td><b>${n}</b></td>${v.map((x,i)=>td(x,i,i==v.length-1)).join("")}${extra}</tr>`;
+  const tg=v=>`<span class="tag ${!isFinite(v)?"tg-c":v>=0?"tg-v":"tg-r"}">${fp(v)}</span>`;
+  const antes=ms.filter(m=>m<ROT_INI),depois=ms.filter(m=>m>=ROT_INI);const med=(v,lst)=>lst.length?sum(lst,m=>v[ms.indexOf(m)])/lst.length:0;
+  const rotOk=antes.length&&depois.length;
+  const nomeQ=MXD?"vendedores da dupla "+nomeD(MXD):BEL?"vendedores e duplas":"duplas";
+  /* Q1 — duplas (ou vendedores dentro da dupla) */
+  const chave=MXD?"vend":"dupla";
+  const Q1=Object.entries(grp(bs,chave)).map(([d,a])=>{const v=porMes(a);return{d:d||"Outros",v,t:sum(v,x=>x),cl:new Set(a.map(x=>x.cli)).size}}).filter(r=>r.t>0.05).sort((a,b)=>(a.d=="Outros")-(b.d=="Outros")||b.t-a.t);
+  const outros=Q1.find(r=>r.d=="Outros");
+  /* Q2 — clientes ativos e cobertura */
+  const atv=ms.map(m=>new Set(bs.filter(x=>x.m==m).map(x=>x.cli)).size);
+  const ref=ULT||new Date();const CL=clientes(bs);const dias=c=>c.ult?Math.floor((ref-c.ult)/864e5):999;
+  const cob={a:0,r:0,s90:0,s180:0};CL.forEach(c=>{const d=dias(c);if(d<=90){const prev=Object.keys(c.ms).map(Number).filter(m=>m<M-2);const gap=[M-3,M-4,M-5].filter(m=>m>0).every(m=>!c.ms[m]);if(prev.length&&gap&&(c.ms[M]||c.ms[M-1]))cob.r++;else cob.a++}else if(d<=180)cob.s90++;else cob.s180++});
+  const cobT=cob.a+cob.r+cob.s90+cob.s180;
+  /* Q3 — rotas */
+  const R=Object.entries(grp(bs,x=>rkey(x.rota)||"SEM ROTA")).map(([r,a])=>{const v=porMes(a);const t=sum(v,x=>x);return{r,nome:titulo(r),v,t,cl:new Set(a.map(x=>x.cli)).size,fora:ehFora(r),an:med(v,antes),dp:med(v,depois)}}).filter(r=>r.t>0.05).sort((a,b)=>b.t-a.t);
+  const pri=R.filter(r=>!r.fora&&r.r!="SEM ROTA"),fora=R.filter(r=>r.fora);
+  const sv=a=>ms.map((_,i)=>sum(a,r=>r.v[i]));const priV=sv(pri),foraV=sv(fora);
+  const partA=r=>{const ta=med(totV,antes),td_=med(totV,depois);return ta&&td_?(r.dp/td_-r.an/ta)*100:NaN};
+  const pp=v=>isFinite(v)?(v>0?"+":"")+v.toLocaleString("pt-BR",{maximumFractionDigits:1}):"–";
+  /* Q5 — comparativo 2025 (só filial inteira, sem filtros de dupla/vendedor/setor) */
+  const A25=!MXD&&!MXV&&!MXS&&MXB!="com"?ano25(MXB=="sem"?ORGtxt:REPtxt):null;
+  const m25=A25?ms.filter(m=>A25.meses.includes(m)):[];
+  /* Q6 — BGL */
+  const bgl=bs.filter(x=>x.bgl),temB=bgl.length>0;
+  const cliB=temB?Object.entries(grp(bgl,"cli")).map(([c,a])=>{const tb=sum(a,x=>x.t),tt=sum(bs.filter(x=>x.cli==c),x=>x.t);return{n:titulo(a[0].nome||c),rota:titulo(rkey(a[0].rota)),tb,tt}}).sort((a,b)=>b.tb-a.tb):[];
+  const semB=new Set(bgl.map(x=>x.cli));
+  const top20=Object.entries(grp(bs.filter(x=>!semB.has(x.cli)),"cli")).map(([c,a])=>{const v=porMes(a);return{n:titulo(a[0].nome||c),rota:titulo(rkey(a[0].rota)),v,t:sum(v,x=>x)}}).sort((a,b)=>b.t-a.t).slice(0,20);
+  /* Q7 — Rota Fora por cidade/cliente */
+  const fC=Object.entries(grp(bs.filter(x=>ehFora(x.rota)),"cli")).map(([c,a])=>{const v=porMes(a);return{n:titulo(a[0].nome||c),cid:a[0].cid,v,t:sum(v,x=>x)}}).sort((a,b)=>b.t-a.t);
+  const fCid=Object.entries(grp(bs.filter(x=>ehFora(x.rota)),"cid")).map(([c,a])=>[c||"(sem cidade)",sum(a,x=>x.t),new Set(a.map(x=>x.cli)).size+" cli."]).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  /* ---- síntese automática ---- */
+  const mB=ms[totV.indexOf(Math.max(...totV))],ult=totV[totV.length-1],pen=totV.length>1?totV[totV.length-2]:0;
+  const pos=[],att=[];
+  if(rotOk){const a=med(priV,antes),d=med(priV,depois);(d>=a?pos:att).push(`Rotas prioritárias: média de ${f1(a)} t/mês antes da roteirização (jan–abr) e ${f1(d)} t/mês depois (mai–${MES[M-1]}), ${fp(pct(d,a))}.`)}
+  pos.push(`Melhor mês do ano: ${MES[mB-1]}/26 com ${f1(Math.max(...totV))} t.`);
+  if(atv.length>1)(atv[atv.length-1]>=atv[0]?pos:att).push(`Clientes ativos no mês: ${atv[0]} em ${MES[ms[0]-1]} e ${atv[atv.length-1]} em ${MES[M-1]} (${fp(pct(atv[atv.length-1],atv[0]))}).`);
+  if(outros&&!MXD){const o0=outros.v[0],o1=outros.v[outros.v.length-1];if(o0>o1)pos.push(`Resíduo "Outros" (sem dupla) caiu de ${f1(o0)} t em ${MES[ms[0]-1]} para ${f1(o1)} t em ${MES[M-1]}.`);else if(o1>0.1*ult)att.push(`"Outros" (sem dupla) ainda soma ${f1(o1)} t em ${MES[M-1]}, ${f1(o1/ult*100)}% do mês: vale amarrar essas contas a uma dupla.`)}
+  const sobe=pri.filter(r=>r.an>1&&r.dp>r.an*1.25).sort((a,b)=>(b.dp/b.an)-(a.dp/a.an)).slice(0,3),cai=pri.filter(r=>r.an>5&&r.dp<r.an*0.85).sort((a,b)=>(a.dp/a.an)-(b.dp/b.an)).slice(0,3);
+  if(rotOk&&sobe.length)pos.push(`Rotas que mais aceleraram após mai/26: ${sobe.map(r=>`${r.nome} (${fp(pct(r.dp,r.an))})`).join(", ")}.`);
+  if(rotOk&&cai.length)att.push(`Rotas prioritárias em queda na média pós-roteirização: ${cai.map(r=>`${r.nome} (${fp(pct(r.dp,r.an))})`).join(", ")}.`);
+  const fT=sum(foraV,x=>x);if(fT)att.push(`Rota Fora (oportunista) responde por ${f1(fT/tot*100)}% do volume no ano (${f0(fT)} t): manter como plus, fora da meta.`);
+  if(pen&&!X.parcial&&ult<pen*0.9)att.push(`${MES[M-1]} fechou ${fp(pct(ult,pen))} contra ${MES[M-2]}.`);
+  if(X.parcial)att.push(`${MES[M-1]} ainda está parcial (${X.duD} de ${X.duT} dias úteis): compare pelo ritmo, não pelo total.`);
+  if(m25.length){const t25=sum(m25,m=>A25.tot[m]||0),t26=sum(m25,m=>totV[ms.indexOf(m)]);(t26>=t25?pos:att).push(`Comparativo ${MES[m25[0]-1]}–${MES[m25[m25.length-1]-1]}: ${f0(t25)} t em 2025 e ${f0(t26)} t em 2026 (${fp(pct(t26,t25))}).`)}
+  /* ---- HTML ---- */
+  const cab=(n,t,s)=>`<h2>${n} &nbsp;${t}</h2><div class="sub">${s}</div>`;
+  let h=`<div class="tit" style="margin-top:8px"><div class="sup">Análise comercial · DBA ${UNIDADES[UNI].nome}${MXD?" · "+esc(nomeD(MXD)):""}</div><h1>${MXB=="sem"?"Organic — sem BGL":MXB=="com"?"Só BGL":"Reported — com BGL (total da filial)"}</h1><p>Toneladas faturadas (notas fiscais) jan–${MES[M-1]}/26. ${MXB=="todos"&&temB?"Use o filtro BGL acima para ver o orgânico (sem a conta GV484).":""}</p></div>`;
+  h+=`<div class="g g4">${kpi("Volume no ano",f0(tot)+" t",`média de ${f1(tot/ms.length)} t/mês`,"var(--laranja)",totV)}${kpi("Rotas prioritárias",f1(tot?sum(priV,x=>x)/tot*100:0)+"%",`Rota Fora: ${f0(fT)} t`,"#1f9d55",priV)}${kpi("Clientes ativos no mês",atv[atv.length-1]||0,`${atv[0]} em ${MES[ms[0]-1]}`,"#0b4a9a",atv)}${kpi("Pós-roteirização",rotOk?fp(pct(med(totV,depois),med(totV,antes))):"–",rotOk?`${f1(med(totV,antes))} → ${f1(med(totV,depois))} t/mês`:"sem base","#7a47aa")}</div>`;
+  h+=`<div class="box" style="margin-bottom:14px">${cab("①",MXD?"Vendedores da dupla":"Evolução das "+(BEL?"duplas e vendedores":"duplas"),`Volume faturado (t) por mês · ${nomeQ}${!MXD?' · clique numa linha para abrir a visão da dupla':""}`)}<div class="rol"><table><thead><tr><th>${MXD?"Vendedor":BEL?"Dupla / vendedor":"Dupla"}</th>${mTh}<th class="n">Total</th><th class="n">% total</th><th class="n">Clientes</th><th class="n">Var. mês</th><th>Tendência</th></tr></thead><tbody>
+   ${Q1.map(r=>linha(`${!MXD&&r.d!="Outros"?`<a href="#" onclick="MXD='${esc(r.d).replace(/'/g,"\\'")}';render();return false" style="color:inherit">${esc(nomeD(r.d))}</a>`:esc(r.d=="Outros"?"Outros / sem dupla":nomeD(r.d))}`,r.v,`<td class="n"><b>${f0(r.t)}</b></td><td class="n">${f1(r.t/tot*100)}%</td><td class="n">${r.cl}</td><td class="n">${tg(pct(r.v[r.v.length-1],r.v[r.v.length-2]))}</td><td>${spark(r.v)}</td>`,r.d=="Outros"?'style="color:#667"':"")).join("")}
+   <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(tot)}</td><td class="n">100%</td><td class="n">${new Set(bs.map(x=>x.cli)).size}</td><td class="n">${tg(pct(ult,pen))}</td><td></td></tr></tbody></table></div>${MXD?`<div class="nota"><a href="#" onclick="MXD='';render();return false">← voltar para a filial inteira</a></div>`:""}</div>`;
+  h+=`<div class="g g2"><div class="box">${cab("②","Clientes ativos por mês","Clientes com pelo menos uma nota no mês")}${colunas(ms,atv,null,M)}</div>
+   <div class="box">${cab("","Cobertura da carteira",`Pela última compra em 2026 (referência ${ref.toLocaleDateString("pt-BR")})`)}<div class="rol"><table><thead><tr><th>Status</th><th class="n">Clientes</th><th class="n">%</th><th>Leitura</th></tr></thead><tbody>
+   <tr><td><b>Ativo (compra ≤ 90 dias)</b></td><td class="n">${cob.a}</td><td class="n">${f1(cob.a/cobT*100)}%</td><td>Base fiel: manter e subir ticket</td></tr>
+   <tr><td><b>Recuperado</b></td><td class="n">${cob.r}</td><td class="n">${f1(cob.r/cobT*100)}%</td><td>Voltou a comprar depois de 3+ meses parado</td></tr>
+   <tr><td><b>Sem compra 90–180 dias</b></td><td class="n">${cob.s90}</td><td class="n">${f1(cob.s90/cobT*100)}%</td><td rowspan="2">Alvo de recuperação: reativar sem custo de aquisição</td></tr>
+   <tr><td><b>Sem compra 180+ dias</b></td><td class="n">${cob.s180}</td><td class="n">${f1(cob.s180/cobT*100)}%</td></tr>
+   <tr class="tot"><td>Total que comprou em 2026</td><td class="n">${cobT}</td><td class="n">100%</td><td></td></tr></tbody></table></div></div></div>`;
+  h+=`<div class="box" style="margin:14px 0">${cab("③","Faturamento por rota · prioritárias × Rota Fora",`Volume (t) por mês · prioritárias = rotas compromissadas (meta) · Rota Fora = oportunista${rotOk?` · colunas a partir de ${MES[ROT_INI-1]} = depois da roteirização`:""}`)}<div class="rol"><table><thead><tr><th>Rota</th>${ms.map(m=>`<th class="n" ${m>=ROT_INI?'style="color:var(--laranja)"':""}>${MES[m-1]}</th>`).join("")}<th class="n">Total</th><th class="n">% total</th><th class="n">Clientes</th>${rotOk?'<th class="n">Méd. jan–abr</th><th class="n">Méd. mai–'+MES[M-1]+'</th><th class="n">Var. pós-rot.</th><th class="n">Δ part. (p.p.)</th>':""}</tr></thead><tbody>
+   ${R.map(r=>linha(esc(r.nome)+(r.fora?' <span class="tag tg-c">fora</span>':""),r.v,`<td class="n"><b>${f0(r.t)}</b></td><td class="n">${f1(r.t/tot*100)}%</td><td class="n">${r.cl}</td>${rotOk?`<td class="n">${f1(r.an)}</td><td class="n">${f1(r.dp)}</td><td class="n">${r.an>0.5?tg(pct(r.dp,r.an)):"–"}</td><td class="n">${pp(partA(r))}</td>`:""}`)).join("")}
+   <tr class="tot"><td>Total</td>${totV.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n">${f0(tot)}</td><td class="n">100%</td><td class="n">${new Set(bs.map(x=>x.cli)).size}</td>${rotOk?`<td class="n">${f1(med(totV,antes))}</td><td class="n">${f1(med(totV,depois))}</td><td class="n">${tg(pct(med(totV,depois),med(totV,antes)))}</td><td></td>`:""}</tr>
+   ${[["Rotas prioritárias",priV],["Rota Fora (oportunista)",foraV]].map(([n,v])=>`<tr style="background:#f6f8fb"><td><b>${n}</b></td>${v.map(x=>`<td class="n">${f1(x)}</td>`).join("")}<td class="n"><b>${f0(sum(v,x=>x))}</b></td><td class="n">${f1(sum(v,x=>x)/tot*100)}%</td><td></td>${rotOk?`<td class="n">${f1(med(v,antes))}</td><td class="n">${f1(med(v,depois))}</td><td class="n">${tg(pct(med(v,depois),med(v,antes)))}</td><td></td>`:""}</tr>`).join("")}
+   </tbody></table></div><div class="nota">Rotas pela base de clientes/cidades da planilha; o total é o das notas fiscais (pode diferir alguns décimos do Power BI).</div></div>`;
+  if(m25.length){
+    const r25=Object.keys(A25.rot);const nomes=[...new Set(R.map(r=>r.r).concat(r25))];
+    const linhas=nomes.map(k=>{const a=A25.rot[k]||{},r=R.find(x=>x.r==k);const t25=sum(m25,m=>a[m]||0),t26=r?sum(m25,m=>r.v[ms.indexOf(m)]):0;return{k,t25,t26}}).filter(x=>x.t25>0.05||x.t26>0.05).sort((a,b)=>b.t26-a.t26);
+    const T25=m25.map(m=>A25.tot[m]||0),T26=m25.map(m=>totV[ms.indexOf(m)]);
+    h+=`<div class="box" style="margin-bottom:14px">${cab("④",`Comparativo 2025 × 2026 · ${MES[m25[0]-1]}–${MES[m25[m25.length-1]-1]}`,`${MXB=="sem"?"Sem BGL (Executive Review — Organic)":"Com BGL (Executive Review — Reported)"} · 2025 da planilha, 2026 das notas`)}
+     <div class="rol"><table><thead><tr><th>Total filial (t)</th>${m25.map(m=>`<th class="n">${MES[m-1]}</th>`).join("")}<th class="n">Total</th></tr></thead><tbody>
+     ${linha("2025",T25,`<td class="n"><b>${f0(sum(T25,x=>x))}</b></td>`)}${linha("2026",T26,`<td class="n"><b>${f0(sum(T26,x=>x))}</b></td>`)}
+     <tr><td><b>Var. 25→26</b></td>${m25.map((m,i)=>`<td class="n">${tg(pct(T26[i],T25[i]))}</td>`).join("")}<td class="n">${tg(pct(sum(T26,x=>x),sum(T25,x=>x)))}</td></tr></tbody></table></div>
+     <div class="rol" style="margin-top:14px"><table><thead><tr><th>Rota</th><th class="n">2025 (t)</th><th class="n">2026 (t)</th><th class="n">Var. %</th><th class="n">Δ vol. (t)</th><th class="n">Part. 25</th><th class="n">Part. 26</th></tr></thead><tbody>
+     ${linhas.map(x=>{const s25=sum(T25,v=>v),s26=sum(T26,v=>v);return `<tr><td><b>${esc(titulo(x.k))}</b></td><td class="n">${f1(x.t25)}</td><td class="n">${f1(x.t26)}</td><td class="n">${x.t25>0.5?tg(pct(x.t26,x.t25)):"novo"}</td><td class="n">${f1(x.t26-x.t25)}</td><td class="n">${s25?f1(x.t25/s25*100):"–"}%</td><td class="n">${s26?f1(x.t26/s26*100):"–"}%</td></tr>`}).join("")}</tbody></table></div></div>`;
+  }else if(!MXD&&!MXV&&!MXS)h+=`<div class="box vazio" style="margin-bottom:14px">④ Comparativo 2025 × 2026: ${BEL?"ainda não há a aba Executive Review de Belém com 2025 publicada. Ligue-a em GID_BEL (REP / ORG) que o quadro aparece.":MXB=="com"?"não se aplica ao filtro só BGL.":"não encontrei o quadro de rotas 2025 nas abas Executive Review."}</div>`;
+  h+=`<div class="g g2"><div class="box">${temB&&MXB!="sem"?`${cab("⑤","Clientes com compra de BGL",`${cliB.length} clientes · BGL = Galvolume (GV484)`)}<div class="rol"><table><thead><tr><th>Cliente</th><th>Rota</th><th class="n">BGL (t)</th><th class="n">% do BGL</th><th class="n">Total (t)</th><th class="n">% BGL no cliente</th></tr></thead><tbody>${(()=>{const tb=sum(cliB,x=>x.tb);return cliB.slice(0,30).map(c=>`<tr><td><b>${esc(c.n)}</b></td><td>${esc(c.rota)}</td><td class="n">${f1(c.tb)}</td><td class="n">${f1(c.tb/tb*100)}%</td><td class="n">${f1(c.tt)}</td><td class="n">${f1(c.tt?c.tb/c.tt*100:0)}%</td></tr>`).join("")+`<tr class="tot"><td>Total (${cliB.length})</td><td></td><td class="n">${f1(tb)}</td><td class="n">100%</td><td class="n">${f1(sum(cliB,x=>x.tt))}</td><td class="n">${f1(tb/sum(cliB,x=>x.tt)*100)}%</td></tr>`})()}</tbody></table></div>`
+    :`${cab("⑤","Top 20 clientes sem BGL","Volume (t) no ano · clientes sem nenhuma compra de BGL em 2026")}<div class="rol"><table><thead><tr><th>Cliente</th><th>Rota</th><th class="n">Total (t)</th><th class="n">% total</th><th>Tendência</th></tr></thead><tbody>${top20.map(c=>`<tr><td><b>${esc(c.n)}</b></td><td>${esc(c.rota)}</td><td class="n">${f1(c.t)}</td><td class="n">${f1(c.t/tot*100)}%</td><td>${spark(c.v)}</td></tr>`).join("")}</tbody></table></div>`}</div>
+   <div class="box">${cab("⑥","Rota Fora · fora da área",`${fC.length} clientes · ${f0(fT)} t no ano`)}${hbars(fCid)}<div class="rol" style="margin-top:10px"><table><thead><tr><th>Cliente</th><th>Cidade</th><th class="n">Ano (t)</th><th class="n">${MES[M-1]}</th></tr></thead><tbody>${fC.slice(0,10).map(c=>`<tr><td><b>${esc(c.n)}</b></td><td>${esc(c.cid||"")}</td><td class="n">${f1(c.t)}</td><td class="n">${f1(c.v[c.v.length-1])}</td></tr>`).join("")||`<tr><td colspan="4" class="vazio">Sem volume na Rota Fora</td></tr>`}</tbody></table></div></div></div>`;
+  h+=`<div class="box" style="margin:14px 0">${cab("⑦","Síntese — pontos positivos e de atenção","Gerada automaticamente com os números acima")}<div class="g g2" style="margin:0">
+   <div>${pos.map(t=>`<div class="al v"><span>▲</span><div>${t}</div></div>`).join("")||'<div class="vazio">–</div>'}</div><div>${att.map(t=>`<div class="al a"><span>!</span><div>${t}</div></div>`).join("")||'<div class="vazio">–</div>'}</div></div></div>`;
+  return h;
 }
 
 /* ---------- ABA: MARGEM ---------- */
