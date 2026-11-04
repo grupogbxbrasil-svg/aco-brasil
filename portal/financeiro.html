@@ -156,9 +156,9 @@ nav.abas{display:block;margin-left:0}.abas-in{justify-content:flex-start!importa
 </head>
 <body>
 <header class="cab"><div class="cab-in">
-  <div><b>Painel do Financeiro · DBA <span id="uniNome">Marabá</span></b><small id="stEl"><span class="dot"></span>carregando…</small></div>
+  <div><b>Painel do Financeiro · <span id="uniNome">Marabá</span></b><small id="stEl"><span class="dot"></span>carregando…</small></div>
   <div class="fil">
-    <div class="uni" role="group" aria-label="Unidade"><button class="btn on" data-u="mab">Marabá</button><button class="btn" data-u="bel">Belém</button></div>
+    <div class="uni" role="group" aria-label="Unidade"><button class="btn on" data-u="mab">Marabá</button><button class="btn" data-u="bel">Belém</button><button class="btn" data-u="out" title="Clientes de cidades fora das praças de Marabá e de Belém">Outras praças</button></div>
     <button class="btn" onclick="carregar()">Atualizar</button>
     <a class="btn" href="#" onclick="parent.postMessage({tipo:'sair'},'*');return false">Sair</a>
   </div>
@@ -171,7 +171,7 @@ nav.abas{display:block;margin-left:0}.abas-in{justify-content:flex-start!importa
    O Financeiro (Filipe) envia as planilhas; vendedores e duplas veem só a própria carteira. Dados: backend/creditos.web.js no Wix. */
 const TIPOS=[{k:"alpe",n:"ALPE",c:"#0b4a9a"},{k:"amcard",n:"AMCARD",c:"#1f9d55"},{k:"seguro",n:"Seguro Arcelor",c:"#f26b1d"},{k:"dba",n:"Crédito DBA (risco)",c:"#7a47aa",off:1}];
 const ABAS=[["resumo","Resumo"],["alpe","ALPE"],["amcard","AMCARD"],["seguro","Seguro Arcelor"],["dba","Crédito DBA (risco)"]];
-const UNOME={mab:"Marabá",bel:"Belém"};
+const UNOME={mab:"Marabá",bel:"Belém",out:"Outras praças"};const UNIS=["mab","bel","out"];let PR=null;
 let ABA="resumo",UNI="mab",CTX={modo:"vendedor",nome:""},DADOS={metas:{},bases:{}},ENV={},FIL="",Q="",ROWS=[];
 const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const so=s=>String(s??"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim();
@@ -213,6 +213,13 @@ function lerPlanilha(tipo,buf){
   if(!abas)throw new Error("Não reconheci o modelo "+TIPOS.find(t=>t.k==tipo).n+". Confira se é a planilha certa (colunas: "+M.req.join(", ")+").");
   return out}
 
+/* ---------- separação por praça (cidade) ---------- */
+const cidN=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/^CENTRO\s*-\s*/i,"").replace(/\s+/g," ").trim().toUpperCase();
+async function pracas(){if(PR)return PR;const r=await rpc("pracas");if(!r||!r.ok)throw new Error((r&&r.erro)||"não consegui ler as praças");PR={mab:new Set(r.mab),bel:new Set(r.bel)};return PR}
+function unidades(k,x){if(k=="alpe"&&x.fil){if(/bel/i.test(x.fil))return["bel"];if(/marab/i.test(x.fil))return["mab"]}
+  const c=cidN(x.cid),m=PR.mab.has(c),b=PR.bel.has(c);return m&&b?["mab","bel"]:m?["mab"]:b?["bel"]:["out"]}
+function separar(k,L){const o={mab:[],bel:[],out:[]};L.forEach(x=>unidades(k,x).forEach(u=>o[u].push(x)));return o}
+
 /* ---------- visão por cliente ---------- */
 function juntar(){const M=new Map(),pega=d=>{if(!M.has(d))M.set(d,{cnpj:d,nome:"",cid:"",uf:"",alpe:[],am:null,seg:null});return M.get(d)};
   base("alpe").forEach(x=>{const c=pega(x.cnpj);c.alpe.push(x);c.nome=c.nome||x.nome;c.cid=c.cid||x.cid;c.uf=c.uf||x.uf});
@@ -228,28 +235,30 @@ function juntar(){const M=new Map(),pega=d=>{if(!M.has(d))M.set(d,{cnpj:d,nome:"
 let LIDO=null;
 function status(){const ms=["alpe","amcard","seguro"].map(k=>meta(k)).filter(Boolean).map(m=>new Date(m.atualizado));const ult=ms.length?new Date(Math.max(...ms)):null;
   stEl.innerHTML='<span class="dot"></span>'+(ult?'créditos atualizados em '+ult.toLocaleDateString("pt-BR"):'créditos ainda não enviados')+(LIDO?' · lido às '+LIDO.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):'')}
-function setUni(u){UNI=u;if(LIDO)status();uniNome.textContent=UNOME[u];document.querySelectorAll(".uni .btn").forEach(b=>b.classList.toggle("on",b.dataset.u==u));document.title="Financeiro · DBA "+UNOME[u]}
+function setUni(u){UNI=u;if(LIDO)status();uniNome.textContent=(u=="out"?"":"DBA ")+UNOME[u];document.querySelectorAll(".uni .btn").forEach(b=>b.classList.toggle("on",b.dataset.u==u));document.title="Financeiro · DBA "+UNOME[u]}
 document.querySelector(".uni").onclick=e=>{const b=e.target.closest("[data-u]");if(!b||b.dataset.u==UNI)return;setUni(b.dataset.u);ENV={};render()};
 abas.innerHTML=ABAS.map(([k,t])=>`<button data-k="${k}">${t}</button>`).join("");
 abas.onclick=e=>{const b=e.target.closest("button");if(!b)return;ABA=b.dataset.k;render()};
 
 function blocoEnvio(t){
-  const m=meta(t.k),e=ENV[chave(t.k)];
+  const m=meta(t.k),e=ENV[t.k];
   let h=`<tr><td><b>${t.n}</b></td><td>${m?dt(m.atualizado):"<span class='tag tg-a'>ainda não enviada</span>"}</td><td>${m&&m.arquivo?esc(m.arquivo):"–"}</td><td class="n">${base(t.k).length.toLocaleString("pt-BR")}</td><td>`;
   if(e&&e.erro)h+=`<span class="tag tg-r">${esc(e.erro)}</span> `;
-  if(e&&e.linhas&&!e.ok)h+=`<b>${e.linhas.length.toLocaleString("pt-BR")}</b> clientes em ${esc(e.arq)} &nbsp;<button class="bt2" onclick="enviar('${t.k}')" ${e.env?"disabled":""}>Publicar para os vendedores</button> <button class="bt2 cl" onclick="ENV['${chave(t.k)}']=null;render()" ${e.env?"disabled":""}>Cancelar</button>${e.env?`<div class="prog"><i style="width:${e.pct||0}%"></i></div>`:""}`;
-  else if(e&&e.ok)h+=`<span class="tag tg-v">Publicado ✓</span>`;
-  else h+=`<input type="file" accept=".xlsx,.xls" id="f_${t.k}" hidden onchange="lerArq('${t.k}',this)"><button class="bt2" onclick="document.getElementById('f_${t.k}').click()">Enviar planilha de ${UNOME[UNI]}</button>`;
+  if(e&&e.partes&&!e.ok)h+=`${esc(e.arq)}: ${UNIS.map(u=>`<b>${UNOME[u]}</b> ${e.partes[u].length.toLocaleString("pt-BR")}`).join(" · ")} &nbsp;<button class="bt2" onclick="enviar('${t.k}')" ${e.env?"disabled":""}>Publicar</button> <button class="bt2 cl" onclick="ENV['${t.k}']=null;render()" ${e.env?"disabled":""}>Cancelar</button>${e.env?`<div class="prog"><i style="width:${e.pct||0}%"></i></div>`:""}`;
+  else if(e&&e.ok)h+=`<span class="tag tg-v">Publicado ✓ Marabá, Belém e outras praças</span>`;
+  else if(e&&e.lendo)h+=`<span class="tag tg-c">lendo e separando por cidade…</span>`;
+  else h+=`<input type="file" accept=".xlsx,.xls" id="f_${t.k}" hidden onchange="lerArq('${t.k}',this)"><button class="bt2" onclick="document.getElementById('f_${t.k}').click()">Enviar planilha</button>`;
   return h+"</td></tr>"}
-function lerArq(k,inp){const f=inp.files[0];inp.value="";if(!f)return;const rd=new FileReader();
-  rd.onload=()=>{try{ENV[chave(k)]={arq:f.name,linhas:lerPlanilha(k,new Uint8Array(rd.result))}}catch(er){ENV[chave(k)]={erro:er.message}}render()};rd.readAsArrayBuffer(f)}
-async function enviar(k){const ch=chave(k),e=ENV[ch];if(!e||!e.linhas||e.env)return;e.env=1;e.pct=0;render();
-  const T=800,partes=Math.max(1,Math.ceil(e.linhas.length/T)),versao=String(Date.now());
-  try{for(let i=0;i<partes;i++){const r=await rpc("salvarParte",ch,versao,i,partes,e.linhas.slice(i*T,(i+1)*T),{arquivo:e.arq});
-      if(!r||!r.ok)throw new Error((r&&r.erro)||"falha no envio");e.pct=Math.round((i+1)/partes*100);if(i==partes-1)DADOS.metas[ch]=r.meta;render()}
-    DADOS.bases[ch]=e.linhas;e.ok=1;status();e.env=0;render();setTimeout(()=>{if(ENV[ch]===e){ENV[ch]=null;render()}},6000)}
-  catch(er){ENV[ch]={erro:"Não publicou ("+er.message+"). A base anterior continua valendo."};render()}}
-
+function lerArq(k,inp){const f=inp.files[0];inp.value="";if(!f)return;ENV[k]={lendo:1};render();const rd=new FileReader();
+  rd.onload=async()=>{try{const L=lerPlanilha(k,new Uint8Array(rd.result));await pracas();ENV[k]={arq:f.name,partes:separar(k,L)}}catch(er){ENV[k]={erro:er.message}}render()};rd.readAsArrayBuffer(f)}
+async function enviar(k){const e=ENV[k];if(!e||!e.partes||e.env)return;e.env=1;e.pct=0;render();
+  const T=800,versao=String(Date.now());let feito=0;const tot=UNIS.reduce((a,u)=>a+Math.max(1,Math.ceil(e.partes[u].length/T)),0);
+  try{for(const u of UNIS){const L=e.partes[u],ch=k+"_"+u,n=Math.max(1,Math.ceil(L.length/T));
+      for(let i=0;i<n;i++){const r=await rpc("salvarParte",ch,versao,i,n,L.slice(i*T,(i+1)*T),{arquivo:e.arq});
+        if(!r||!r.ok)throw new Error((r&&r.erro)||"falha no envio");feito++;e.pct=Math.round(feito/tot*100);if(i==n-1)DADOS.metas[ch]=r.meta;render()}
+      DADOS.bases[ch]=L}
+    e.ok=1;e.env=0;status();render();setTimeout(()=>{if(ENV[k]===e){ENV[k]=null;render()}},6000)}
+  catch(er){ENV[k]={erro:"Não publicou ("+er.message+"). Confira e envie de novo."};render()}}
 function filtroBox(){return `<div class="busca"><input id="q" placeholder="Buscar cliente, CNPJ ou cidade" value="${esc(Q)}" oninput="Q=this.value;tabela()">
   ${[["","Todos"],["atraso","Em atraso"],["esgot","Sem limite / esgotado"],["semseg","Sem seguro"]].map(([k,n])=>`<button class="chip ${FIL==k?"on":""}" onclick="FIL='${k}';render()">${n}</button>`).join("")}
   <button class="chip" onclick="baixar()">Baixar planilha</button></div>`}
@@ -279,7 +288,7 @@ function render(){
   h+=`<div class="g g4">`+(ABA=="resumo"||ABA=="alpe"?kpi("ALPE · disponível",R(sum(sA,x=>x.disp)),`de ${R(sum(sA,x=>x.lim))} · ${sA.length} clientes`,"#0b4a9a"):"")
    +(ABA=="resumo"||ABA=="amcard"?kpi("AMCARD · disponível",R(sum(sM,x=>x.disp)),`de ${R(sum(sM,x=>x.lim))} · ${sM.length.toLocaleString("pt-BR")} clientes`,"#1f9d55"):"")
    +(ABA=="resumo"||ABA=="seguro"?kpi("Seguro · exposição",R(sum(sS,x=>x.exp)),`limite ${R(sum(sS,x=>x.lim))} · ${sS.length.toLocaleString("pt-BR")} clientes`,"#f26b1d")+kpi("Em atraso",R(sum(natr,x=>x.atr)),`${natr.length} clientes no Seguro`,"var(--bad)"):"")+`</div>`;
-  if(ed)h+=`<div class="box" style="margin-bottom:14px"><h2>Atualizar planilhas · DBA ${UNOME[UNI]}</h2><div class="sub">Envie a planilha de ${UNOME[UNI]} no modelo de sempre. Ao publicar, a base anterior de ${UNOME[UNI]} é substituída e os vendedores veem na hora.</div><div class="rol"><table><thead><tr><th>Crédito</th><th>Última atualização</th><th>Arquivo</th><th class="n">Clientes</th><th></th></tr></thead><tbody>${TIPOS.filter(t=>!t.off&&(ABA=="resumo"||t.k==ABA)).map(blocoEnvio).join("")}</tbody></table></div></div>`;
+  if(ed)h+=`<div class="box" style="margin-bottom:14px"><h2>Atualizar planilhas</h2><div class="sub">Envie a planilha inteira no modelo de sempre: a página separa os clientes pela cidade (praças do DBA Marabá e do DBA Belém; na ALPE vale a coluna Filial). Cidades fora das duas praças vão para "Outras praças". Ao publicar, as bases anteriores são substituídas e os vendedores veem na hora.</div><div class="rol"><table><thead><tr><th>Crédito</th><th>Última atualização</th><th>Arquivo</th><th class="n">Clientes em ${UNOME[UNI]}</th><th></th></tr></thead><tbody>${TIPOS.filter(t=>!t.off&&(ABA=="resumo"||t.k==ABA)).map(blocoEnvio).join("")}</tbody></table></div></div>`;
   h+=`<div class="box">${filtroBox()}<div id="tb"></div></div>`;
   app.innerHTML=h;tabela()}
 function baixar(){const H=["Cliente","CNPJ/CPF","Cidade","UF","ALPE limite","ALPE disponível","AMCARD limite","AMCARD disponível","AMCARD tomado","AMCARD últ. transação","Seguro classe","Seguro limite","Exposição","% esgotamento","Dias em atraso","Valor em atraso"];
