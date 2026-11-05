@@ -1059,10 +1059,31 @@ function lgBarras(lab,val,{dest=-1,cor="#a9c3e6",h=190,fmt=f1}={}){if(!val.lengt
   `<line x1="28" y1="${h}" x2="${w-6}" y2="${h}" stroke="#d6dde6"/></svg></div>`}
 
 /* ---- tela ---- */
+/* Grade dos 8 relatórios da Logística (mesma do painel do vendedor), visão completa da unidade, somente leitura.
+   Abre o relatório na página inteira; ao voltar, cai de novo nesta aba (05/11/2026). */
+const LG_IC={"user": "<path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m21 21-4.3-4.3\"/>", "swap": "<path d=\"M7 7h12l-3-3\"/><path d=\"M17 17H5l3 3\"/>", "truck": "<path d=\"M3 6h11v9H3z\"/><path d=\"M14 9h4l3 3v3h-7\"/><circle cx=\"7\" cy=\"17\" r=\"2\"/><circle cx=\"17\" cy=\"17\" r=\"2\"/>", "bldg": "<path d=\"M4 21V5l8-3v19\"/><path d=\"M12 9h8v12\"/><path d=\"M8 8v.01M8 12v.01M8 16v.01M16 13v.01M16 17v.01\"/><path d=\"M2 21h20\"/>", "cal": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M16 3v4M8 3v4M3 11h18\"/>", "doc": "<path d=\"M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z\"/><path d=\"M14 3v6h6M8 13h8M8 17h6\"/>"};
+const LG_REL=[
+ {g:0,t:"Carteira em Aberto",d:"Ordens em aberto na usina, por status.",p:"/carteira-em-aberto",c:"#8a5a2b",i:"user"},
+ {g:0,t:"Carteira — Outros Centros",d:"Ordens que outros centros faturam para a região, com saldo na origem.",p:"/carteira-outros-centros",c:"#8a5a2b",i:"bldg"},
+ {g:0,t:"Pré-rotas · Ordens CIF",d:"Fechamento de carga por rota: veículo indicado, ocupação e mínimo de 70%.",p:"/relatorio-logistica",r:"prerotas",c:"#1f5fa8",i:"truck"},
+ {g:0,t:"Faturamento",d:"Últimos 12 meses com filtros por vendedor, grupo, rota, cidade, cliente, usina, mês e ano.",p:"/faturamento",c:"#2f7d5b",i:"doc"},
+ {g:1,t:"Busca de Estoque",d:"Pesquise por código ou descrição — estoque DBA e outros centros, em um só lugar.",p:"/busca-de-estoque",c:"#e8552a",i:"search"},
+ {g:1,t:"Abastecimento · Estoque",d:"Status por Buffer: ruptura, risco de falta, excesso, cobertura e sugestão de pedido.",p:"/relatorio-logistica",r:"abast",c:"#1f5fa8",i:"cal"},
+ {g:1,t:"Pedido de Abastecimento Esporádico",d:"Propostas dos vendedores: material, quantidade, vendedor e situação.",p:"/relatorio-logistica",r:"abastvend",c:"#b85c2a",i:"cal"},
+ {g:1,t:"Acompanhamento de Transferência",d:"Pedido, fornecimento, formação de carga, trânsito e agendamento de descarga.",p:"/acompanhamento-de-transferencia",c:"#2f7d5b",i:"swap"}];
+function lgAbre(i,u){const o=LG_REL[i];if(!o)return;const q=[];if(o.r)q.push("r="+o.r);if(u=="belem")q.push("u=belem");
+ try{localStorage.setItem("dir_aba","logistica")}catch(_){}
+ parent.postMessage({tipo:"irTop",destino:o.p+(q.length?"?"+q.join("&"):"")},"*")}
+function lgGrade(u){if(window.__DU)return "";
+ let h=`<style>.lgg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px}@media(max-width:1200px){.lgg{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:640px){.lgg{grid-template-columns:1fr}}.lgh{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b;margin:6px 0 10px}.lgk{cursor:pointer;display:flex;gap:16px;border:1px solid #e3e8ef;border-radius:12px;padding:20px;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.05)}.lgk:hover{box-shadow:0 4px 14px rgba(15,23,42,.1)}</style>`;
+ ["Carteira e faturamento","Estoque e abastecimento"].forEach((gn,gi)=>{h+=`<div class="lgh">${gn}</div><div class="lgg">`;
+  LG_REL.forEach((o,i)=>{if(o.g!==gi)return;h+=`<div class="lgk" onclick="lgAbre(${i},'${u}')"><div style="flex:0 0 56px;width:56px;height:56px;border-radius:10px;background:${o.c};display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${LG_IC[o.i]}</svg></div><div style="min-width:0"><div style="font-weight:800;font-size:17px;color:#0b2a55;line-height:1.3">${o.t}</div><div style="font-size:14px;color:#5b6b7d;margin:6px 0 12px;line-height:1.45">${o.d}</div><span style="display:inline-block;background:#e3f6ea;color:#1f7a45;font-size:13px;font-weight:600;padding:3px 12px;border-radius:999px">Disponível</span><div style="margin-top:12px;font-weight:800;color:#0b4a9a;font-size:15px">Abrir relatório &rarr;</div></div></div>`});
+  h+=`</div>`});
+ return h+`<div class="lgh" style="margin-top:8px">Resumo da unidade</div>`}
 function vLogistica(){if(!LG_UNI)LG_UNI=UNI;const u=LG_UNI,nm=UNIDADES[u].nome;
  setTimeout(()=>lgFill(u),0);
  return tit("Logística · DBA "+nm,"Carteira, transferências e faturamento","Resumo para a diretoria · dados das planilhas da Logística ("+nm+")")+
- `<div class="lg-uni" role="group" aria-label="Unidade">${["maraba","belem"].map(k=>`<button data-lgu="${k}" class="${k==u?"on":""}">${UNIDADES[k].nome}</button>`).join("")}</div>
+ `<div class="lg-uni" role="group" aria-label="Unidade">${["maraba","belem"].map(k=>`<button data-lgu="${k}" class="${k==u?"on":""}">${UNIDADES[k].nome}</button>`).join("")}</div>${lgGrade(u)}
  <div id="lgTopo"><div class="box"><div class="carga"><div class="spin"></div>Lendo as bases da Logística de ${esc(nm)}…</div></div></div>
  <div id="lgFat" style="margin-top:14px"></div>`}
 async function lgFill(u){const top=document.getElementById("lgTopo");if(!top)return;
