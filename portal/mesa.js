@@ -55,7 +55,7 @@
     pede({ op: 'enviar', dados: { tipo: M.tipo, texto: t } }).then(function (r) {
       M.enviando = false;
       if (!r || !r.ok) { M.erro = (r && r.erro) || 'Não consegui enviar. Seu texto continua aí; tente de novo.'; }
-      else { M.rascunho = ''; M.aviso = 'Recebido! O Claude responde aqui em até 1 hora (dias úteis, das 7h às 20h) e avisa o Gilvan.'; if (M.dados) M.dados.conversas.unshift(r.conversa); M.abertos[r.conversa.id] = true; }
+      else { M.rascunho = ''; M.aviso = 'Recebido! O Claude responde aqui em até 1 hora (de segunda a sábado, das 7h às 20h) e avisa o Gilvan.'; if (M.dados) M.dados.conversas.unshift(r.conversa); M.abertos[r.conversa.id] = true; }
       rerender();
     });
   };

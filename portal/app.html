@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b2a55">
+<meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Aço Brasil">
+<link rel="manifest" href="app/manifest.json">
+<link rel="icon" href="app/icone-192.png">
+<link rel="apple-touch-icon" href="app/apple-touch-icon.png">
+<title>Aço Brasil · Sócios</title>
+<!-- App do celular para os sócios e a gerência: login, Meu painel e Mesa do Maurício.
+     Esta página só desenha; os números e as conversas ficam no servidor do Wix (/_functions/app). -->
+<style>
+  :root{--azul:#0b2a55;--laranja:#f26b1d;--verde:#5bd16f;--fundo:#f3f5f9;--linha:#e3e8ef;--cinza:#64748b}
+  *{box-sizing:border-box}
+  html,body{overflow-x:hidden;margin:0;background:var(--fundo);color:#0f172a;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+  .topo{position:sticky;top:0;z-index:5;background:var(--azul);color:#fff;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .marca{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+  .marca i{width:30px;height:30px;border-radius:8px;background:#fff;color:var(--azul);display:grid;place-items:center;font-style:normal;font-size:13px;font-weight:900}
+  .topo button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:8px 12px;font-size:14px}
+  main{padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 92px);max-width:1100px;margin:0 auto}
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:5;background:#fff;border-top:1px solid var(--linha);display:flex;padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 6px)}
+  .nav button{flex:1;background:none;border:0;padding:8px 4px;font-size:13px;font-weight:700;color:var(--cinza);display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:12px}
+  .nav button span{font-size:22px;line-height:1}
+  .nav button.on{color:var(--azul);background:#eef3fb}
+  .login{max-width:420px;margin:8vh auto 0;background:#fff;border:1px solid var(--linha);border-radius:18px;padding:24px}
+  .login h1{margin:0 0 4px;font-size:24px;color:var(--azul)}
+  .login p{margin:0 0 18px;color:var(--cinza);font-size:15px;line-height:1.5}
+  .login label{display:block;font-size:14px;font-weight:700;color:var(--azul);margin:12px 0 6px}
+  .login input{width:100%;font-size:18px;padding:14px;border:2px solid #cbd5e1;border-radius:12px;background:#fff}
+  .login input:focus{outline:none;border-color:var(--azul)}
+  .login button{width:100%;margin-top:18px;background:var(--laranja);color:#fff;border:0;border-radius:14px;padding:16px;font-size:18px;font-weight:800}
+  .login button[disabled]{opacity:.6}
+  .erro{background:#fdecea;color:#8a1c12;border-radius:12px;padding:12px 14px;margin-top:14px;font-size:15px}
+  .instalar{background:#fff8f2;border:1px solid #fbd9c2;color:#7a3d10;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14.5px;line-height:1.5;display:flex;gap:10px;align-items:flex-start}
+  .instalar button{margin-left:auto;background:none;border:0;font-size:18px;color:#7a3d10}
+  .vz{color:var(--cinza);padding:30px 4px;text-align:center}
+</style>
+</head>
+<body>
+<div class="topo"><div class="marca"><i>AB</i><span>Aço Brasil</span></div><div id="topoDir"></div></div>
+<main id="app"></main>
+<nav class="nav" id="nav" hidden></nav>
+
+<script>
+// ---------- configuração ----------
+var API = 'https://acobrasil.wixsite.com/arcerlormittal/_functions/app';
+var CHAVE = 'acoApp';
+var S = { tk: '', exp: 0, perfil: null };
+var ABA = 'socio', ABAS = [['socio', 'Meu painel']];
+try { var g = JSON.parse(localStorage.getItem(CHAVE) || 'null'); if (g && g.tk && g.exp > Date.now()) S = g; } catch (e) {}
+function guarda() { try { localStorage.setItem(CHAVE, JSON.stringify(S)); } catch (e) {} }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+// ---------- servidor (Wix) ----------
+function api(o) {
+  var corpo = JSON.stringify(Object.assign({ tk: S.tk }, o));
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: corpo })
+    .then(function (r) { return r.json().catch(function () { return { ok: false, erro: 'Resposta inválida do servidor (' + r.status + ').' }; }); })
+    .catch(function () { return { ok: false, erro: 'Sem conexão com o servidor. Confira a internet e tente de novo.' }; })
+    .then(function (r) { if (r && !r.ok && /expirad|entre de novo/i.test(r.erro || '')) { sair(true); } return r || { ok: false, erro: 'Sem resposta.' }; });
+}
+// as telas (socios.js e mesa.js) falam por mensagem, como dentro do portal; aqui a própria página responde
+addEventListener('message', function (e) {
+  if (e.source !== window) return;
+  var d = e.data || {};
+  if (d.tipo === 'socio' && d.id) api({ op: 'painel' }).then(function (r) { postMessage({ tipo: 'socior', id: d.id, r: r }, '*'); });
+  if (d.tipo === 'mesa' && d.id) {
+    var o = d.op === 'listar' ? { op: 'mesa_listar' } : d.op === 'enviar' ? { op: 'mesa_enviar', dados: d.dados } : d.op === 'status' ? { op: 'mesa_status', cid: d.cid, status: d.status } : null;
+    if (!o) return postMessage({ tipo: 'mesar', id: d.id, r: { ok: false, erro: 'operação inválida' } }, '*');
+    api(o).then(function (r) { postMessage({ tipo: 'mesar', id: d.id, r: r }, '*'); });
+  }
+});
+
+// ---------- telas ----------
+var app = document.getElementById('app'), nav = document.getElementById('nav'), topoDir = document.getElementById('topoDir');
+function telaLogin(msg) {
+  nav.hidden = true; topoDir.innerHTML = '';
+  app.innerHTML = '<form class="login" id="fl" autocomplete="on"><h1>Entrar</h1><p>Use o mesmo usuário e senha do portal da Aço Brasil. O aparelho fica conectado por 30 dias.</p>' +
+    '<label for="us">Usuário</label><input id="us" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="email" placeholder="ex.: mauricio.diretoria">' +
+    '<label for="se">Senha</label><input id="se" name="password" type="password" autocomplete="current-password">' +
+    '<button id="bt" type="submit">Entrar</button>' + (msg ? '<div class="erro">' + esc(msg) + '</div>' : '') + '</form>';
+  document.getElementById('fl').onsubmit = function (ev) {
+    ev.preventDefault();
+    var us = document.getElementById('us').value.trim(), se = document.getElementById('se').value;
+    if (!us || !se) return telaLogin('Preencha usuário e senha.');
+    var bt = document.getElementById('bt'); bt.disabled = true; bt.textContent = 'Entrando…';
+    api({ op: 'login', usuario: us, senha: se }).then(function (r) {
+      if (!r.ok) { telaLogin(r.erro || 'Não consegui entrar.'); document.getElementById('us').value = us; return; }
+      S = { tk: r.tk, exp: r.exp, perfil: r.perfil }; guarda(); inicia();
+    });
+  };
+}
+function sair(expirou) { S = { tk: '', exp: 0, perfil: null }; try { localStorage.removeItem(CHAVE); } catch (e) {} telaLogin(expirou ? 'Sua sessão terminou. Entre de novo.' : ''); }
+function dicaInstalar() {
+  try { if (localStorage.getItem('acoAppDica') || matchMedia('(display-mode: standalone)').matches || navigator.standalone) return ''; } catch (e) { return ''; }
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  return '<div class="instalar" id="dica"><span>📲</span><div><b>Deixe na tela inicial, como um aplicativo:</b><br>' + (ios ? 'toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.' : 'toque no menu <b>⋮</b> do navegador e depois em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.') + '</div><button onclick="fechaDica()" aria-label="Fechar">✕</button></div>';
+}
+function fechaDica() { try { localStorage.setItem('acoAppDica', '1'); } catch (e) {} var d = document.getElementById('dica'); if (d) d.remove(); }
+function render() {
+  if (!S.tk) return telaLogin();
+  [].forEach.call(nav.querySelectorAll('button'), function (b) { b.classList.toggle('on', b.dataset.k === ABA); });
+  var corpo = ABA === 'mesa' && window.vMesa ? window.vMesa() : window.vSocio ? window.vSocio() : '<div class="vz">Carregando…</div>';
+  app.innerHTML = (ABA === 'socio' ? dicaInstalar() : '') + corpo;
+}
+function inicia() {
+  var p = S.perfil || {};
+  ABAS = p.mesa ? [['socio', 'Meu painel'], ['mesa', 'Mesa do Maurício']] : [['socio', 'Meu painel']];
+  try { var u = localStorage.getItem('acoAppAba'); if (u && ABAS.some(function (a) { return a[0] === u; })) ABA = u; } catch (e) {}
+  topoDir.innerHTML = '<button onclick="sair()">Sair</button>';
+  var ic = { socio: '📊', mesa: '📝' };
+  nav.innerHTML = ABAS.map(function (a) { return '<button data-k="' + a[0] + '"><span>' + ic[a[0]] + '</span>' + esc(a[0] === 'mesa' ? 'Mesa' : a[1]) + '</button>'; }).join('');
+  nav.hidden = ABAS.length < 2;
+  nav.onclick = function (ev) { var b = ev.target.closest('button'); if (!b) return; ABA = b.dataset.k; try { localStorage.setItem('acoAppAba', ABA); } catch (e) {} render(); scrollTo({ top: 0 }); };
+  render();
+}
+</script>
+<script src="socios.js?v=1"></script>
+<script src="mesa.js?v=1"></script>
+<script>
+// os módulos chamam render()/ABA do painel; aqui eles usam os desta página
+if (S.tk) inicia(); else telaLogin();
+</script>
+</body>
+</html>

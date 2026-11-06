@@ -23,16 +23,16 @@
   var CSS = '<style>' +
     '.sc{font-size:15px}.sc h3{font-size:19px;color:#0b2a55;margin:26px 0 10px;display:flex;align-items:center;gap:10px}.sc h3 .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:#f26b1d;color:#fff;border-radius:99px;padding:3px 10px}' +
     '.sc .hd{background:#0b2a55;color:#fff;border-radius:14px;padding:20px 22px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}.sc .hd b{font-size:24px;display:block}.sc .hd span{opacity:.8;font-size:14px}.sc .hd button{background:#fff;color:#0b2a55;border:0;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer}' +
-    '.sc .duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}@media(max-width:860px){.sc .duas{grid-template-columns:1fr}}' +
-    '.sc .cx{background:#fff;border:1px solid #e3e8ef;border-radius:12px;padding:16px}.sc .cx h4{margin:0 0 12px;font-size:15px;color:#0b2a55;display:flex;justify-content:space-between;gap:8px}.sc .cx h4 small{font-weight:500;color:#64748b;font-size:12px}' +
+    '.sc .duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}@media(max-width:860px){.sc .duas{grid-template-columns:minmax(0,1fr)}}' +
+    '.sc .cx{min-width:0;overflow-x:auto;background:#fff;border:1px solid #e3e8ef;border-radius:12px;padding:16px}.sc .cx h4{margin:0 0 12px;font-size:15px;color:#0b2a55;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.sc .cx h4 small{font-weight:500;color:#64748b;font-size:12px}' +
     '.sc .ks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:520px){.sc .ks{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
     '.sc .k{background:#f6f8fb;border-radius:10px;padding:10px 12px}.sc .k small{display:block;font-size:11.5px;color:#64748b;text-transform:uppercase;letter-spacing:.05em}.sc .k b{display:block;font-size:22px;color:#0b2a55;margin-top:2px}.sc .k span{font-size:12.5px;color:#5b6b7d}' +
     '.sc .bar{height:10px;background:#eef1f5;border-radius:99px;overflow:hidden;margin:6px 0 2px}.sc .bar i{display:block;height:100%;border-radius:99px}' +
-    '.sc table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:12px}.sc th{text-align:right;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;padding:6px;border-bottom:1px solid #e3e8ef}.sc th:first-child,.sc td:first-child{text-align:left}.sc td{text-align:right;padding:6px;border-bottom:1px solid #f0f2f6}' +
+    '.sc table{width:100%;min-width:300px;border-collapse:collapse;font-size:13.5px;margin-top:12px}.sc th{text-align:right;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;padding:6px;border-bottom:1px solid #e3e8ef}.sc th:first-child,.sc td:first-child{text-align:left}.sc td{text-align:right;padding:6px;border-bottom:1px solid #f0f2f6}' +
     '.sc .ev{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:12px}.sc .ev div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;color:#64748b}.sc .ev i{display:block;width:100%;border-radius:4px 4px 0 0;background:#0b2a55}.sc .ev .m{position:relative;width:100%;flex:1;display:flex;align-items:flex-end}.sc .ev .mt{position:absolute;left:0;right:0;border-top:2px dashed #f26b1d}' +
     '.sc .al{border-radius:10px;padding:10px 12px;font-size:13.5px;margin-top:10px}.sc .al.r{background:#fdecea;color:#8a1c12}.sc .al.a{background:#fff4dc;color:#7a4b06}.sc .al.v{background:#e6f4ec;color:#14532d}' +
     '.sc .lk{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.sc .lk button{border:1px solid #cbd5e1;background:#fff;border-radius:99px;padding:7px 14px;font-size:13px;cursor:pointer;color:#0b2a55;font-weight:600}' +
-    '.sc .mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}@media(max-width:860px){.sc .mini{grid-template-columns:1fr}}' +
+    '.sc .mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}@media(max-width:860px){.sc .mini{grid-template-columns:minmax(0,1fr)}}' +
     '.sc .vz{color:#64748b;font-size:13.5px}' +
     '</style>';
 
