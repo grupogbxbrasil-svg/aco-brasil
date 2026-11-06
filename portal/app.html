@@ -62,7 +62,7 @@ function api(o) {
   var corpo = JSON.stringify(Object.assign({ tk: S.tk }, o));
   return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: corpo })
     .then(function (r) { return r.json().catch(function () { return { ok: false, erro: 'Resposta inválida do servidor (' + r.status + ').' }; }); })
-    .catch(function () { return { ok: false, erro: 'Sem conexão com o servidor. Confira a internet e tente de novo.' }; })
+    .catch(function () { return { ok: false, erro: 'Não consegui falar com o servidor da Aço Brasil. Confira a internet; se a internet estiver boa, o site pode estar em atualização — tente de novo em alguns minutos.' }; })
     .then(function (r) { if (r && !r.ok && /expirad|entre de novo/i.test(r.erro || '')) { sair(true); } return r || { ok: false, erro: 'Sem resposta.' }; });
 }
 // as telas (socios.js e mesa.js) falam por mensagem, como dentro do portal; aqui a própria página responde
