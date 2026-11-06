@@ -98,9 +98,10 @@
     // lançamentos
     if (D.edita) {
       var man = M.manual || {};
-      h += '<div class="box" style="margin-top:14px"><h2>Lançar dados de ' + mesNome(P.mes) + '</h2><div class="sub">Campos de Volume em branco = usa o Resultado BI. Preencha para corrigir. Valores em números, com vírgula ou ponto.' + (man.atualizado ? ' · último lançamento ' + new Date(man.atualizado).toLocaleString('pt-BR') + (man.por ? ' por ' + esc(man.por) : '') : '') + '</div><div class="frm">';
+      h += '<div class="box" style="margin-top:14px"><h2>Lançar dados de ' + mesNome(P.mes) + '</h2><div class="sub">Campo em branco = usa o que a rotina gravou na aba PEX Entradas (aparece em cinza) ou o Resultado BI. Preencha só para corrigir. Valores em números, com vírgula ou ponto.' + (man.atualizado ? ' · último lançamento ' + new Date(man.atualizado).toLocaleString('pt-BR') + (man.por ? ' por ' + esc(man.por) : '') : '') + '</div><div class="frm">';
       ['longosFat', 'longosMeta', 'planosFat', 'planosMeta', 'tubosFat', 'tubosMeta', 'ca50Real', 'ca50Meta', 'trefReal', 'trefMeta', 'pvlIndReal', 'pvlIndMeta', 'agCivAgeing', 'agCivEstoque', 'agIndAgeing', 'agIndEstoque', 'npsNota', 'npsRespostas', 'npsClientes', 'metodNota'].forEach(function (k) {
-        h += '<div><label>' + esc(rotulo(k)) + '</label><input data-pxc="' + k + '" inputmode="decimal" value="' + esc(man[k] == null ? '' : man[k]) + '"></div>';
+        var rt = (M.rotina || {})[k];
+        h += '<div><label>' + esc(rotulo(k)) + '</label><input data-pxc="' + k + '" inputmode="decimal" value="' + esc(man[k] == null ? '' : man[k]) + '"' + (rt != null ? ' placeholder="rotina: ' + esc(rt) + '"' : '') + '></div>';
       });
       h += '<div><label>KPI Acelerador (AMis)</label><select data-pxc="acel"><option value="">— sem dado —</option><option value="sim"' + (man.acel === 'sim' ? ' selected' : '') + '>Atingiu (+16,83 pts)</option><option value="nao"' + (man.acel === 'nao' ? ' selected' : '') + '>Não atingiu</option></select></div>';
       h += '<div style="grid-column:1/-1"><label>Observação do mês</label><input data-pxc="obs" value="' + esc(man.obs || '') + '"></div></div>';
