@@ -12,7 +12,7 @@
   function hoje() { var d = new Date(); return d.toISOString().slice(0, 10); }
   function dataBR(s) { if (!s) return ''; var p = String(s).slice(0, 10).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : s; }
   var COR = { 'Não iniciado': ['#8a94a3', '#eef1f5'], 'Em andamento': ['#b7791f', '#fdf3dc'], 'Concluído': ['#1f7a45', '#e3f6ea'], 'Depende da ArcelorMittal': ['#5b4bb7', '#efedff'], 'Não se aplica': ['#64748b', '#f1f5f9'] };
-  var PESSOAS = ['Gilvan', 'Vitor', 'Anthony', 'Filipe', 'Luis', 'Bruna', 'Josimar', 'Lavínia', 'Logística', 'Diretoria', 'ArcelorMittal'];
+  var PESSOAS = ['Gilvan', 'Vitor', 'Anthony', 'Filipe', 'Luis', 'Brunna', 'Josimar', 'Lavínia', 'Logística', 'Diretoria', 'ArcelorMittal'];
   var CSS = '<style>.a3 .a3k{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}@media(max-width:900px){.a3 .a3k{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
     '.a3 .a3c{background:#fff;border:1px solid #e3e8ef;border-radius:12px;padding:16px}.a3 .a3c small{display:block;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.06em}.a3 .a3c b{display:block;font-size:28px;color:#0b2a55;margin:6px 0 2px}.a3 .a3c span{font-size:13px;color:#5b6b7d}' +
     '.a3 table{width:100%;border-collapse:collapse;font-size:14px}.a3 th{text-align:left;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;padding:8px;border-bottom:1px solid #e3e8ef}.a3 td{padding:8px;border-bottom:1px solid #f0f2f6;vertical-align:middle}' +
