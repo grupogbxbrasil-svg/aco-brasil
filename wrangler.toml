@@ -5,4 +5,4 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding = "DB"
 database_name = "aco-brasil-portal"
-database_id = "COLOQUE_AQUI_O_ID_DO_D1"
+database_id = "981d88ac-3bf6-4f27-8b24-d78f56cc8524"
