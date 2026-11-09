@@ -24,7 +24,7 @@ button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;backgr
   <img src="../logo-arcelormittal.png" alt="ArcelorMittal">
   <h1>Acesso Restrito</h1>
   <p>Portal interno para Vendedores, Gerência e Diretoria da Aço Brasil.</p>
-  <div class="aviso" role="status"><b>Ambiente de teste.</b> Entre com o usuário da sua dupla.</div>
+  <div class="aviso" role="status">Primeiro acesso? Use o link enviado pelo administrador para criar sua senha.</div>
   <form onsubmit="entrar(event)">
     <label for="email">Usuário</label>
     <input id="email" autocomplete="username" required>
@@ -35,15 +35,16 @@ button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;backgr
   </form>
   <a class="voltar" href="../index.html">← Voltar ao site</a>
 </main>
-<script src="duplas.js"></script>
 <script>
-async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
-async function entrar(e){e.preventDefault();
- const k=email.value.trim().toLowerCase(),p=senha.value;
- const DIR={"diretoria":"5df6b10b2a3358054b97e3bd42cc572e1e0244aeb2de0358379370c83d28e0b0","supervisao":"09be3223d2e141d52a73221eff0000bcede632177ca296489c349d3e8108e292"};
- if(DIR[k]){if(await sha(p)===DIR[k]){try{sessionStorage.setItem("dir_ok","1")}catch(_){}location.href="diretoria.html";return}else{erro.textContent="Usuário ou senha inválidos.";return}}
- for(const[id,d]of Object.entries(DUPLAS)){if(d.usuarios[k]===p){try{sessionStorage.setItem("vend_"+id,k)}catch(_){}location.href="painel.html?d="+id;return}}
- erro.textContent="Usuário ou senha inválidos.";}
+async function entrar(e){e.preventDefault();erro.textContent="";
+ const b=e.target.querySelector("button");b.disabled=true;
+ try{const r=await fetch("/api/login",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({usuario:email.value,senha:senha.value})});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){erro.textContent=d.erro||"Não foi possível entrar.";return}
+  const v=new URLSearchParams(location.search).get("volta");
+  location.href=(v&&v.startsWith("/portal/"))?v:d.destino;
+ }catch(_){erro.textContent="Sem conexão com o servidor."}finally{b.disabled=false}}
+fetch("/api/me").then(r=>r.ok&&r.json()).then(u=>{if(u){const v=new URLSearchParams(location.search).get("volta");if(!v)location.href=u.perfil==="vendedor"&&u.dupla?"painel.html?d="+encodeURIComponent(u.dupla):u.perfil==="admin"?"admin.html":"diretoria.html"}}).catch(()=>{});
 </script>
 </body>
 </html>

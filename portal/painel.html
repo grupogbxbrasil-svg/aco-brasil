@@ -178,13 +178,11 @@ else{
  };
  relatorios.innerHTML=GRUPOS.map(G=>`<section class="grupo"><div class="gh"><span class="gi">${sv(G.ic)}</span><div><h2>${G.t}</h2><p>${G.d}</p></div></div><div class="cards ${G.col}">${REL.filter(r=>r.g==G.g).map(card).join("")}</div></section>`).join("");
 }
-const K="vend_"+id;
+// Acesso já validado no servidor (functions/_middleware.js).
 function mostrar(ok){login.classList.toggle("hide",ok);painel.classList.toggle("hide",!ok)}
-function entrar(e){e.preventDefault();const k=u.value.trim().toLowerCase();
- if(D&&D.usuarios[k]===s.value){try{sessionStorage.setItem(K,k)}catch(_){}erro.textContent="";mostrar(true)}
- else erro.textContent="Usuário ou senha inválidos."}
-function sair(){try{sessionStorage.removeItem(K)}catch(_){}s.value="";mostrar(false)}
-let c=null;try{c=sessionStorage.getItem(K)}catch(_){}mostrar(!!(D&&D.usuarios[c]));
+function entrar(e){e.preventDefault();location.href="login.html?volta="+encodeURIComponent(location.pathname+location.search)}
+async function sair(){try{await fetch("/api/logout",{method:"POST"})}catch(_){}location.href="login.html"}
+mostrar(true);
 </script>
 </body>
 </html>
