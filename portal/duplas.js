@@ -2,83 +2,71 @@
    CADASTRO DAS DUPLAS — para criar uma dupla nova, copie um
    bloco, troque os dados e salve. O painel fica em:
    portal/painel.html?d=<id>
-   ATENÇÃO: senhas aqui são SÓ DE TESTE (repositório público).
+   Logins e senhas NÃO ficam aqui: são cadastrados em portal/admin.html.
    ============================================================ */
 const DUPLAS = {
   "israel-stefanny": {
     unidade: "DBA Marabá",
     nomes: ["Israel", "Stefanny"],
-    iniciais: "IS",
-    usuarios: { israel: "teste123", stefanny: "teste123" }
+    iniciais: "IS"
   }
   /* ---- DBA Belém: vendedores individuais (sem dupla) ----
      painel: portal/painel.html?d=bel-<nome> */,
   "bel-alcir": {
     unidade: "DBA Belém",
     nomes: ["Alcir"],
-    iniciais: "AL",
-    usuarios: { alcir: "teste123" }
+    iniciais: "AL"
   },
   "bel-francitonio": {
     unidade: "DBA Belém",
     nomes: ["Francitonio"],
-    iniciais: "FR",
-    usuarios: { francitonio: "teste123" }
+    iniciais: "FR"
   },
   "bel-raphael": {
     unidade: "DBA Belém",
     nomes: ["Raphael"],
-    iniciais: "RA",
-    usuarios: { raphael: "teste123" }
+    iniciais: "RA"
   },
   "bel-cibelle": {
     unidade: "DBA Belém",
     nomes: ["Cibelle"],
-    iniciais: "CI",
-    usuarios: { cibelle: "teste123" }
+    iniciais: "CI"
   },
   "bel-renato": {
     unidade: "DBA Belém",
     nomes: ["Renato"],
-    iniciais: "RE",
-    usuarios: { renato: "teste123" }
+    iniciais: "RE"
   },
   "bel-jennifer": {
     unidade: "DBA Belém",
     nomes: ["Jennifer"],
-    iniciais: "JE",
-    usuarios: { jennifer: "teste123" }
+    iniciais: "JE"
   },
   "bel-alessandra": {
     unidade: "DBA Belém",
     nomes: ["Alessandra"],
-    iniciais: "AS",
-    usuarios: { alessandra: "teste123" }
+    iniciais: "AS"
   },
   "bel-fabio": {
     unidade: "DBA Belém",
     nomes: ["Fabio"],
-    iniciais: "FA",
-    usuarios: { fabio: "teste123" }
+    iniciais: "FA"
   },
   "bel-alvaro": {
     unidade: "DBA Belém",
     nomes: ["Alvaro"],
-    iniciais: "AV",
-    usuarios: { alvaro: "teste123" }
+    iniciais: "AV"
   },
   "bel-marcelle": {
     unidade: "DBA Belém",
     nomes: ["Marcelle"],
-    iniciais: "MA",
-    usuarios: { marcelle: "teste123" }
+    iniciais: "MA"
   }
   /* Exemplo de nova dupla:
   ,"fulano-ciclano": {
     unidade: "DBA Marabá",
     nomes: ["Fulano", "Ciclano"],
-    iniciais: "FC",
-    usuarios: { fulano: "teste123", ciclano: "teste123" }
+    iniciais: "FC"
   }
   */
 };
