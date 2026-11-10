@@ -169,7 +169,7 @@ nav.abas{display:block;margin-left:0}.abas-in{justify-content:flex-start!importa
 <script>
 /* Créditos dos clientes — ALPE, AMCARD, Seguro Arcelor e Crédito DBA (risco SAP), uma base por unidade (Marabá e Belém têm planilhas separadas).
    O Financeiro (Filipe) envia as planilhas; vendedores e duplas veem só a própria carteira. Dados: backend/creditos.web.js no Wix. */
-const TIPOS=[{k:"alpe",n:"ALPE",c:"#0b4a9a"},{k:"amcard",n:"AMCARD",c:"#1f9d55"},{k:"seguro",n:"Seguro Arcelor",c:"#f26b1d"},{k:"dba",n:"Crédito DBA (risco)",c:"#7a47aa"}];
+let IGN=[];const TIPOS=[{k:"alpe",n:"ALPE",c:"#0b4a9a"},{k:"amcard",n:"AMCARD",c:"#1f9d55"},{k:"seguro",n:"Seguro Arcelor",c:"#f26b1d"},{k:"dba",n:"Crédito DBA (risco)",c:"#7a47aa"}];
 const ABAS=[["resumo","Resumo"],["ranking","Ranking"],["alpe","ALPE"],["amcard","AMCARD"],["seguro","Seguro Arcelor"],["dba","Crédito DBA (risco)"]];
 const UNOME={mab:"Marabá",bel:"Belém",out:"Outras praças"};const UNIS=["mab","bel","out"];let PR=null;
 let DONOS={},ABA="resumo",UNI="mab",CTX={modo:"vendedor",nome:""},DADOS={metas:{},bases:{}},ENV={},FIL="",Q="",ROWS=[];
@@ -201,29 +201,31 @@ new ResizeObserver(altura).observe(document.body);
 const MAPA={
  alpe:{req:["cnpj","limite atribuido","limite disponivel"],c:{fil:"filial",cnpj:"cnpj",nome:"razao social",lim:"limite atribuido",disp:"limite disponivel",cid:"cidade",uf:"uf",vend:"vendedor alpe"}},
  amcard:{req:["cnpj","$ limite de compra","$ limite de compra disponivel"],c:{cnpj:"cnpj",nome:"nome cliente",tp:"tipo de pessoa",uf:"uf",cid:"cidade",und:"unidade",cri:"dt. criacao",ult:"dt. da ultima transacao",lim:"$ limite de compra",disp:"$ limite de compra disponivel",tom:"$ limite de compra tomado"}},
- seguro:{req:["cnpj","limite de credito","exposicao total"],c:{parc:"parceiro de negocios",cnpj:"cnpj",cid:"cidade",nome:"nome 1",cls:"classe de risco",lim:"limite de credito",exp:"exposicao total",pct:"percentual esgotamento",dias:"dias em atraso",atr:"valor em atraso",seg:"seguro de credito"}},
+ seguro:{req:["cnpj","limite de credito","exposicao total"],c:{parc:"parceiro de negocios",cnpj:"cnpj",cid:"cidade",nome:"nome 1",cls:"classe de risco",lim:"limite de credito",exp:"exposicao total",pct:"percentual esgotamento",dias:"dias em atraso",atr:"valor em atraso",seg:"seguro de credito",grp:"grp.responsaveis"}},
  dba:{req:["parceiro de negocios","limite de credito","exposicao total","grp.responsaveis"],c:{parc:"parceiro de negocios",cnpj:"cnpj",cpf:"cpf",cid:"cidade",nome:"nome 1",cls:"classe de risco",lim:"limite de credito",val:"validade do limite",exp:"exposicao total",pct:"percentual esgotamento",ov:"ordem de vendas",ovp:"ordem de vendas pendente liberacao",rem:"remessas",cr:"contas a receber",dias:"dias em atraso",atr:"valor em atraso",venc:"vencto mais antigo",dso:"dso",grp:"grp.responsaveis",regra:"regra verif.credito",bloq:"bloq.sap credit management",mot:"motivo p/bloqueio sap credit management"}}};
 const NUMS=["lim","disp","tom","exp","pct","dias","atr","seg","ov","ovp","rem","cr","dso"],DATAS=["val","venc"];
 /* data do Excel (número de série ou texto) -> dd/mm/aaaa; validade 2100/9999 = sem vencimento */
 function xd(v){if(v===""||v==null)return"";let d=null;if(typeof v=="number")d=new Date(Math.round((v-25569)*864e5));else if(v instanceof Date)d=v;else{const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)d=new Date(Date.UTC(+m[1],m[2]-1,+m[3]));else return String(v).trim()}if(isNaN(d))return"";if(d.getUTCFullYear()>=2100)return"sem vencimento";return String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0")+"/"+d.getUTCFullYear()}
 function lerPlanilha(tipo,buf){
-  const wb=XLSX.read(buf,{type:"array"}),M=MAPA[tipo],out=[];let abas=0;
+  const wb=XLSX.read(buf,{type:"array"}),M=MAPA[tipo],out=[];let abas=0;IGN=[];
   wb.SheetNames.forEach(sn=>{const L=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:""});
-    const hi=L.findIndex(r=>{const h=r.map(so);return M.req.every(k=>h.includes(k))});if(hi<0)return;abas++;
+    const hi=L.findIndex(r=>{const h=r.map(so);return M.req.every(k=>h.includes(k))});if(hi<0){if(L.filter(r=>r.some(v=>v!==""&&v!=null)).length>1)IGN.push(sn);return}abas++;
     const H=L[hi].map(so),ix={};for(const [k,n] of Object.entries(M.c))ix[k]=H.indexOf(n);
     L.slice(hi+1).forEach(r=>{const o={};for(const [k,i] of Object.entries(ix)){if(i<0)continue;let v=r[i];v=NUMS.includes(k)?num(v):DATAS.includes(k)?xd(v):String(v??"").trim();if(v!==""&&v!=null)o[k]=v}
       o.cnpj=doc(r[ix.cnpj])||(ix.cpf>=0?doc(r[ix.cpf]):"");delete o.cpf;if(!o.cnpj)return;
       /* risco DBA: só clientes com limite, exposição, atraso ou bloqueio (a exportação traz todo o cadastro) */
-      if(tipo=="dba"&&!((o.lim||0)>0||(o.exp||0)>0||(o.atr||0)>0||o.bloq))return;if(tipo=="alpe"&&!o.fil)o.fil=sn;out.push(o)})});
+      if(tipo=="dba"&&!((o.lim||0)>0||(o.exp||0)>0||(o.atr||0)>0||o.bloq))return;if(tipo=="alpe"&&!o.fil)o.fil=sn;o.aba=sn;out.push(o)})});
   if(!abas)throw new Error("Não reconheci o modelo "+TIPOS.find(t=>t.k==tipo).n+". Confira se é a planilha certa (colunas: "+M.req.join(", ")+").");
   return out}
 
 /* ---------- separação por praça (cidade) ---------- */
 const cidN=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/^CENTRO\s*-\s*/i,"").replace(/\s+/g," ").trim().toUpperCase();
 async function pracas(){if(PR)return PR;const r=await rpc("pracas");if(!r||!r.ok)throw new Error((r&&r.erro)||"não consegui ler as praças");PR={mab:new Set(r.mab),bel:new Set(r.bel)};return PR}
-function unidades(k,x){if(k=="alpe"&&x.fil){if(/bel/i.test(x.fil))return["bel"];if(/marab/i.test(x.fil))return["mab"]}
+/* unidade pelo Grp. responsáveis (DMB/DBE) ou pelo nome da aba (Marabá/Belém); só sem isso vai pela cidade */
+function uniFixa(x){if(/^DBE$|^159/i.test(x.grp||""))return"bel";if(/^DMB$|^130/i.test(x.grp||""))return"mab";if(/bel/i.test(cidN(x.aba)))return"bel";if(/marab/i.test(cidN(x.aba)))return"mab";return""}
+function unidades(k,x){const f=uniFixa(x);if(f)return[f];if(k=="alpe"&&x.fil){if(/bel/i.test(x.fil))return["bel"];if(/marab/i.test(x.fil))return["mab"]}
   const c=cidN(x.cid),m=PR.mab.has(c),b=PR.bel.has(c);return m&&b?["mab","bel"]:m?["mab"]:b?["bel"]:["out"]}
-function uniDBA(x){return /DBE|159/i.test(x.grp||"")?"bel":/DMB|130/i.test(x.grp||"")?"mab":UNI}
+function uniDBA(x){return uniFixa(x)||UNI}
 function separar(k,L){const o={mab:[],bel:[],out:[]};if(k=="dba"){L.forEach(x=>o[uniDBA(x)].push(x));return o}L.forEach(x=>unidades(k,x).forEach(u=>o[u].push(x)));return o}
 
 /* ---------- visão por cliente ---------- */
@@ -252,14 +254,14 @@ abas.onclick=e=>{const b=e.target.closest("button");if(!b)return;ABA=b.dataset.k
 function blocoEnvio(t){
   const m=meta(t.k),e=ENV[t.k];
   let h=`<tr><td><b>${t.n}</b></td><td>${m?dt(m.atualizado):"<span class='tag tg-a'>ainda não enviada</span>"}</td><td>${m&&m.arquivo?esc(m.arquivo):"–"}</td><td class="n">${base(t.k).length.toLocaleString("pt-BR")}</td><td>`;
-  if(e&&e.erro)h+=`<span class="tag tg-r">${esc(e.erro)}</span> `;
+  if(e&&e.erro)h+=`<span class="tag tg-r">${esc(e.erro)}</span> `;if(e&&e.aviso)h+=`<span class="tag tg-r">${esc(e.aviso)}</span> `;
   if(e&&e.partes&&!e.ok)h+=`${esc(e.arq)}: ${unisEnv(t.k,e).map(u=>`<b>${UNOME[u]}</b> ${e.partes[u].length.toLocaleString("pt-BR")}`).join(" · ")} &nbsp;<button class="bt2" onclick="enviar('${t.k}')" ${e.env?"disabled":""}>Publicar</button> <button class="bt2 cl" onclick="ENV['${t.k}']=null;render()" ${e.env?"disabled":""}>Cancelar</button>${e.env?`<div class="prog"><i style="width:${e.pct||0}%"></i></div>`:""}`;
   else if(e&&e.ok)h+=`<span class="tag tg-v">Publicado ✓ ${t.k=="dba"?unisEnv(t.k,e).map(u=>UNOME[u]).join(" e "):"Marabá, Belém e outras praças"}</span>`;
   else if(e&&e.lendo)h+=`<span class="tag tg-c">lendo e separando por cidade…</span>`;
   else h+=`<input type="file" accept=".xlsx,.xls" id="f_${t.k}" hidden onchange="lerArq('${t.k}',this)"><button class="bt2" onclick="document.getElementById('f_${t.k}').click()">Enviar planilha</button>`;
   return h+"</td></tr>"}
 function lerArq(k,inp){const f=inp.files[0];inp.value="";if(!f)return;ENV[k]={lendo:1};render();const rd=new FileReader();
-  rd.onload=async()=>{try{const L=lerPlanilha(k,new Uint8Array(rd.result));await pracas();ENV[k]={arq:f.name,partes:separar(k,L)}}catch(er){ENV[k]={erro:er.message}}render()};rd.readAsArrayBuffer(f)}
+  rd.onload=async()=>{try{const L=lerPlanilha(k,new Uint8Array(rd.result));await pracas();ENV[k]={arq:f.name,partes:separar(k,L),aviso:IGN.length?"A aba "+IGN.join(", ")+" veio sem as colunas do modelo (CNPJ, limite, exposição) e ficou de fora: exporte de novo essa aba com todas as colunas.":""}}catch(er){ENV[k]={erro:er.message}}render()};rd.readAsArrayBuffer(f)}
 /* Crédito DBA: cada planilha é de uma unidade (Grp. responsáveis DMB/DBE) — só essa base é substituída */
 function unisEnv(k,e){return k=="dba"?UNIS.filter(u=>e.partes[u].length):UNIS}
 async function enviar(k){const e=ENV[k];if(!e||!e.partes||e.env)return;e.env=1;e.pct=0;render();
